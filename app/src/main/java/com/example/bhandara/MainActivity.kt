@@ -19,6 +19,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -55,7 +56,8 @@ fun MainScreen(modifier: Modifier = Modifier) {
                 .fillMaxWidth() // Width of the screen
                 .height(80.dp), // Extra Large height
             colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary
+                containerColor = Color(0xFFB07720),
+                contentColor = Color.White
             )
         ) {
             Text(
@@ -64,16 +66,17 @@ fun MainScreen(modifier: Modifier = Modifier) {
             )
         }
 
-        Spacer(modifier = Modifier.height(32.dp)) // Space between buttons
+        Spacer(modifier = Modifier.height(8.dp)) // Space between buttons
 
         // Button 2: Report a Feast
         Button(
             onClick = { /* TODO: Add action */ },
             modifier = Modifier
                 .fillMaxWidth() // Width of the screen
-                .height(80.dp), // Extra Large height
+                .height(60.dp), // Extra Large height
             colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.secondary
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = Color.White
             )
         ) {
             Text(
