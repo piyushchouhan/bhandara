@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="button_i_am_hungry">मुझे भूख लगी है</string>
+    <string name="button_report_feast">भंडारे की सूचना दें</string>
+</resources>

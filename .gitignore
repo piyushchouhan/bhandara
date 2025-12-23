@@ -91,5 +91,7 @@ Thumbs.db
 *.swp
 *.bak
 
+app/google-services.json
+
 # NDK
 obj/

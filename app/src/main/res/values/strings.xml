@@ -1,3 +1,5 @@
 <resources>
-    <string name="app_name">Bhandara</string>
+    <string name="app_name" translatable="false">Bhandara</string>
+    <string name="button_i_am_hungry" >I am Hungry</string>
+    <string name="button_report_feast" >Report a Feast</string>
 </resources>
