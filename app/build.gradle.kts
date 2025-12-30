@@ -65,7 +65,14 @@ dependencies {
     implementation(platform("com.google.firebase:firebase-bom:34.7.0"))
     // When using the BoM, don't specify versions in Firebase dependencies
     implementation("com.google.firebase:firebase-analytics")
+    implementation("com.google.firebase:firebase-auth")
+    implementation("com.google.firebase:firebase-firestore")
+    implementation("com.google.firebase:firebase-storage")
+    implementation("com.google.firebase:firebase-messaging")
     
-    // Add other Firebase products as needed
-    // https://firebase.google.com/docs/android/setup#available-libraries
+    // Google Play Services for Location
+    implementation("com.google.android.gms:play-services-location:21.3.0")
+    
+    // Coil for image loading
+    implementation("io.coil-kt:coil-compose:2.5.0")
 }

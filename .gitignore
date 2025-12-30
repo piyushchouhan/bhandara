@@ -95,3 +95,11 @@ app/google-services.json
 
 # NDK
 obj/
+
+# Python virtual environment for docs
+venv/
+*.pyc
+__pycache__/
+
+# MkDocs build output
+site/
