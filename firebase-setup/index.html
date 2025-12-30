@@ -1,0 +1,1778 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../getting-started/">
+      
+      
+        <link rel="next" href="../architecture/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+    
+    
+      
+        <title>Firebase Setup - Bhandara Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#firebase-setup-user-tracking" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Bhandara Documentation" class="md-header__button md-logo" aria-label="Bhandara Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Bhandara Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Firebase Setup
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../getting-started/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Getting Started
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="./" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Firebase Setup
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../architecture/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Architecture
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../features/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Features
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../development/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Development
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../backend-integration/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Backend Integration
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../api-reference/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  API Reference
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Bhandara Documentation" class="md-nav__button md-logo" aria-label="Bhandara Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Bhandara Documentation
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Firebase Setup
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Firebase Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Architecture
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation-details" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implementation Details
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Implementation Details">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-firebase-dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Firebase Dependencies
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-android-manifest-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Android Manifest Permissions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-firebase-cloud-messaging-service" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Firebase Cloud Messaging Service
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#components" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Components
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Components">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#usermanager" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        UserManager
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#userrepository" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        UserRepository
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#locationhelper" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LocationHelper
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-models" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data Models
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#user-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        User Flow
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="User Flow">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#first-app-launch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        First App Launch
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#subsequent-app-launches" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Subsequent App Launches
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#firebase-console-verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Firebase Console Verification
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Firebase Console Verification">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#authentication" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Authentication
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#firestore-database" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Firestore Database
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cloud-messaging" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cloud Messaging
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#debugging" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Debugging
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Debugging">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#logcat-tags" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LogCat Tags
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#expected-log-sequence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Expected Log Sequence
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#common-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Common Issues
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Common Issues">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#location-not-updating" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Location Not Updating
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fcm-token-not-generated" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FCM Token Not Generated
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#anonymous-user-not-created" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Anonymous User Not Created
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#security-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security Considerations
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Security Considerations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#anonymous-auth-limitations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Anonymous Auth Limitations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#privacy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Privacy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-retention" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data Retention
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next Steps
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#related-documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Related Documentation
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../features/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Features
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../development/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../backend-integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backend Integration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Architecture
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#implementation-details" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Implementation Details
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Implementation Details">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-firebase-dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Firebase Dependencies
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-android-manifest-permissions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Android Manifest Permissions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-firebase-cloud-messaging-service" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Firebase Cloud Messaging Service
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#components" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Components
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Components">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#usermanager" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        UserManager
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#userrepository" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        UserRepository
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#locationhelper" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LocationHelper
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-models" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data Models
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#user-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        User Flow
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="User Flow">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#first-app-launch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        First App Launch
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#subsequent-app-launches" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Subsequent App Launches
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#firebase-console-verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Firebase Console Verification
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Firebase Console Verification">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#authentication" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Authentication
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#firestore-database" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Firestore Database
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cloud-messaging" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cloud Messaging
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#debugging" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Debugging
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Debugging">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#logcat-tags" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LogCat Tags
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#expected-log-sequence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Expected Log Sequence
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#common-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Common Issues
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Common Issues">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#location-not-updating" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Location Not Updating
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fcm-token-not-generated" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        FCM Token Not Generated
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#anonymous-user-not-created" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Anonymous User Not Created
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#security-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security Considerations
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Security Considerations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#anonymous-auth-limitations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Anonymous Auth Limitations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#privacy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Privacy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-retention" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data Retention
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next Steps
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#related-documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Related Documentation
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="firebase-setup-user-tracking">Firebase Setup &amp; User Tracking</h1>
+<p>This guide explains how the app implements silent user tracking using Firebase Anonymous Authentication, Cloud Messaging (FCM), and location services.</p>
+<h2 id="overview">Overview</h2>
+<p>The app automatically tracks users without any login or signup. When a user installs and opens the app:</p>
+<ol>
+<li><strong>Anonymous Authentication</strong> - Assigns a permanent UID</li>
+<li><strong>FCM Token</strong> - Enables push notifications</li>
+<li><strong>Location Tracking</strong> - Gets user's current location</li>
+<li><strong>Data Storage</strong> - Saves to Firebase Firestore</li>
+</ol>
+<p>All of this happens <strong>silently in the background</strong> without user interaction.</p>
+<h2 id="architecture">Architecture</h2>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>App Launch
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    ↓
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>UserManager.initializeUser()
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    ↓
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>Firebase Anonymous Auth → UID
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    ↓
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>Firebase Messaging → FCM Token
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    ↓
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>Save to Firestore (uid, fcmToken)
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    ↓
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>Request Location Permissions
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>    ↓
+</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>Get Location → Update Firestore
+</span></code></pre></div>
+<h2 id="implementation-details">Implementation Details</h2>
+<h3 id="1-firebase-dependencies">1. Firebase Dependencies</h3>
+<p>Added to <a href="../app/build.gradle.kts">app/build.gradle.kts</a>:</p>
+<div class="language-kotlin highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1">// Firebase - Import the BoM</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="n">implementation</span><span class="p">(</span><span class="n">platform</span><span class="p">(</span><span class="s">&quot;com.google.firebase:firebase-bom:34.7.0&quot;</span><span class="p">))</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1">// Firebase products</span>
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="n">implementation</span><span class="p">(</span><span class="s">&quot;com.google.firebase:firebase-analytics&quot;</span><span class="p">)</span>
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="n">implementation</span><span class="p">(</span><span class="s">&quot;com.google.firebase:firebase-auth&quot;</span><span class="p">)</span><span class="w">           </span><span class="c1">// Anonymous auth</span>
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="n">implementation</span><span class="p">(</span><span class="s">&quot;com.google.firebase:firebase-firestore&quot;</span><span class="p">)</span><span class="w">      </span><span class="c1">// User data storage</span>
+</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="n">implementation</span><span class="p">(</span><span class="s">&quot;com.google.firebase:firebase-storage&quot;</span><span class="p">)</span><span class="w">        </span><span class="c1">// Photo storage</span>
+</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="n">implementation</span><span class="p">(</span><span class="s">&quot;com.google.firebase:firebase-messaging&quot;</span><span class="p">)</span><span class="w">      </span><span class="c1">// Push notifications</span>
+</span><span id="__span-1-10"><a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>
+</span><span id="__span-1-11"><a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="c1">// Google Play Services for Location</span>
+</span><span id="__span-1-12"><a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="n">implementation</span><span class="p">(</span><span class="s">&quot;com.google.android.gms:play-services-location:21.3.0&quot;</span><span class="p">)</span>
+</span><span id="__span-1-13"><a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>
+</span><span id="__span-1-14"><a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="c1">// Coil for image loading</span>
+</span><span id="__span-1-15"><a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="n">implementation</span><span class="p">(</span><span class="s">&quot;io.coil-kt:coil-compose:2.5.0&quot;</span><span class="p">)</span>
+</span></code></pre></div>
+<p><strong>Why each dependency:</strong>
+- <strong>firebase-auth</strong>: Anonymous user authentication
+- <strong>firebase-firestore</strong>: Store user data (UID, FCM token, location)
+- <strong>firebase-storage</strong>: Future use for feast photos
+- <strong>firebase-messaging</strong>: Receive push notifications
+- <strong>play-services-location</strong>: Get user's GPS location
+- <strong>coil</strong>: Load images efficiently in Compose</p>
+<h3 id="2-android-manifest-permissions">2. Android Manifest Permissions</h3>
+<p>Added to <a href="../app/src/main/AndroidManifest.xml">AndroidManifest.xml</a>:</p>
+<div class="language-xml highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="cm">&lt;!-- Internet permission for Firebase --&gt;</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="nt">&lt;uses-permission</span><span class="w"> </span><span class="na">android:name=</span><span class="s">&quot;android.permission.INTERNET&quot;</span><span class="w"> </span><span class="nt">/&gt;</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="cm">&lt;!-- Location permissions for tracking user location --&gt;</span>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="nt">&lt;uses-permission</span><span class="w"> </span><span class="na">android:name=</span><span class="s">&quot;android.permission.ACCESS_FINE_LOCATION&quot;</span><span class="w"> </span><span class="nt">/&gt;</span>
+</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="nt">&lt;uses-permission</span><span class="w"> </span><span class="na">android:name=</span><span class="s">&quot;android.permission.ACCESS_COARSE_LOCATION&quot;</span><span class="w"> </span><span class="nt">/&gt;</span>
+</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>
+</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="cm">&lt;!-- Notification permission (Android 13+) --&gt;</span>
+</span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="nt">&lt;uses-permission</span><span class="w"> </span><span class="na">android:name=</span><span class="s">&quot;android.permission.POST_NOTIFICATIONS&quot;</span><span class="w"> </span><span class="nt">/&gt;</span>
+</span></code></pre></div>
+<p><strong>Why each permission:</strong>
+- <strong>INTERNET</strong>: Firebase requires network access
+- <strong>ACCESS_FINE_LOCATION</strong>: Get precise GPS coordinates
+- <strong>ACCESS_COARSE_LOCATION</strong>: Fallback for approximate location
+- <strong>POST_NOTIFICATIONS</strong>: Required for Android 13+ to show notifications</p>
+<h3 id="3-firebase-cloud-messaging-service">3. Firebase Cloud Messaging Service</h3>
+<p>Added <a href="../app/src/main/java/com/example/bhandara/services/BhandaraMessagingService.kt">BhandaraMessagingService.kt</a>:</p>
+<div class="language-xml highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="cm">&lt;!-- In AndroidManifest.xml --&gt;</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="nt">&lt;service</span>
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">    </span><span class="na">android:name=</span><span class="s">&quot;.services.BhandaraMessagingService&quot;</span>
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">    </span><span class="na">android:exported=</span><span class="s">&quot;false&quot;</span><span class="nt">&gt;</span>
+</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">    </span><span class="nt">&lt;intent-filter&gt;</span>
+</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">        </span><span class="nt">&lt;action</span><span class="w"> </span><span class="na">android:name=</span><span class="s">&quot;com.google.firebase.MESSAGING_EVENT&quot;</span><span class="w"> </span><span class="nt">/&gt;</span>
+</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">    </span><span class="nt">&lt;/intent-filter&gt;</span>
+</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="nt">&lt;/service&gt;</span>
+</span></code></pre></div>
+<p><strong>Purpose:</strong>
+- Receives push notifications from Firebase
+- Displays notifications in system tray
+- Handles notification clicks to open the app</p>
+<p><strong>How it works:</strong>
+1. Backend sends FCM notification
+2. Firebase delivers to device
+3. Service receives message
+4. Creates and displays notification</p>
+<h2 id="components">Components</h2>
+<h3 id="usermanager">UserManager</h3>
+<p>Location: <a href="../app/src/main/java/com/example/bhandara/managers/UserManager.kt">UserManager.kt</a></p>
+<p>Responsible for:
+- Initializing anonymous users
+- Managing FCM tokens
+- Updating user locations
+- (Future) Syncing data to backend API</p>
+<p><strong>Key Methods:</strong>
+- <code>initializeUser()</code>: Signs in anonymously and saves to Firestore
+- <code>updateUserLocation()</code>: Gets GPS and updates Firestore</p>
+<h3 id="userrepository">UserRepository</h3>
+<p>Location: <a href="../app/src/main/java/com/example/bhandara/data/repository/UserRepository.kt">UserRepository.kt</a></p>
+<p>Handles Firebase operations:
+- <code>signInAnonymously()</code>: Creates anonymous Firebase user
+- <code>getFcmToken()</code>: Retrieves FCM device token
+- <code>saveUser()</code>: Saves user data to Firestore
+- <code>updateUserLocation()</code>: Updates location in Firestore</p>
+<h3 id="locationhelper">LocationHelper</h3>
+<p>Location: <a href="../app/src/main/java/com/example/bhandara/utils/LocationHelper.kt">LocationHelper.kt</a></p>
+<p>Manages location services:
+- <code>hasLocationPermissions()</code>: Checks if permissions granted
+- <code>getCurrentLocation()</code>: Gets precise GPS coordinates
+- <code>getLastKnownLocation()</code>: Gets cached location (faster)</p>
+<h3 id="data-models">Data Models</h3>
+<p><strong>User Model</strong> - <a href="../app/src/main/java/com/example/bhandara/data/models/User.kt">User.kt</a>:</p>
+<div class="language-kotlin highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kd">data</span><span class="w"> </span><span class="kd">class</span><span class="w"> </span><span class="nc">User</span><span class="p">(</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">    </span><span class="kd">val</span><span class="w"> </span><span class="nv">uid</span><span class="p">:</span><span class="w"> </span><span class="kt">String</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;&quot;</span><span class="p">,</span>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span><span class="kd">val</span><span class="w"> </span><span class="nv">fcmToken</span><span class="p">:</span><span class="w"> </span><span class="kt">String</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;&quot;</span><span class="p">,</span>
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">    </span><span class="kd">val</span><span class="w"> </span><span class="nv">location</span><span class="p">:</span><span class="w"> </span><span class="n">GeoPoint? </span><span class="o">=</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">    </span><span class="kd">val</span><span class="w"> </span><span class="nv">createdAt</span><span class="p">:</span><span class="w"> </span><span class="kt">Long</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">System</span><span class="p">.</span><span class="na">currentTimeMillis</span><span class="p">(),</span>
+</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">    </span><span class="kd">val</span><span class="w"> </span><span class="nv">lastActive</span><span class="p">:</span><span class="w"> </span><span class="kt">Long</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">System</span><span class="p">.</span><span class="na">currentTimeMillis</span><span class="p">()</span>
+</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="p">)</span>
+</span></code></pre></div>
+<h2 id="user-flow">User Flow</h2>
+<h3 id="first-app-launch">First App Launch</h3>
+<ol>
+<li><strong>App Opens</strong> → <code>MainActivity.onCreate()</code></li>
+<li><strong>UserManager Initialized</strong> → Creates UserManager instance</li>
+<li>
+<p><strong>initializeUser() Called</strong>:
+   <div class="language-kotlin highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1">// Step 1: Anonymous sign in</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="kd">val</span><span class="w"> </span><span class="nv">uid</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">userRepository</span><span class="p">.</span><span class="na">signInAnonymously</span><span class="p">()</span><span class="w"> </span><span class="c1">// e.g., &quot;abc123def456&quot;</span>
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
+</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="c1">// Step 2: Get FCM token</span>
+</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="kd">val</span><span class="w"> </span><span class="nv">fcmToken</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">userRepository</span><span class="p">.</span><span class="na">getFcmToken</span><span class="p">()</span><span class="w"> </span><span class="c1">// e.g., &quot;fcm_device_token_...&quot;</span>
+</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>
+</span><span id="__span-5-7"><a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="c1">// Step 3: Save to Firestore</span>
+</span><span id="__span-5-8"><a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="n">userRepository</span><span class="p">.</span><span class="na">saveUser</span><span class="p">(</span><span class="n">uid</span><span class="p">,</span><span class="w"> </span><span class="n">fcmToken</span><span class="p">)</span>
+</span></code></pre></div></p>
+</li>
+<li>
+<p><strong>Permissions Requested</strong> → Location and notifications</p>
+</li>
+<li><strong>Location Updated</strong> (if granted):
+   <div class="language-kotlin highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kd">val</span><span class="w"> </span><span class="nv">location</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">locationHelper</span><span class="p">.</span><span class="na">getCurrentLocation</span><span class="p">()</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="n">userRepository</span><span class="p">.</span><span class="na">updateUserLocation</span><span class="p">(</span><span class="n">uid</span><span class="p">,</span><span class="w"> </span><span class="n">location</span><span class="p">)</span>
+</span></code></pre></div></li>
+</ol>
+<h3 id="subsequent-app-launches">Subsequent App Launches</h3>
+<ol>
+<li><strong>App Opens</strong></li>
+<li><strong>Existing User Check</strong> → Firebase recognizes returning user</li>
+<li><strong>Same UID Used</strong> → No new user created</li>
+<li><strong>FCM Token Verified</strong> → Updated if changed</li>
+<li><strong>Location Updated</strong> → Fresh GPS coordinates</li>
+</ol>
+<h2 id="firebase-console-verification">Firebase Console Verification</h2>
+<h3 id="authentication">Authentication</h3>
+<ol>
+<li>Go to <a href="https://console.firebase.google.com">Firebase Console</a></li>
+<li>Select "bhandara" project</li>
+<li>Navigate to <strong>Authentication</strong> → <strong>Users</strong></li>
+<li>See anonymous users with UID</li>
+</ol>
+<h3 id="firestore-database">Firestore Database</h3>
+<ol>
+<li>In Firebase Console</li>
+<li>Navigate to <strong>Firestore Database</strong></li>
+<li>Open <strong>users</strong> collection</li>
+<li>View documents with structure:
+   <div class="language-text highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>users/
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>  {uid}/
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>    - uid: &quot;abc123def456&quot;
+</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>    - fcmToken: &quot;fcm_token_...&quot;
+</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>    - location: GeoPoint(18.5823749, 73.8844745)
+</span><span id="__span-7-6"><a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>    - createdAt: 1704045600000
+</span><span id="__span-7-7"><a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>    - lastActive: 1704045600000
+</span></code></pre></div></li>
+</ol>
+<h3 id="cloud-messaging">Cloud Messaging</h3>
+<ol>
+<li>In Firebase Console</li>
+<li>Navigate to <strong>Cloud Messaging</strong></li>
+<li>View registered FCM tokens</li>
+<li>Test notifications from console</li>
+</ol>
+<h2 id="debugging">Debugging</h2>
+<h3 id="logcat-tags">LogCat Tags</h3>
+<p>Monitor these tags in Android Studio Logcat:</p>
+<ul>
+<li><code>UserManager</code>: User initialization flow</li>
+<li><code>UserRepository</code>: Firebase operations</li>
+<li><code>LocationHelper</code>: Location updates</li>
+<li><code>BhandaraMessaging</code>: Notification handling</li>
+</ul>
+<h3 id="expected-log-sequence">Expected Log Sequence</h3>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>UserManager: User signed in with UID: abc123def456
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>UserManager: FCM token obtained
+</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>UserRepository: User data saved successfully
+</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>UserManager: User saved to Firestore
+</span><span id="__span-8-5"><a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>LocationHelper: Location obtained: 18.5823749, 73.8844745
+</span><span id="__span-8-6"><a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>UserRepository: User location updated
+</span><span id="__span-8-7"><a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>UserManager: User location updated in Firestore
+</span></code></pre></div>
+<h2 id="common-issues">Common Issues</h2>
+<h3 id="location-not-updating">Location Not Updating</h3>
+<p><strong>Problem</strong>: Location stays null in Firestore</p>
+<p><strong>Solutions</strong>:
+- Check permissions granted
+- Ensure emulator has location set (Extended Controls → Location)
+- Use device with GPS instead of emulator
+- Check Play Services installed on emulator</p>
+<h3 id="fcm-token-not-generated">FCM Token Not Generated</h3>
+<p><strong>Problem</strong>: fcmToken is empty</p>
+<p><strong>Solutions</strong>:
+- Use emulator with Google Play (not just Google APIs)
+- Check <code>google-services.json</code> is valid
+- Verify internet connection
+- Restart app</p>
+<h3 id="anonymous-user-not-created">Anonymous User Not Created</h3>
+<p><strong>Problem</strong>: UID is null</p>
+<p><strong>Solutions</strong>:
+- Check Firebase Authentication is enabled
+- Verify <code>google-services.json</code> configuration
+- Enable Anonymous sign-in in Firebase Console</p>
+<h2 id="security-considerations">Security Considerations</h2>
+<h3 id="anonymous-auth-limitations">Anonymous Auth Limitations</h3>
+<ul>
+<li><strong>Device-specific</strong>: UID tied to app installation</li>
+<li><strong>Non-recoverable</strong>: Uninstall = new user</li>
+<li><strong>No cross-device</strong>: Can't sync across devices</li>
+</ul>
+<h3 id="privacy">Privacy</h3>
+<ul>
+<li>No personal information collected</li>
+<li>Only: UID, FCM token, location</li>
+<li>Users can't be identified</li>
+<li>Complies with anonymous usage</li>
+</ul>
+<h3 id="data-retention">Data Retention</h3>
+<p>Consider implementing:
+- Remove users inactive for 90+ days
+- Clear location data older than 30 days
+- GDPR compliance for EU users</p>
+<h2 id="next-steps">Next Steps</h2>
+<p>See <a href="../backend-integration/">Backend Integration</a> for:
+- Syncing user data to PostgreSQL/PostGIS
+- Implementing backend API calls
+- Querying nearby users
+- Sending targeted notifications</p>
+<h2 id="related-documentation">Related Documentation</h2>
+<ul>
+<li><a href="../getting-started/">Getting Started</a> - Initial setup</li>
+<li><a href="../architecture/">Architecture</a> - Overall app structure</li>
+<li><a href="../backend-integration/">Backend Integration</a> - API implementation</li>
+<li><a href="../development/">Development Guide</a> - Best practices</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

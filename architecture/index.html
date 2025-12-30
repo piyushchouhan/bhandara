@@ -9,10 +9,10 @@
       
       
       
-        <link rel="prev" href="../api-reference/">
+        <link rel="prev" href="../firebase-setup/">
       
       
-        <link rel="next" href="../development/">
+        <link rel="next" href="../features/">
       
       
         
@@ -215,7 +215,7 @@
   
     
   
-  Welcome to Bhandara Documentation
+  Home
 
       </a>
     </li>
@@ -228,13 +228,32 @@
   
   
     <li class="md-tabs__item">
-      <a href="../api-reference/" class="md-tabs__link">
+      <a href="../getting-started/" class="md-tabs__link">
         
   
   
     
   
-  API Reference
+  Getting Started
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../firebase-setup/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Firebase Setup
 
       </a>
     </li>
@@ -268,25 +287,6 @@
   
   
     <li class="md-tabs__item">
-      <a href="../development/" class="md-tabs__link">
-        
-  
-  
-    
-  
-  Development Guide
-
-      </a>
-    </li>
-  
-
-      
-        
-  
-  
-  
-  
-    <li class="md-tabs__item">
       <a href="../features/" class="md-tabs__link">
         
   
@@ -306,13 +306,51 @@
   
   
     <li class="md-tabs__item">
-      <a href="../getting-started/" class="md-tabs__link">
+      <a href="../development/" class="md-tabs__link">
         
   
   
     
   
-  Getting Started
+  Development
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../backend-integration/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Backend Integration
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../api-reference/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  API Reference
 
       </a>
     </li>
@@ -366,7 +404,7 @@
   <span class="md-ellipsis">
     
   
-    Welcome to Bhandara Documentation
+    Home
   
 
     
@@ -386,14 +424,41 @@
   
   
     <li class="md-nav__item">
-      <a href="../api-reference/" class="md-nav__link">
+      <a href="../getting-started/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    API Reference
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../firebase-setup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Firebase Setup
   
 
     
@@ -495,6 +560,45 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#firebase-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Firebase Integration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Firebase Integration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#services-used" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Services Used
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data Flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#project-structure" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -534,6 +638,78 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#key-components" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key Components
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Key Components">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#usermanager" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        UserManager
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#userrepository" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        UserRepository
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#locationhelper" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LocationHelper
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bhandaramessagingservice" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        BhandaraMessagingService
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#navigation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Navigation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#dependencies" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -541,6 +717,23 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Dependencies">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#firebase-dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Firebase Dependencies
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -564,10 +757,49 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Design Patterns">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#repository-pattern" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Repository Pattern
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#manager-pattern" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Manager Pattern
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#single-responsibility" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Single Responsibility
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
-  <a href="#data-flow" class="md-nav__link">
+  <a href="#data-flow_1" class="md-nav__link">
     <span class="md-ellipsis">
       
         Data Flow
@@ -575,39 +807,68 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Data Flow">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#user-initialization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        User Initialization
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#notification-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Notification Flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#future-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Future Architecture
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Future Architecture">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#backend-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Backend Integration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
     </ul>
   
 </nav>
       
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../development/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Development Guide
-  
-
-    
-  </span>
-  
-  
-
-      </a>
     </li>
   
 
@@ -646,14 +907,68 @@
   
   
     <li class="md-nav__item">
-      <a href="../getting-started/" class="md-nav__link">
+      <a href="../development/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Getting Started
+    Development
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../backend-integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Backend Integration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
   
 
     
@@ -715,6 +1030,45 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#firebase-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Firebase Integration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Firebase Integration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#services-used" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Services Used
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data Flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#project-structure" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -754,6 +1108,78 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#key-components" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key Components
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Key Components">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#usermanager" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        UserManager
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#userrepository" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        UserRepository
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#locationhelper" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LocationHelper
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bhandaramessagingservice" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        BhandaraMessagingService
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#navigation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Navigation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#dependencies" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -761,6 +1187,23 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Dependencies">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#firebase-dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Firebase Dependencies
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -784,16 +1227,111 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Design Patterns">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#repository-pattern" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Repository Pattern
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#manager-pattern" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Manager Pattern
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#single-responsibility" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Single Responsibility
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
-  <a href="#data-flow" class="md-nav__link">
+  <a href="#data-flow_1" class="md-nav__link">
     <span class="md-ellipsis">
       
         Data Flow
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Data Flow">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#user-initialization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        User Initialization
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#notification-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Notification Flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#future-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Future Architecture
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Future Architecture">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#backend-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Backend Integration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -816,42 +1354,175 @@
 
 <h1 id="architecture">Architecture</h1>
 <h2 id="overview">Overview</h2>
-<p>Bhandara follows modern Android development practices.</p>
+<p>Bhandara follows modern Android development practices with clean architecture principles.</p>
 <h2 id="tech-stack">Tech Stack</h2>
 <ul>
 <li><strong>Language</strong>: Kotlin</li>
+<li><strong>UI</strong>: Jetpack Compose</li>
 <li><strong>Build System</strong>: Gradle (Kotlin DSL)</li>
-<li><strong>Min SDK</strong>: TBD</li>
-<li><strong>Target SDK</strong>: TBD</li>
+<li><strong>Backend</strong>: Firebase (Auth, Firestore, FCM, Storage)</li>
+<li><strong>Location</strong>: Google Play Services Location API</li>
+<li><strong>Min SDK</strong>: 35</li>
+<li><strong>Target SDK</strong>: 36</li>
 </ul>
+<h2 id="firebase-integration">Firebase Integration</h2>
+<h3 id="services-used">Services Used</h3>
+<ol>
+<li><strong>Firebase Authentication</strong> - Anonymous user sign-in</li>
+<li><strong>Cloud Firestore</strong> - User data storage (UID, FCM token, location)</li>
+<li><strong>Cloud Messaging (FCM)</strong> - Push notifications</li>
+<li><strong>Cloud Storage</strong> - Future: Feast photo uploads</li>
+</ol>
+<h3 id="data-flow">Data Flow</h3>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>User Opens App
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    ↓
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>Anonymous Auth → UID
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    ↓
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>FCM Token Generated
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    ↓
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>Location Requested
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    ↓
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>Save to Firestore
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    ↓
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>(Future) Sync to Backend API
+</span></code></pre></div>
 <h2 id="project-structure">Project Structure</h2>
 <h3 id="modules">Modules</h3>
 <ul>
 <li><strong>app</strong>: Main application module containing all source code and resources</li>
 </ul>
 <h3 id="key-directories">Key Directories</h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>app/src/main/
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>├── java/com/example/bhandara/  # Application code
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>│   └── MainActivity.kt          # Main entry point
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>├── res/                         # Resources
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>│   ├── layout/                  # XML layouts
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>│   ├── values/                  # Strings, colors, themes
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>│   ├── drawable/                # Images and icons
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>│   └── mipmap/                  # App icons
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>└── AndroidManifest.xml          # App manifest
-</code></pre></div>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>app/src/main/
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>├── java/com/example/bhandara/  # Application code
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>│   ├── MainActivity.kt          # Main entry point
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>│   ├── data/                    # Data layer
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>│   │   ├── models/              # Data models (User, Feast)
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>│   │   └── repository/          # Firebase operations
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>│   ├── managers/                # Business logic
+</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>│   │   └── UserManager.kt       # User initialization &amp; tracking
+</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>│   ├── services/                # Background services
+</span><span id="__span-1-10"><a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>│   │   └── BhandaraMessagingService.kt  # FCM receiver
+</span><span id="__span-1-11"><a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>│   ├── ui/                      # UI layer
+</span><span id="__span-1-12"><a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>│   │   ├── components/          # Reusable components
+</span><span id="__span-1-13"><a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>│   │   ├── screens/             # Screen composables
+</span><span id="__span-1-14"><a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>│   │   └── theme/               # Material theme
+</span><span id="__span-1-15"><a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>│   └── utils/                   # Utilities
+</span><span id="__span-1-16"><a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>│       └── LocationHelper.kt    # GPS &amp; permissions
+</span><span id="__span-1-17"><a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>├── res/                         # Resources
+</span><span id="__span-1-18"><a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>│   ├── layout/                  # XML layouts (legacy)
+</span><span id="__span-1-19"><a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>│   ├── values/                  # Strings, colors, themes
+</span><span id="__span-1-20"><a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>│   ├── drawable/                # Images and icons
+</span><span id="__span-1-21"><a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>│   └── mipmap/                  # App icons
+</span><span id="__span-1-22"><a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>└── AndroidManifest.xml          # App manifest
+</span></code></pre></div>
+<h2 id="key-components">Key Components</h2>
+<h3 id="usermanager">UserManager</h3>
+<ul>
+<li>Initializes anonymous users on app start</li>
+<li>Manages FCM token lifecycle</li>
+<li>Handles location updates</li>
+<li>Coordinates data sync to Firestore and backend</li>
+</ul>
+<h3 id="userrepository">UserRepository</h3>
+<ul>
+<li>Firebase Authentication operations</li>
+<li>Firestore CRUD operations</li>
+<li>FCM token management</li>
+</ul>
+<h3 id="locationhelper">LocationHelper</h3>
+<ul>
+<li>GPS location retrieval</li>
+<li>Permission management</li>
+<li>Location caching</li>
+</ul>
+<h3 id="bhandaramessagingservice">BhandaraMessagingService</h3>
+<ul>
+<li>Receives FCM push notifications</li>
+<li>Displays system notifications</li>
+<li>Handles notification clicks</li>
+</ul>
+<h2 id="navigation">Navigation</h2>
+<p>Simple enum-based navigation with back stack:</p>
+<div class="language-kotlin highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kd">enum</span><span class="w"> </span><span class="kd">class</span><span class="w"> </span><span class="nc">Screen</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">    </span><span class="n">HOME</span><span class="p">,</span><span class="w"> </span><span class="n">HUNGRY</span><span class="p">,</span><span class="w"> </span><span class="n">REPORT_FEAST</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="p">}</span>
+</span></code></pre></div>
+<p>Back stack automatically manages navigation history for proper back button behavior.</p>
 <h2 id="dependencies">Dependencies</h2>
 <p>Dependencies are managed in <code>gradle/libs.versions.toml</code> using version catalogs.</p>
+<h3 id="firebase-dependencies">Firebase Dependencies</h3>
+<p>Added in <a href="../app/build.gradle.kts">app/build.gradle.kts</a>:</p>
+<div class="language-kotlin highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">implementation</span><span class="p">(</span><span class="n">platform</span><span class="p">(</span><span class="s">&quot;com.google.firebase:firebase-bom:34.7.0&quot;</span><span class="p">))</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">implementation</span><span class="p">(</span><span class="s">&quot;com.google.firebase:firebase-analytics&quot;</span><span class="p">)</span>
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="n">implementation</span><span class="p">(</span><span class="s">&quot;com.google.firebase:firebase-auth&quot;</span><span class="p">)</span>
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="n">implementation</span><span class="p">(</span><span class="s">&quot;com.google.firebase:firebase-firestore&quot;</span><span class="p">)</span>
+</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="n">implementation</span><span class="p">(</span><span class="s">&quot;com.google.firebase:firebase-storage&quot;</span><span class="p">)</span>
+</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="n">implementation</span><span class="p">(</span><span class="s">&quot;com.google.firebase:firebase-messaging&quot;</span><span class="p">)</span>
+</span></code></pre></div>
+<p>See <a href="../firebase-setup/">Firebase Setup</a> for detailed explanation of each dependency.</p>
 <h2 id="build-configuration">Build Configuration</h2>
 <ul>
 <li><strong>Project-level</strong>: <code>build.gradle.kts</code> (root)</li>
 <li><strong>App-level</strong>: <code>app/build.gradle.kts</code></li>
 <li><strong>Gradle properties</strong>: <code>gradle.properties</code></li>
+<li><strong>Firebase config</strong>: <code>app/google-services.json</code></li>
 </ul>
 <h2 id="design-patterns">Design Patterns</h2>
-<p>(To be documented as the project evolves)</p>
-<h2 id="data-flow">Data Flow</h2>
-<p>(To be documented as the project evolves)</p>
+<h3 id="repository-pattern">Repository Pattern</h3>
+<ul>
+<li>Separates data access from business logic</li>
+<li><code>UserRepository</code> handles all Firebase operations</li>
+<li>Makes testing easier</li>
+</ul>
+<h3 id="manager-pattern">Manager Pattern</h3>
+<ul>
+<li><code>UserManager</code> coordinates multiple operations</li>
+<li>Centralizes business logic</li>
+<li>Reduces MainActivity complexity</li>
+</ul>
+<h3 id="single-responsibility">Single Responsibility</h3>
+<ul>
+<li>Each class has one clear purpose</li>
+<li>LocationHelper only handles location</li>
+<li>Services only handle their specific task</li>
+</ul>
+<h2 id="data-flow_1">Data Flow</h2>
+<h3 id="user-initialization">User Initialization</h3>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>MainActivity
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>    ↓
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>UserManager.initializeUser()
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>    ↓
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>UserRepository.signInAnonymously() → Firebase Auth
+</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>    ↓
+</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>UserRepository.getFcmToken() → Firebase Messaging
+</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>    ↓
+</span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>UserRepository.saveUser() → Firestore
+</span><span id="__span-4-10"><a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>    ↓
+</span><span id="__span-4-11"><a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>LocationHelper.getCurrentLocation() → Play Services
+</span><span id="__span-4-12"><a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>    ↓
+</span><span id="__span-4-13"><a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>UserRepository.updateUserLocation() → Firestore
+</span></code></pre></div>
+<h3 id="notification-flow">Notification Flow</h3>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>Backend API
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>    ↓
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>Firebase Cloud Messaging
+</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    ↓
+</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>BhandaraMessagingService.onMessageReceived()
+</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>    ↓
+</span><span id="__span-5-7"><a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>Create Notification
+</span><span id="__span-5-8"><a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>    ↓
+</span><span id="__span-5-9"><a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>System Notification Tray
+</span><span id="__span-5-10"><a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>    ↓
+</span><span id="__span-5-11"><a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>User clicks → Opens MainActivity
+</span></code></pre></div>
+<h2 id="future-architecture">Future Architecture</h2>
+<h3 id="backend-integration">Backend Integration</h3>
+<ul>
+<li>API calls via Retrofit</li>
+<li>PostgreSQL + PostGIS for geo queries</li>
+<li>Backend sends FCM notifications</li>
+</ul>
+<p>See <a href="../backend-integration/">Backend Integration</a> for implementation details.</p>
 
 
 
@@ -901,7 +1572,7 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "search.suggest", "search.highlight", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
       <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
