@@ -15,7 +15,7 @@ object NetworkModule {
     private const val TIMEOUT_SECONDS = 30L
     
     /**
-     * OkHttp client with logging interceptor
+     * OkHttp client with logging and auth interceptors
      */
     private val okHttpClient: OkHttpClient by lazy {
         val loggingInterceptor = HttpLoggingInterceptor().apply {
@@ -26,8 +26,11 @@ object NetworkModule {
             }
         }
         
+        val authInterceptor = AuthInterceptor()
+        
         OkHttpClient.Builder()
-            .addInterceptor(loggingInterceptor)
+            .addInterceptor(authInterceptor)  // Add auth token first
+            .addInterceptor(loggingInterceptor)  // Then log the authenticated request
             .connectTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS)
             .readTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS)
             .writeTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS)

@@ -22,7 +22,9 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         
         // API Configuration
-        buildConfigField("String", "API_BASE_URL", "\"http://localhost:8080/\"")
+        // Using computer's local IP for physical device testing
+        // Phone must be on same WiFi network OR use USB with ADB reverse port forwarding
+        buildConfigField("String", "API_BASE_URL", "\"http://192.168.1.7:8080/\"")
     }
 
     buildTypes {
@@ -90,4 +92,7 @@ dependencies {
     implementation("com.squareup.retrofit2:converter-gson:2.11.0")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+    
+    // WorkManager for periodic location updates
+    implementation("androidx.work:work-runtime-ktx:2.9.0")
 }

@@ -37,17 +37,12 @@ class BackendRepository {
                 longitude = location?.longitude ?: -180.0
             )
             
-            Log.d(TAG, "Creating user in backend: $firebaseUid")
-            
             val response = apiService.createUser(request)
             
             if (response.isSuccessful) {
-                val body = response.body()
-                Log.d(TAG, "User created successfully: ${body?.id}")
-                body
+                response.body()
             } else {
-                Log.e(TAG, "Failed to create user: ${response.code()} - ${response.message()}")
-                Log.e(TAG, "Error body: ${response.errorBody()?.string()}")
+                Log.e(TAG, "Failed to create user: ${response.code()}")
                 null
             }
         } catch (e: Exception) {
@@ -76,18 +71,8 @@ class BackendRepository {
                 fcmToken = fcmToken
             )
             
-            Log.d(TAG, "Updating user location in backend: $firebaseUid")
-            
             val response = apiService.updateUserLocation(request)
-            
-            if (response.isSuccessful) {
-                Log.d(TAG, "Location updated successfully in backend")
-                true
-            } else {
-                Log.e(TAG, "Failed to update location: ${response.code()} - ${response.message()}")
-                Log.e(TAG, "Error body: ${response.errorBody()?.string()}")
-                false
-            }
+            response.isSuccessful
         } catch (e: Exception) {
             Log.e(TAG, "Error updating location in backend", e)
             false

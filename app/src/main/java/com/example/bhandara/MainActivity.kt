@@ -39,7 +39,11 @@ class MainActivity : AppCompatActivity() {
     ) { permissions ->
         val granted = permissions.entries.all { it.value }
         if (granted) {
+            // Update location immediately
             userManager.updateUserLocation()
+            
+            // Start periodic background updates (every 15 minutes)
+            userManager.startPeriodicLocationUpdates()
         }
     }
     
