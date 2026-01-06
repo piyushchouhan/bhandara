@@ -20,6 +20,9 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        
+        // API Configuration
+        buildConfigField("String", "API_BASE_URL", "\"http://localhost:8080/\"")
     }
 
     buildTypes {
@@ -38,8 +41,14 @@ android {
     kotlinOptions {
         jvmTarget = "11"
     }
+    testOptions {
+        unitTests {
+            isReturnDefaultValues = true
+        }
+    }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -75,4 +84,10 @@ dependencies {
     
     // Coil for image loading
     implementation("io.coil-kt:coil-compose:2.5.0")
+    
+    // Retrofit for REST API calls
+    implementation("com.squareup.retrofit2:retrofit:2.11.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.11.0")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
 }

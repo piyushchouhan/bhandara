@@ -2,6 +2,7 @@ package com.example.bhandara.managers
 
 import android.content.Context
 import android.util.Log
+import com.example.bhandara.data.repository.BackendRepository
 import com.example.bhandara.data.repository.UserRepository
 import com.example.bhandara.utils.LocationHelper
 import kotlinx.coroutines.CoroutineScope
@@ -15,6 +16,7 @@ class UserManager(
     private val coroutineScope: CoroutineScope
 ) {
     private val userRepository = UserRepository()
+    private val backendRepository = BackendRepository()
     private val locationHelper = LocationHelper(context)
     
     companion object {
@@ -51,8 +53,13 @@ class UserManager(
                     Log.d(TAG, "User saved to Firestore")
                 }
                 
-                // TODO: Send user data to backend API
-                // sendUserDataToBackend(uid, fcmToken, null)
+                // Step 4: Send user data to backend API
+                val backendResponse = backendRepository.createUser(uid, fcmToken, null)
+                if (backendResponse != null) {
+                    Log.d(TAG, "User created in backend database: ${backendResponse.id}")
+                } else {
+                    Log.e(TAG, "Failed to create user in backend")
+                }
                 
             } catch (e: Exception) {
                 Log.e(TAG, "Error initializing user", e)
@@ -73,47 +80,23 @@ class UserManager(
                 userRepository.updateUserLocation(uid, location)
                 Log.d(TAG, "User location updated in Firestore")
                 
-                // TODO: Update location in backend
-                // sendUserDataToBackend(uid, null, location)
+                // Update location in backend (also updates fcmToken to keep it fresh)
+                val fcmToken = userRepository.getFcmToken()
+                if (fcmToken != null) {
+                    val success = backendRepository.updateUserLocation(uid, fcmToken, location)
+                    if (success) {
+                        Log.d(TAG, "User location updated in backend")
+                    } else {
+                        Log.e(TAG, "Failed to update location in backend")
+                    }
+                } else {
+                    Log.e(TAG, "FCM token not available for location update")
+                }
             }
         }
     }
     
     fun hasLocationPermissions(): Boolean {
         return locationHelper.hasLocationPermissions()
-    }
-    
-    // TODO: Implement backend API call
-    /**
-     * Send user data to backend
-     * @param uid User ID from Firebase
-     * @param fcmToken FCM token for notifications
-     * @param location User's current location
-     */
-    private suspend fun sendUserDataToBackend(
-        uid: String,
-        fcmToken: String?,
-        location: com.google.firebase.firestore.GeoPoint?
-    ) {
-        // TODO: Implement Retrofit/OkHttp API call
-        /*
-        val request = UserUpdateRequest(
-            uid = uid,
-            fcmToken = fcmToken,
-            latitude = location?.latitude,
-            longitude = location?.longitude
-        )
-        
-        try {
-            val response = apiService.updateUser(request)
-            if (response.isSuccessful) {
-                Log.d(TAG, "User data sent to backend successfully")
-            } else {
-                Log.e(TAG, "Failed to send user data to backend: ${response.code()}")
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Error sending user data to backend", e)
-        }
-        */
     }
 }
