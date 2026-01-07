@@ -78,4 +78,27 @@ class BackendRepository {
             false
         }
     }
+    
+    /**
+     * Create a new feast/bhandara
+     * @param request FeastRequest with all feast details
+     * @return FeastResponse if successful, null otherwise
+     */
+    suspend fun createFeast(
+        request: com.example.bhandara.data.models.api.FeastRequest
+    ): com.example.bhandara.data.models.api.FeastResponse? {
+        return try {
+            val response = apiService.createFeast(request)
+            
+            if (response.isSuccessful) {
+                response.body()
+            } else {
+                Log.e(TAG, "Failed to create feast: ${response.code()}")
+                null
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error creating feast in backend", e)
+            null
+        }
+    }
 }

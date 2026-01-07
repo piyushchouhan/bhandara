@@ -2,6 +2,8 @@ package com.example.bhandara.data.api
 
 import com.example.bhandara.data.models.api.CreateUserRequest
 import com.example.bhandara.data.models.api.CreateUserResponse
+import com.example.bhandara.data.models.api.FeastRequest
+import com.example.bhandara.data.models.api.FeastResponse
 import com.example.bhandara.data.models.api.UpdateLocationRequest
 import com.example.bhandara.data.models.api.UpdateLocationResponse
 import retrofit2.Response
@@ -33,4 +35,14 @@ interface ApiService {
     suspend fun updateUserLocation(
         @Body request: UpdateLocationRequest
     ): Response<UpdateLocationResponse>
+    
+    /**
+     * Create a new feast/bhandara
+     * @param request Feast data including menu, location, time, etc.
+     * @return Response containing created feast data
+     */
+    @POST("api/feasts")
+    suspend fun createFeast(
+        @Body request: FeastRequest
+    ): Response<FeastResponse>
 }
