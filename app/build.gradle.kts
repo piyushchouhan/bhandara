@@ -27,9 +27,20 @@ android {
         buildConfigField("String", "API_BASE_URL", "\"http://192.168.1.7:8080/\"")
     }
 
+    signingConfigs {
+        create("release") {
+            // Use debug keystore for testing release build on local device
+            storeFile = file(System.getProperty("user.home") + "/.android/debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+    }
+
     buildTypes {
         release {
-            isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("release")
+            isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
