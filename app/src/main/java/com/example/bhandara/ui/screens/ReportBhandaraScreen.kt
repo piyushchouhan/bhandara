@@ -146,6 +146,118 @@ fun ReportBhandaraScreen(
                     }
                 }
             )
+        },
+        bottomBar = {
+            // Fixed bottom bar with submit button
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shadowElevation = 8.dp,
+                tonalElevation = 3.dp
+            ) {
+                Button(
+                    onClick = {
+                        scope.launch {
+                            // Validation
+                            val finalMenuItems = if (currentMenuItem.isNotBlank()) {
+                                menuItems + currentMenuItem.trim()
+                            } else {
+                                menuItems
+                            }
+
+                            if (finalMenuItems.isEmpty()) {
+                                errorMessage = "Please enter menu items"
+                                return@launch
+                            }
+                            if (feastDate == null) {
+                                errorMessage = "Please select a date"
+                                return@launch
+                            }
+                            if (startTime == null) {
+                                errorMessage = "Please select start time"
+                                return@launch
+                            }
+                            if (endTime == null) {
+                                errorMessage = "Please select end time"
+                                return@launch
+                            }
+                            
+                            isLoading = true
+                            errorMessage = null
+                            
+                            try {
+                                // Hardcoded placeholder
+                                val imageUrls = listOf("https://placehold.co/600x400/orange/white?text=Bhandara+Feast")
+                                
+                                // Get current location
+                                val location = locationHelper.getCurrentLocation()
+                                if (location == null) {
+                                    errorMessage = "Could not get your location. Please enable GPS."
+                                    isLoading = false
+                                    return@launch
+                                }
+                                
+                                // Get Firebase UID
+                                val firebaseUid = userRepository.getCurrentUserId()
+                                if (firebaseUid == null) {
+                                    errorMessage = "User not authenticated"
+                                    isLoading = false
+                                    return@launch
+                                }
+                                
+                                // Create feast request
+                                val request = FeastRequest(
+                                    firebaseUid = firebaseUid,
+                                    organizerName = organizerName.ifBlank { null },
+                                    contactPhone = contactPhone.ifBlank { null },
+                                    menuItems = finalMenuItems,
+                                    foodType = foodType.ifBlank { null },
+                                    description = description.ifBlank { null },
+                                    imageUrls = imageUrls,
+                                    feastDate = feastDate!!.format(DateTimeFormatter.ISO_LOCAL_DATE),
+                                    startTime = startTime!!.format(DateTimeFormatter.ISO_LOCAL_TIME),
+                                    endTime = endTime!!.format(DateTimeFormatter.ISO_LOCAL_TIME),
+                                    latitude = location.latitude,
+                                    longitude = location.longitude,
+                                    address = address.ifBlank { null },
+                                    landmark = landmark.ifBlank { null },
+                                    estimatedCapacity = estimatedCapacity.toIntOrNull()
+                                )
+                                
+                                // Submit to backend
+                                val response = backendRepository.createFeast(request)
+                                
+                                if (response != null) {
+                                    // Success - navigate back
+                                    onNavigateBack()
+                                } else {
+                                    errorMessage = "Failed to submit bhandara. Please try again."
+                                }
+                            } catch (e: Exception) {
+                                errorMessage = "Error: ${e.message}"
+                            } finally {
+                                isLoading = false
+                                uploadProgress = 0
+                            }
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                        .height(48.dp),
+                    enabled = !isLoading
+                ) {
+                    if (isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = MaterialTheme.colorScheme.onPrimary
+                        )
+                    } else {
+                        Icon(Icons.Default.Send, null, modifier = Modifier.size(20.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Submit Bhandara")
+                    }
+                }
+            }
         }
     ) { padding ->
         Column(
@@ -512,128 +624,6 @@ fun ReportBhandaraScreen(
                     )
                 }
             }
-            
-            // Submit Button
-            Button(
-                onClick = {
-                    scope.launch {
-                        // Validation
-                        // OPTIONAL: Image validation disabled for testing
-                        // if (selectedImages.isEmpty()) {
-                        //     errorMessage = "Please add at least one photo"
-                        //     return@launch
-                        // }
-                        val finalMenuItems = if (currentMenuItem.isNotBlank()) {
-                            menuItems + currentMenuItem.trim()
-                        } else {
-                            menuItems
-                        }
-
-                        if (finalMenuItems.isEmpty()) {
-                            errorMessage = "Please enter menu items"
-                            return@launch
-                        }
-                        if (feastDate == null) {
-                            errorMessage = "Please select a date"
-                            return@launch
-                        }
-                        if (startTime == null) {
-                            errorMessage = "Please select start time"
-                            return@launch
-                        }
-                        if (endTime == null) {
-                            errorMessage = "Please select end time"
-                            return@launch
-                        }
-                        
-                        isLoading = true
-                        errorMessage = null
-                        
-                        try {
-                            // Upload images bypassed for now
-                            // val imageUrls = imageUploadHelper.uploadImages(selectedImages) { progress ->
-                            //    uploadProgress = progress
-                            // }
-                            
-                            // Hardcoded placeholder
-                            val imageUrls = listOf("https://placehold.co/600x400/orange/white?text=Bhandara+Feast")
-                            
-                            // if (imageUrls.isEmpty()) {
-                            //     errorMessage = "Failed to upload images"
-                            //     isLoading = false
-                            //     return@launch
-                            // }
-                            
-                            // Get current location
-                            val location = locationHelper.getCurrentLocation()
-                            if (location == null) {
-                                errorMessage = "Could not get your location. Please enable GPS."
-                                isLoading = false
-                                return@launch
-                            }
-                            
-                            // Get Firebase UID
-                            val firebaseUid = userRepository.getCurrentUserId()
-                            if (firebaseUid == null) {
-                                errorMessage = "User not authenticated"
-                                isLoading = false
-                                return@launch
-                            }
-                            
-                            // Create feast request
-                            val request = FeastRequest(
-                                firebaseUid = firebaseUid,
-                                organizerName = organizerName.ifBlank { null },
-                                contactPhone = contactPhone.ifBlank { null },
-                                menuItems = finalMenuItems,
-                                foodType = foodType.ifBlank { null },
-                                description = description.ifBlank { null },
-                                imageUrls = imageUrls,
-                                feastDate = feastDate!!.format(DateTimeFormatter.ISO_LOCAL_DATE),
-                                startTime = startTime!!.format(DateTimeFormatter.ISO_LOCAL_TIME),
-                                endTime = endTime!!.format(DateTimeFormatter.ISO_LOCAL_TIME),
-                                latitude = location.latitude,
-                                longitude = location.longitude,
-                                address = address.ifBlank { null },
-                                landmark = landmark.ifBlank { null },
-                                estimatedCapacity = estimatedCapacity.toIntOrNull()
-                            )
-                            
-                            // Submit to backend
-                            val response = backendRepository.createFeast(request)
-                            
-                            if (response != null) {
-                                // Success - navigate back
-                                onNavigateBack()
-                            } else {
-                                errorMessage = "Failed to submit bhandara. Please try again."
-                            }
-                        } catch (e: Exception) {
-                            errorMessage = "Error: ${e.message}"
-                        } finally {
-                            isLoading = false
-                            uploadProgress = 0
-                        }
-                    }
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                enabled = !isLoading
-            ) {
-                if (isLoading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
-                } else {
-                    Icon(Icons.Default.Send, null, modifier = Modifier.size(20.dp))
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Submit Bhandara")
-                }
-            }
-            
-            Spacer(modifier = Modifier.height(32.dp))
         }
     }
     
