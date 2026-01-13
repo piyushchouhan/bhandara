@@ -1,9 +1,20 @@
+import java.util.Properties
+import java.io.FileInputStream
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     // Add the Google services Gradle plugin
     id("com.google.gms.google-services")
+}
+
+// Load API keys from local.properties (which is gitignored)
+val localProperties = Properties().apply {
+    val localPropertiesFile = rootProject.file("local.properties")
+    if (localPropertiesFile.exists()) {
+        load(FileInputStream(localPropertiesFile))
+    }
 }
 
 android {
@@ -25,6 +36,9 @@ android {
         // Using computer's local IP for physical device testing
         // Phone must be on same WiFi network OR use USB with ADB reverse port forwarding
         buildConfigField("String", "API_BASE_URL", "\"http://192.168.1.7:8080/\"")
+        
+        // Google Maps API Key from local.properties
+        manifestPlaceholders["MAPS_API_KEY"] = localProperties.getProperty("MAPS_API_KEY", "")
     }
 
     signingConfigs {
