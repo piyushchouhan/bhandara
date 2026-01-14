@@ -245,6 +245,7 @@ fun HungryScreen(
         """.trimIndent())
     }
     
+    // Map properties
     val mapProperties = MapProperties(
         mapType = MapType.NORMAL,
         isMyLocationEnabled = hasLocationPermission,
