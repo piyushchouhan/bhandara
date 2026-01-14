@@ -2,6 +2,7 @@ package com.example.bhandara.ui.screens
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -30,8 +31,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.example.bhandara.R
+import com.example.bhandara.data.api.NetworkModule
+import com.example.bhandara.data.models.api.FeastResponse
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MapStyleOptions
@@ -58,6 +62,14 @@ fun HungryScreen(
     // State for location permission
     var hasLocationPermission by remember { mutableStateOf(false) }
     var currentLocation by remember { mutableStateOf<LatLng?>(null) }
+    
+    // State for nearby feasts
+    var nearbyFeasts by remember { mutableStateOf<List<FeastResponse>>(emptyList()) }
+    var isLoadingFeasts by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    
+    // API service
+    val apiService = NetworkModule.apiService
     
     // Default location - Delhi, India (fallback)
     val defaultLocation = LatLng(28.6139, 77.2090)
@@ -93,6 +105,31 @@ fun HungryScreen(
                     currentLocation = latLng
                     // Animate camera to current location
                     cameraPositionState.position = CameraPosition.fromLatLngZoom(latLng, 14f)
+                    
+                    // Fetch nearby feasts
+                    coroutineScope.launch {
+                        isLoadingFeasts = true
+                        errorMessage = null
+                        try {
+                            val response = apiService.getFeastsNearby(
+                                lat = location.latitude,
+                                lon = location.longitude,
+                                radius = 5000.0 // 5km radius
+                            )
+                            
+                            if (response.isSuccessful) {
+                                val feasts = response.body() ?: emptyList()
+                                nearbyFeasts = feasts
+                            } else {
+                                val errorBody = response.errorBody()?.string()
+                                errorMessage = "Failed to load nearby feasts"
+                            }
+                        } catch (e: Exception) {
+                            errorMessage = "Error: ${e.message}"
+                        } finally {
+                            isLoadingFeasts = false
+                        }
+                    }
                 }
             }
         }
@@ -298,8 +335,21 @@ fun HungryScreen(
                 properties = mapProperties,
                 uiSettings = uiSettings
             ) {
-                // Add your Bhandara markers here
-                // The blue dot will show the user's current location
+                // Add markers for nearby feasts
+                nearbyFeasts.forEach { feast ->
+                    Marker(
+                        state = MarkerState(position = LatLng(feast.latitude, feast.longitude)),
+                        title = feast.organizerName,
+                        snippet = buildString {
+                            append(feast.address)
+                            feast.distance?.let {
+                                val distanceKm = it / 1000.0
+                                append(" • ${String.format("%.1f", distanceKm)} km away")
+                            }
+                        },
+                        icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)
+                    )
+                }
             }
         }
     }

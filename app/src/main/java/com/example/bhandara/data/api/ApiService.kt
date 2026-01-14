@@ -8,8 +8,10 @@ import com.example.bhandara.data.models.api.UpdateLocationRequest
 import com.example.bhandara.data.models.api.UpdateLocationResponse
 import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.PUT
+import retrofit2.http.Query
 
 /**
  * API service interface for backend communication
@@ -45,4 +47,18 @@ interface ApiService {
     suspend fun createFeast(
         @Body request: FeastRequest
     ): Response<FeastResponse>
+    
+    /**
+     * Get nearby feasts based on user location
+     * @param lat Latitude of the user's location
+     * @param lon Longitude of the user's location
+     * @param radius Search radius in meters (default 500m)
+     * @return List of nearby feasts with distance information
+     */
+    @GET("api/feasts/nearby")
+    suspend fun getFeastsNearby(
+        @Query("lat") lat: Double,
+        @Query("lon") lon: Double,
+        @Query("radius") radius: Double = 500.0
+    ): Response<List<FeastResponse>>
 }
