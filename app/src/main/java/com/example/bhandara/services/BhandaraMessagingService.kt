@@ -34,36 +34,57 @@ class BhandaraMessagingService : FirebaseMessagingService() {
         
         Log.d(TAG, "Message received from: ${message.from}")
         
-        // Check if message contains a notification payload
-        message.notification?.let {
-            showNotification(it.title ?: "New Bhandara", it.body ?: "")
-        }
+        // Extract data payload
+        val data = message.data
+        val notificationType = data["type"] ?: ""
+        val feastId = data["feastId"] ?: ""
+        val organizerName = data["organizerName"] ?: ""
+        val address = data["address"] ?: ""
         
-        // Handle data payload
-        if (message.data.isNotEmpty()) {
-            Log.d(TAG, "Message data: ${message.data}")
-        }
+        Log.d(TAG, "Notification type: $notificationType")
+        Log.d(TAG, "Feast ID: $feastId")
+        Log.d(TAG, "Organizer: $organizerName")
+        
+        // Get title and body - prefer notification payload, fallback to data
+        val title = message.notification?.title ?: data["title"] ?: "New Bhandara"
+        val body = message.notification?.body ?: data["body"] ?: "Check out a new bhandara near you"
+        
+        // Show notification in system tray
+        showNotification(title, body, notificationType, feastId)
     }
     
-    private fun showNotification(title: String, body: String) {
+    private fun showNotification(
+        title: String, 
+        body: String, 
+        type: String = "",
+        feastId: String = ""
+    ) {
         createNotificationChannel()
         
+        // Intent to open MainActivity when notification is tapped
+        // Later you can add feastId as extras to navigate to specific bhandara
         val intent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            putExtra("notification_type", type)
+            putExtra("feast_id", feastId)
         }
         
         val pendingIntent = PendingIntent.getActivity(
-            this, 0, intent,
-            PendingIntent.FLAG_IMMUTABLE
+            this, 
+            System.currentTimeMillis().toInt(), 
+            intent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
         
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle(title)
             .setContentText(body)
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setAutoCancel(true)
+            .setSmallIcon(R.drawable.ic_notification)  // White notification icon
+            .setAutoCancel(true)  // Dismiss when tapped
             .setContentIntent(pendingIntent)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setDefaults(NotificationCompat.DEFAULT_ALL)  // Sound, vibrate, lights
+            .setStyle(NotificationCompat.BigTextStyle().bigText(body))  // Expandable text
             .build()
         
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
