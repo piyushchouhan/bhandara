@@ -661,10 +661,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#userrepository" class="md-nav__link">
+  <a href="#backendrepository" class="md-nav__link">
     <span class="md-ellipsis">
       
-        UserRepository
+        BackendRepository
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#locationupdateworker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LocationUpdateWorker
       
     </span>
   </a>
@@ -722,10 +733,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#firebase-dependencies" class="md-nav__link">
+  <a href="#key-libraries" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Firebase Dependencies
+        Key Libraries
       
     </span>
   </a>
@@ -776,17 +787,6 @@
     <span class="md-ellipsis">
       
         Manager Pattern
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#single-responsibility" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Single Responsibility
       
     </span>
   </a>
@@ -845,23 +845,6 @@
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Future Architecture">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#backend-integration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Backend Integration
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -1131,10 +1114,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#userrepository" class="md-nav__link">
+  <a href="#backendrepository" class="md-nav__link">
     <span class="md-ellipsis">
       
-        UserRepository
+        BackendRepository
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#locationupdateworker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LocationUpdateWorker
       
     </span>
   </a>
@@ -1192,10 +1186,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#firebase-dependencies" class="md-nav__link">
+  <a href="#key-libraries" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Firebase Dependencies
+        Key Libraries
       
     </span>
   </a>
@@ -1246,17 +1240,6 @@
     <span class="md-ellipsis">
       
         Manager Pattern
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#single-responsibility" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Single Responsibility
       
     </span>
   </a>
@@ -1316,23 +1299,6 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Future Architecture">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#backend-integration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Backend Integration
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
 </li>
       
     </ul>
@@ -1360,7 +1326,11 @@
 <li><strong>Language</strong>: Kotlin</li>
 <li><strong>UI</strong>: Jetpack Compose</li>
 <li><strong>Build System</strong>: Gradle (Kotlin DSL)</li>
-<li><strong>Backend</strong>: Firebase (Auth, Firestore, FCM, Storage)</li>
+<li><strong>Backend</strong>: </li>
+<li>Firebase (Auth, Firestore, FCM, Storage)</li>
+<li>Custom REST API (Retrofit + OkHttp)</li>
+<li><strong>Background Jobs</strong>: WorkManager</li>
+<li><strong>Maps</strong>: Google Maps SDK for Android (Maps Compose)</li>
 <li><strong>Location</strong>: Google Play Services Location API</li>
 <li><strong>Min SDK</strong>: 35</li>
 <li><strong>Target SDK</strong>: 36</li>
@@ -1371,7 +1341,7 @@
 <li><strong>Firebase Authentication</strong> - Anonymous user sign-in</li>
 <li><strong>Cloud Firestore</strong> - User data storage (UID, FCM token, location)</li>
 <li><strong>Cloud Messaging (FCM)</strong> - Push notifications</li>
-<li><strong>Cloud Storage</strong> - Future: Feast photo uploads</li>
+<li><strong>Cloud Storage</strong> - Feast photo uploads</li>
 </ol>
 <h3 id="data-flow">Data Flow</h3>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>User Opens App
@@ -1382,9 +1352,7 @@
 </span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    ↓
 </span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>Location Requested
 </span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    ↓
-</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>Save to Firestore
-</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    ↓
-</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>(Future) Sync to Backend API
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>Save to Backend API &amp; Firestore
 </span></code></pre></div>
 <h2 id="project-structure">Project Structure</h2>
 <h3 id="modules">Modules</h3>
@@ -1396,38 +1364,45 @@
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>├── java/com/example/bhandara/  # Application code
 </span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>│   ├── MainActivity.kt          # Main entry point
 </span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>│   ├── data/                    # Data layer
-</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>│   │   ├── models/              # Data models (User, Feast)
-</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>│   │   └── repository/          # Firebase operations
-</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>│   ├── managers/                # Business logic
-</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>│   │   └── UserManager.kt       # User initialization &amp; tracking
-</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>│   ├── services/                # Background services
-</span><span id="__span-1-10"><a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>│   │   └── BhandaraMessagingService.kt  # FCM receiver
-</span><span id="__span-1-11"><a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>│   ├── ui/                      # UI layer
-</span><span id="__span-1-12"><a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>│   │   ├── components/          # Reusable components
-</span><span id="__span-1-13"><a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>│   │   ├── screens/             # Screen composables
-</span><span id="__span-1-14"><a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>│   │   └── theme/               # Material theme
-</span><span id="__span-1-15"><a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>│   └── utils/                   # Utilities
-</span><span id="__span-1-16"><a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>│       └── LocationHelper.kt    # GPS &amp; permissions
-</span><span id="__span-1-17"><a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>├── res/                         # Resources
-</span><span id="__span-1-18"><a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>│   ├── layout/                  # XML layouts (legacy)
-</span><span id="__span-1-19"><a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>│   ├── values/                  # Strings, colors, themes
-</span><span id="__span-1-20"><a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>│   ├── drawable/                # Images and icons
-</span><span id="__span-1-21"><a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>│   └── mipmap/                  # App icons
-</span><span id="__span-1-22"><a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>└── AndroidManifest.xml          # App manifest
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>│   │   ├── api/                 # Retrofit services &amp; interceptors
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>│   │   ├── models/              # Data models (User, Feast, API)
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>│   │   └── repository/          # Data access repositories
+</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>│   ├── managers/                # Business logic
+</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>│   │   └── UserManager.kt       # User initialization, tracking &amp; sync
+</span><span id="__span-1-10"><a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>│   ├── services/                # Background services
+</span><span id="__span-1-11"><a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>│   │   └── BhandaraMessagingService.kt  # FCM receiver
+</span><span id="__span-1-12"><a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>│   ├── workers/                 # Background workers
+</span><span id="__span-1-13"><a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>│   │   └── LocationUpdateWorker.kt # Periodic location sync
+</span><span id="__span-1-14"><a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>│   ├── ui/                      # UI layer
+</span><span id="__span-1-15"><a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>│   │   ├── components/          # Reusable components
+</span><span id="__span-1-16"><a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>│   │   ├── screens/             # Screen composables
+</span><span id="__span-1-17"><a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>│   │   └── theme/               # Material theme
+</span><span id="__span-1-18"><a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>│   └── utils/                   # Utilities
+</span><span id="__span-1-19"><a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>│       └── LocationHelper.kt    # GPS &amp; permissions
+</span><span id="__span-1-20"><a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>├── res/                         # Resources
+</span><span id="__span-1-21"><a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>│   ├── layout/                  # XML layouts (legacy)
+</span><span id="__span-1-22"><a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>│   ├── values/                  # Strings, colors, themes
+</span><span id="__span-1-23"><a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>│   ├── drawable/                # Images and icons
+</span><span id="__span-1-24"><a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a>│   └── mipmap/                  # App icons
+</span><span id="__span-1-25"><a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a>└── AndroidManifest.xml          # App manifest
 </span></code></pre></div>
 <h2 id="key-components">Key Components</h2>
 <h3 id="usermanager">UserManager</h3>
 <ul>
 <li>Initializes anonymous users on app start</li>
 <li>Manages FCM token lifecycle</li>
-<li>Handles location updates</li>
-<li>Coordinates data sync to Firestore and backend</li>
+<li>Coordinates manual and background location updates</li>
+<li>Syncs user data to Backend API</li>
 </ul>
-<h3 id="userrepository">UserRepository</h3>
+<h3 id="backendrepository">BackendRepository</h3>
 <ul>
-<li>Firebase Authentication operations</li>
-<li>Firestore CRUD operations</li>
-<li>FCM token management</li>
+<li>Handles communication with the REST API</li>
+<li>Endpoints for creating users, updating location, and managing feasts</li>
+</ul>
+<h3 id="locationupdateworker">LocationUpdateWorker</h3>
+<ul>
+<li>Periodic background task (WorkManager)</li>
+<li>Updates user location to backend every 15 minutes when app is in background</li>
 </ul>
 <h3 id="locationhelper">LocationHelper</h3>
 <ul>
@@ -1444,21 +1419,20 @@
 <h2 id="navigation">Navigation</h2>
 <p>Simple enum-based navigation with back stack:</p>
 <div class="language-kotlin highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kd">enum</span><span class="w"> </span><span class="kd">class</span><span class="w"> </span><span class="nc">Screen</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">    </span><span class="n">HOME</span><span class="p">,</span><span class="w"> </span><span class="n">HUNGRY</span><span class="p">,</span><span class="w"> </span><span class="n">REPORT_FEAST</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">    </span><span class="n">HOME</span><span class="p">,</span><span class="w"> </span><span class="n">HUNGRY</span><span class="p">,</span><span class="w"> </span><span class="n">REPORT_BHANDARA</span>
 </span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="p">}</span>
 </span></code></pre></div>
 <p>Back stack automatically manages navigation history for proper back button behavior.</p>
 <h2 id="dependencies">Dependencies</h2>
 <p>Dependencies are managed in <code>gradle/libs.versions.toml</code> using version catalogs.</p>
-<h3 id="firebase-dependencies">Firebase Dependencies</h3>
-<p>Added in <a href="../app/build.gradle.kts">app/build.gradle.kts</a>:</p>
-<div class="language-kotlin highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">implementation</span><span class="p">(</span><span class="n">platform</span><span class="p">(</span><span class="s">&quot;com.google.firebase:firebase-bom:34.7.0&quot;</span><span class="p">))</span>
-</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">implementation</span><span class="p">(</span><span class="s">&quot;com.google.firebase:firebase-analytics&quot;</span><span class="p">)</span>
-</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="n">implementation</span><span class="p">(</span><span class="s">&quot;com.google.firebase:firebase-auth&quot;</span><span class="p">)</span>
-</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="n">implementation</span><span class="p">(</span><span class="s">&quot;com.google.firebase:firebase-firestore&quot;</span><span class="p">)</span>
-</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="n">implementation</span><span class="p">(</span><span class="s">&quot;com.google.firebase:firebase-storage&quot;</span><span class="p">)</span>
-</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="n">implementation</span><span class="p">(</span><span class="s">&quot;com.google.firebase:firebase-messaging&quot;</span><span class="p">)</span>
-</span></code></pre></div>
+<h3 id="key-libraries">Key Libraries</h3>
+<ul>
+<li><strong>Firebase BOM</strong>: 34.7.0 (Auth, Firestore, Messaging, Storage)</li>
+<li><strong>Retrofit</strong>: 2.11.0 (Networking)</li>
+<li><strong>WorkManager</strong>: 2.9.0 (Background jobs)</li>
+<li><strong>Maps Compose</strong>: 4.3.3 (Map UI)</li>
+<li><strong>Coil</strong>: Image loading</li>
+</ul>
 <p>See <a href="../firebase-setup/">Firebase Setup</a> for detailed explanation of each dependency.</p>
 <h2 id="build-configuration">Build Configuration</h2>
 <ul>
@@ -1471,8 +1445,8 @@
 <h3 id="repository-pattern">Repository Pattern</h3>
 <ul>
 <li>Separates data access from business logic</li>
-<li><code>UserRepository</code> handles all Firebase operations</li>
-<li>Makes testing easier</li>
+<li><code>BackendRepository</code> handles API operations</li>
+<li><code>UserRepository</code> handles Firebase operations</li>
 </ul>
 <h3 id="manager-pattern">Manager Pattern</h3>
 <ul>
@@ -1480,49 +1454,39 @@
 <li>Centralizes business logic</li>
 <li>Reduces MainActivity complexity</li>
 </ul>
-<h3 id="single-responsibility">Single Responsibility</h3>
-<ul>
-<li>Each class has one clear purpose</li>
-<li>LocationHelper only handles location</li>
-<li>Services only handle their specific task</li>
-</ul>
 <h2 id="data-flow_1">Data Flow</h2>
 <h3 id="user-initialization">User Initialization</h3>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>MainActivity
-</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>    ↓
-</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>UserManager.initializeUser()
-</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>    ↓
-</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>UserRepository.signInAnonymously() → Firebase Auth
-</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>    ↓
-</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>UserRepository.getFcmToken() → Firebase Messaging
-</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>    ↓
-</span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>UserRepository.saveUser() → Firestore
-</span><span id="__span-4-10"><a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>    ↓
-</span><span id="__span-4-11"><a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>LocationHelper.getCurrentLocation() → Play Services
-</span><span id="__span-4-12"><a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>    ↓
-</span><span id="__span-4-13"><a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>UserRepository.updateUserLocation() → Firestore
+<div class="language-text highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>MainActivity
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    ↓
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>UserManager.initializeUser()
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    ↓
+</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>UserRepository.signInAnonymously() → Firebase Auth
+</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>    ↓
+</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>UserRepository.getFcmToken() → Firebase Messaging
+</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>    ↓
+</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>UserManager.updateUserLocation()
+</span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>    ↓
+</span><span id="__span-3-11"><a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>BackendRepository.createUser() → API
 </span></code></pre></div>
 <h3 id="notification-flow">Notification Flow</h3>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>Backend API
-</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>    ↓
-</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>Firebase Cloud Messaging
-</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    ↓
-</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>BhandaraMessagingService.onMessageReceived()
-</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>    ↓
-</span><span id="__span-5-7"><a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>Create Notification
-</span><span id="__span-5-8"><a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>    ↓
-</span><span id="__span-5-9"><a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>System Notification Tray
-</span><span id="__span-5-10"><a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>    ↓
-</span><span id="__span-5-11"><a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>User clicks → Opens MainActivity
+<div class="language-text highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>Backend API
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>    ↓
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>Firebase Cloud Messaging
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>    ↓
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>BhandaraMessagingService.onMessageReceived()
+</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>    ↓
+</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>Create Notification
+</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>    ↓
+</span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>System Notification Tray
+</span><span id="__span-4-10"><a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>    ↓
+</span><span id="__span-4-11"><a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>User clicks → Opens MainActivity
 </span></code></pre></div>
 <h2 id="future-architecture">Future Architecture</h2>
-<h3 id="backend-integration">Backend Integration</h3>
 <ul>
-<li>API calls via Retrofit</li>
-<li>PostgreSQL + PostGIS for geo queries</li>
-<li>Backend sends FCM notifications</li>
+<li><strong>Offline Support</strong>: Local Room database for caching feasts</li>
+<li><strong>Social Features</strong>: Comments and ratings for bhandaras</li>
+<li><strong>Improved Maps</strong>: Clustering and route navigation</li>
 </ul>
-<p>See <a href="../backend-integration/">Backend Integration</a> for implementation details.</p>
 
 
 
