@@ -9,7 +9,11 @@ Bhandara follows modern Android development practices with clean architecture pr
 - **Language**: Kotlin
 - **UI**: Jetpack Compose
 - **Build System**: Gradle (Kotlin DSL)
-- **Backend**: Firebase (Auth, Firestore, FCM, Storage)
+- **Backend**: 
+  - Firebase (Auth, Firestore, FCM, Storage)
+  - Custom REST API (Retrofit + OkHttp)
+- **Background Jobs**: WorkManager
+- **Maps**: Google Maps SDK for Android (Maps Compose)
 - **Location**: Google Play Services Location API
 - **Min SDK**: 35
 - **Target SDK**: 36
@@ -21,7 +25,7 @@ Bhandara follows modern Android development practices with clean architecture pr
 1. **Firebase Authentication** - Anonymous user sign-in
 2. **Cloud Firestore** - User data storage (UID, FCM token, location)
 3. **Cloud Messaging (FCM)** - Push notifications
-4. **Cloud Storage** - Future: Feast photo uploads
+4. **Cloud Storage** - Feast photo uploads
 
 ### Data Flow
 
@@ -34,9 +38,7 @@ FCM Token Generated
     ↓
 Location Requested
     ↓
-Save to Firestore
-    ↓
-(Future) Sync to Backend API
+Save to Backend API & Firestore
 ```
 
 ## Project Structure
@@ -52,12 +54,15 @@ app/src/main/
 ├── java/com/example/bhandara/  # Application code
 │   ├── MainActivity.kt          # Main entry point
 │   ├── data/                    # Data layer
-│   │   ├── models/              # Data models (User, Feast)
-│   │   └── repository/          # Firebase operations
+│   │   ├── api/                 # Retrofit services & interceptors
+│   │   ├── models/              # Data models (User, Feast, API)
+│   │   └── repository/          # Data access repositories
 │   ├── managers/                # Business logic
-│   │   └── UserManager.kt       # User initialization & tracking
+│   │   └── UserManager.kt       # User initialization, tracking & sync
 │   ├── services/                # Background services
 │   │   └── BhandaraMessagingService.kt  # FCM receiver
+│   ├── workers/                 # Background workers
+│   │   └── LocationUpdateWorker.kt # Periodic location sync
 │   ├── ui/                      # UI layer
 │   │   ├── components/          # Reusable components
 │   │   ├── screens/             # Screen composables
@@ -77,13 +82,16 @@ app/src/main/
 ### UserManager
 - Initializes anonymous users on app start
 - Manages FCM token lifecycle
-- Handles location updates
-- Coordinates data sync to Firestore and backend
+- Coordinates manual and background location updates
+- Syncs user data to Backend API
 
-### UserRepository
-- Firebase Authentication operations
-- Firestore CRUD operations
-- FCM token management
+### BackendRepository
+- Handles communication with the REST API
+- Endpoints for creating users, updating location, and managing feasts
+
+### LocationUpdateWorker
+- Periodic background task (WorkManager)
+- Updates user location to backend every 15 minutes when app is in background
 
 ### LocationHelper
 - GPS location retrieval
@@ -101,7 +109,7 @@ Simple enum-based navigation with back stack:
 
 ```kotlin
 enum class Screen {
-    HOME, HUNGRY, REPORT_FEAST
+    HOME, HUNGRY, REPORT_BHANDARA
 }
 ```
 
@@ -111,18 +119,12 @@ Back stack automatically manages navigation history for proper back button behav
 
 Dependencies are managed in `gradle/libs.versions.toml` using version catalogs.
 
-### Firebase Dependencies
-
-Added in [app/build.gradle.kts](../app/build.gradle.kts):
-
-```kotlin
-implementation(platform("com.google.firebase:firebase-bom:34.7.0"))
-implementation("com.google.firebase:firebase-analytics")
-implementation("com.google.firebase:firebase-auth")
-implementation("com.google.firebase:firebase-firestore")
-implementation("com.google.firebase:firebase-storage")
-implementation("com.google.firebase:firebase-messaging")
-```
+### Key Libraries
+- **Firebase BOM**: 34.7.0 (Auth, Firestore, Messaging, Storage)
+- **Retrofit**: 2.11.0 (Networking)
+- **WorkManager**: 2.9.0 (Background jobs)
+- **Maps Compose**: 4.3.3 (Map UI)
+- **Coil**: Image loading
 
 See [Firebase Setup](firebase-setup.md) for detailed explanation of each dependency.
 
@@ -137,18 +139,13 @@ See [Firebase Setup](firebase-setup.md) for detailed explanation of each depende
 
 ### Repository Pattern
 - Separates data access from business logic
-- `UserRepository` handles all Firebase operations
-- Makes testing easier
+- `BackendRepository` handles API operations
+- `UserRepository` handles Firebase operations
 
 ### Manager Pattern
 - `UserManager` coordinates multiple operations
 - Centralizes business logic
 - Reduces MainActivity complexity
-
-### Single Responsibility
-- Each class has one clear purpose
-- LocationHelper only handles location
-- Services only handle their specific task
 
 ## Data Flow
 
@@ -162,11 +159,9 @@ UserRepository.signInAnonymously() → Firebase Auth
     ↓
 UserRepository.getFcmToken() → Firebase Messaging
     ↓
-UserRepository.saveUser() → Firestore
+UserManager.updateUserLocation()
     ↓
-LocationHelper.getCurrentLocation() → Play Services
-    ↓
-UserRepository.updateUserLocation() → Firestore
+BackendRepository.createUser() → API
 ```
 
 ### Notification Flow
@@ -186,9 +181,6 @@ User clicks → Opens MainActivity
 
 ## Future Architecture
 
-### Backend Integration
-- API calls via Retrofit
-- PostgreSQL + PostGIS for geo queries
-- Backend sends FCM notifications
-
-See [Backend Integration](backend-integration.md) for implementation details.
+- **Offline Support**: Local Room database for caching feasts
+- **Social Features**: Comments and ratings for bhandaras
+- **Improved Maps**: Clustering and route navigation

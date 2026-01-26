@@ -21,13 +21,12 @@ import com.example.bhandara.ui.components.LanguageSwitcher
 import com.example.bhandara.ui.screens.HomeScreen
 import com.example.bhandara.ui.screens.HungryScreen
 import com.example.bhandara.ui.screens.ReportBhandaraScreen
-import com.example.bhandara.ui.screens.ReportFeastScreen
 import com.example.bhandara.ui.theme.BhandaraTheme
 import com.example.bhandara.utils.LocationHelper
 
 // Simple navigation states
 enum class Screen {
-    HOME, HUNGRY, REPORT_FEAST, REPORT_BHANDARA
+    HOME, HUNGRY, REPORT_BHANDARA
 }
 
 class MainActivity : AppCompatActivity() {
@@ -104,11 +103,6 @@ class MainActivity : AppCompatActivity() {
                         }
                         Screen.HUNGRY -> {
                             HungryScreen(
-                                onBackClick = { navigateBack() }
-                            )
-                        }
-                        Screen.REPORT_FEAST -> {
-                            ReportFeastScreen(
                                 onBackClick = { navigateBack() }
                             )
                         }

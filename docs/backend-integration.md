@@ -1,151 +1,125 @@
-# Backend Integration TODO
+# Backend Integration
 
-## User Data Sync
+## Overview
 
-### Required API Endpoint
+The application communicates with a backend REST API to handle user synchronization, location updates, and bhandara (feast) management. The networking layer is built using **Retrofit** and **OkHttp**, ensuring robust data exchange with proper authentication and error handling.
+
+## Mobile Implementation
+
+### Tech Stack
+
+- **Retrofit 2**: Type-safe HTTP client.
+- **OkHttp 3**: Underlying HTTP client with interceptors.
+- **Gson**: JSON serialization/deserialization.
+- **Coroutines**: Asynchronous API calls.
+
+### Network Configuration
+
+The network configuration is centralized in `com.example.bhandara.data.api.NetworkModule`.
+
+- **Base URL**: Defined in `build.gradle.kts` as `API_BASE_URL`.
+  - *Debug*: Defaults to `http://192.168.1.5:8080/` (Local Network)
+  - *Release*: Should point to production server.
+- **Timeouts**: 30 seconds for connect, read, and write operations.
+- **Logging**: `HttpLoggingInterceptor` is enabled in DEBUG mode (Level: BODY).
+
+### Authentication
+
+Security is handled via `AuthInterceptor`. It automatically retrieves the current Firebase User's ID token and attaches it to every request:
+
+```http
+Authorization: Bearer <firebase_id_token>
 ```
-POST /api/users/update
-```
 
-### Request Payload
-```json
-{
-  "uid": "firebase-anonymous-uid",
-  "fcmToken": "fcm-device-token",
-  "latitude": 18.5823749,
-  "longitude": 73.8844745,
-  "timestamp": 1704045600000
-}
-```
+If the user is not signed in (or `signInAnonymously` hasn't completed), the request proceeds without the header.
 
-### Implementation Steps
+## API Reference
 
-1. **Add Retrofit dependency** to `app/build.gradle.kts`:
-   ```kotlin
-   implementation("com.squareup.retrofit2:retrofit:2.9.0")
-   implementation("com.squareup.retrofit2:converter-gson:2.9.0")
-   implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
-   ```
+The contract is defined in `com.example.bhandara.data.api.ApiService`.
 
-2. **Create API service** in `data/api/`:
-   ```kotlin
-   interface BhandaraApiService {
-       @POST("users/update")
-       suspend fun updateUser(@Body request: UserUpdateRequest): Response<Unit>
-   }
-   ```
+### 1. User Management
 
-3. **Create request/response models** in `data/models/`:
-   ```kotlin
-   data class UserUpdateRequest(
-       val uid: String,
-       val fcmToken: String?,
-       val latitude: Double?,
-       val longitude: Double?,
-       val timestamp: Long = System.currentTimeMillis()
-   )
-   ```
+#### Create User
+Registers a new user (anonymous or authenticated) with the backend.
 
-4. **Implement API client** in `data/api/`:
-   ```kotlin
-   object ApiClient {
-       private const val BASE_URL = "https://your-backend.com/api/"
-       
-       val instance: BhandaraApiService by lazy {
-           Retrofit.Builder()
-               .baseUrl(BASE_URL)
-               .addConverterFactory(GsonConverterFactory.create())
-               .build()
-               .create(BhandaraApiService::class.java)
-       }
-   }
-   ```
+- **Endpoint**: `POST api/users`
+- **Request**: `CreateUserRequest`
+  - `uid`: Firebase User ID
+  - `fcmToken`: Firebase Cloud Messaging token
+  - `latitude`: Current latitude
+  - `longitude`: Current longitude
+- **Response**: `CreateUserResponse`
 
-5. **Update UserManager.kt**:
-   - Uncomment `sendUserDataToBackend()` calls
-   - Implement the function to call API
-   - Handle errors and retries
+#### Update Location
+Periodically updates the user's location for geo-fencing features.
 
-### Backend Database Schema (PostgreSQL + PostGIS)
+- **Endpoint**: `PUT api/users/location`
+- **Request**: `UpdateLocationRequest`
+  - `uid`: Firebase User ID
+  - `latitude`: New latitude
+  - `longitude`: New longitude
+- **Response**: `UpdateLocationResponse`
+
+### 2. Feast Management
+
+#### Report Bhandara (Create Feast)
+Submits a new bhandara event.
+
+- **Endpoint**: `POST api/feasts`
+- **Request**: `FeastRequest`
+  - `menuItems`: List of food items
+  - `startTime` / `endTime`: Event duration
+  - `latitude` / `longitude`: Event location
+  - `imageUrls`: List of uploaded image URLs
+  - (and other details)
+- **Response**: `FeastResponse`
+
+#### Get Nearby Feasts
+Retrieves active bhandaras within a specific radius.
+
+- **Endpoint**: `GET api/feasts/nearby`
+- **Query Params**:
+  - `lat`: User's latitude
+  - `lon`: User's longitude
+  - `radius`: Search radius in meters (default: 500.0)
+- **Response**: `List<FeastResponse>`
+
+## Backend Requirements (Reference)
+
+For the server-side implementation to support this mobile app, the following database structure (using PostgreSQL + PostGIS) is recommended.
+
+### Database Schema
 
 ```sql
 CREATE EXTENSION postgis;
 
+-- Users Table
 CREATE TABLE users (
     uid VARCHAR(128) PRIMARY KEY,
-    fcm_token VARCHAR(512) NOT NULL,
+    fcm_token VARCHAR(512),
     location GEOGRAPHY(POINT, 4326),
     last_active TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT valid_location CHECK (
-        ST_X(location::geometry) BETWEEN -180 AND 180 AND
-        ST_Y(location::geometry) BETWEEN -90 AND 90
-    )
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Feasts Table
+CREATE TABLE feasts (
+    id SERIAL PRIMARY KEY,
+    organizer_uid VARCHAR(128) REFERENCES users(uid),
+    description TEXT,
+    location GEOGRAPHY(POINT, 4326),
+    start_time TIMESTAMP,
+    end_time TIMESTAMP,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX idx_users_location ON users USING GIST (location);
-CREATE INDEX idx_users_last_active ON users (last_active);
+CREATE INDEX idx_feasts_location ON feasts USING GIST (location);
 ```
 
-### Backend API Implementation Example (FastAPI)
+### API Implementation Notes
 
-```python
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-from geoalchemy2 import Geography
-from sqlalchemy import create_engine
-from datetime import datetime
-
-app = FastAPI()
-
-class UserUpdateRequest(BaseModel):
-    uid: str
-    fcmToken: str | None
-    latitude: float | None
-    longitude: float | None
-    timestamp: int
-
-@app.post("/api/users/update")
-async def update_user(request: UserUpdateRequest):
-    # Upsert user data
-    query = """
-        INSERT INTO users (uid, fcm_token, location, last_active)
-        VALUES (:uid, :fcm_token, 
-                ST_SetSRID(ST_MakePoint(:lon, :lat), 4326)::geography,
-                :last_active)
-        ON CONFLICT (uid) 
-        DO UPDATE SET
-            fcm_token = COALESCE(:fcm_token, users.fcm_token),
-            location = CASE 
-                WHEN :lat IS NOT NULL AND :lon IS NOT NULL 
-                THEN ST_SetSRID(ST_MakePoint(:lon, :lat), 4326)::geography
-                ELSE users.location
-            END,
-            last_active = :last_active
-    """
-    
-    # Execute query
-    return {"status": "success"}
-```
-
-### Testing
-
-1. Start backend server
-2. Update `BASE_URL` in ApiClient
-3. Run app on emulator
-4. Check backend logs for incoming requests
-5. Verify data in PostgreSQL:
-   ```sql
-   SELECT uid, fcm_token, 
-          ST_X(location::geometry) as longitude,
-          ST_Y(location::geometry) as latitude,
-          last_active
-   FROM users;
-   ```
-
-### Notes
-
-- **Error handling**: Implement retry logic for failed API calls
-- **Offline support**: Queue updates locally if network unavailable
-- **Privacy**: Implement data retention policies
-- **Security**: Use HTTPS and API authentication tokens
+1.  **Duplicate Handling**: The `POST api/users` endpoint should handle "upsert" logic (insert if new, update if exists).
+2.  **Geo-Queries**: Use PostGIS `ST_DWithin` for the `nearby` endpoint to efficiently find feasts.
+3.  **Token Validation**: The backend **must** verify the Firebase ID token in the `Authorization` header using the Firebase Admin SDK.
