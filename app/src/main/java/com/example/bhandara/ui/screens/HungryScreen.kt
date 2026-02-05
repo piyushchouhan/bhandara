@@ -52,7 +52,8 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HungryScreen(
-    onBackClick: () -> Unit = {}
+    onBackClick: () -> Unit = {},
+    onFeastClick: (String) -> Unit = {} // Add callback for feast click
 ) {
     val context = LocalContext.current
     val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
@@ -347,7 +348,12 @@ fun HungryScreen(
                                 append(" • ${String.format("%.1f", distanceKm)} km away")
                             }
                         },
-                        icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)
+                        icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED),
+                        onClick = {
+                            // Navigate to feast details
+                            onFeastClick(feast.id)
+                            true // Return true to indicate the event was consumed
+                        }
                     )
                 }
             }

@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.lifecycleScope
 import com.example.bhandara.managers.UserManager
 import com.example.bhandara.ui.components.LanguageSwitcher
+import com.example.bhandara.ui.screens.FeastDetailsScreen
 import com.example.bhandara.ui.screens.HomeScreen
 import com.example.bhandara.ui.screens.HungryScreen
 import com.example.bhandara.ui.screens.ReportBhandaraScreen
@@ -26,8 +27,13 @@ import com.example.bhandara.utils.LocationHelper
 
 // Simple navigation states
 enum class Screen {
-    HOME, HUNGRY, REPORT_BHANDARA
+    HOME, HUNGRY, REPORT_BHANDARA, FEAST_DETAILS
 }
+
+// Navigation arguments
+data class NavArgs(
+    val feastId: String? = null
+)
 
 class MainActivity : AppCompatActivity() {
     
@@ -59,18 +65,18 @@ class MainActivity : AppCompatActivity() {
         
         setContent {
             BhandaraTheme {
-                // Navigation back stack
-                var backStack by remember { mutableStateOf(listOf(Screen.HOME)) }
-                val currentScreen = backStack.last()
+                // Navigation back stack with arguments
+                var backStack by remember { mutableStateOf(listOf(Pair(Screen.HOME, NavArgs()))) }
+                val (currentScreen, currentArgs) = backStack.last()
                 
                 // Request permissions on first composition
                 LaunchedEffect(Unit) {
                     requestPermissions()
                 }
                 
-                // Navigate to a new screen
-                fun navigateTo(screen: Screen) {
-                    backStack = backStack + screen
+                // Navigate to a new screen with optional arguments
+                fun navigateTo(screen: Screen, args: NavArgs = NavArgs()) {
+                    backStack = backStack + Pair(screen, args)
                 }
                 
                 // Navigate back
@@ -103,13 +109,24 @@ class MainActivity : AppCompatActivity() {
                         }
                         Screen.HUNGRY -> {
                             HungryScreen(
-                                onBackClick = { navigateBack() }
+                                onBackClick = { navigateBack() },
+                                onFeastClick = { feastId ->
+                                    navigateTo(Screen.FEAST_DETAILS, NavArgs(feastId = feastId))
+                                }
                             )
                         }
                         Screen.REPORT_BHANDARA -> {
                             ReportBhandaraScreen(
                                 onNavigateBack = { navigateBack() }
                             )
+                        }
+                        Screen.FEAST_DETAILS -> {
+                            currentArgs.feastId?.let { feastId ->
+                                FeastDetailsScreen(
+                                    feastId = feastId,
+                                    onBackClick = { navigateBack() }
+                                )
+                            }
                         }
                     }
                 }

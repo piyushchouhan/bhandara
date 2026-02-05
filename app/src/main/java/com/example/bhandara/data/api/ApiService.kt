@@ -61,4 +61,14 @@ interface ApiService {
         @Query("lon") lon: Double,
         @Query("radius") radius: Double = 500.0
     ): Response<List<FeastResponse>>
+    
+    /**
+     * Report a feast as fake or inappropriate
+     * @param id Feast ID to report
+     * @return Response containing updated feast data with updated report count
+     */
+    @PUT("api/feasts/{id}/report")
+    suspend fun reportFeast(
+        @retrofit2.http.Path("id") id: String
+    ): Response<FeastResponse>
 }

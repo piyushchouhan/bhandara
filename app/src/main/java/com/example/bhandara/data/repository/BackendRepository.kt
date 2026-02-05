@@ -4,6 +4,8 @@ import android.util.Log
 import com.example.bhandara.data.api.NetworkModule
 import com.example.bhandara.data.models.api.CreateUserRequest
 import com.example.bhandara.data.models.api.CreateUserResponse
+import com.example.bhandara.data.models.api.FeastRequest
+import com.example.bhandara.data.models.api.FeastResponse
 import com.google.firebase.firestore.GeoPoint
 
 /**
@@ -98,6 +100,32 @@ class BackendRepository {
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error creating feast in backend", e)
+            null
+        }
+    }
+    
+    /**
+     * Report a feast as fake or inappropriate
+     * @param feastId ID of the feast to report
+     * @return FeastResponse if successful, null otherwise
+     */
+    suspend fun reportFeast(feastId: String): FeastResponse? {
+        return try {
+            Log.d(TAG, "Reporting feast ID: $feastId")
+            
+            val response = apiService.reportFeast(feastId)
+            
+            if (response.isSuccessful) {
+                val body = response.body()
+                Log.d(TAG, "✅ Feast reported successfully")
+                Log.d(TAG, "Feast ID: ${body?.id}, IsActive: ${body?.isActive}")
+                body
+            } else {
+                Log.e(TAG, "❌ Failed to report feast: ${response.code()}")
+                null
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ Error reporting feast", e)
             null
         }
     }
