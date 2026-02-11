@@ -18,7 +18,7 @@ The application communicates with a backend REST API to handle user synchronizat
 The network configuration is centralized in `com.example.bhandara.data.api.NetworkModule`.
 
 - **Base URL**: Defined in `build.gradle.kts` as `API_BASE_URL`.
-  - *Debug*: Defaults to `http://192.168.1.5:8080/` (Local Network)
+  - *Debug*: Defaults to `http://192.168.1.4:8080/` (Local Network)
   - *Release*: Should point to production server.
 - **Timeouts**: 30 seconds for connect, read, and write operations.
 - **Logging**: `HttpLoggingInterceptor` is enabled in DEBUG mode (Level: BODY).

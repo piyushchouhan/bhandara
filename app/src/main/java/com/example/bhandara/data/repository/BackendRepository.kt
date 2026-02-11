@@ -129,4 +129,24 @@ class BackendRepository {
             null
         }
     }
+
+    /**
+     * Get details of a specific bhandara by its ID
+     * @param id The ID of the bhandara to fetch
+     * @return FeastResponse if successful, null otherwise
+     */
+    suspend fun getFeastById(id: String): FeastResponse? {
+        return try {
+            val response = apiService.getFeastById(id)
+            if (response.isSuccessful) {
+                response.body()
+            } else {
+                Log.e(TAG, "Failed to get feast by ID: ${response.code()}")
+                null
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error getting feast by ID", e)
+            null
+        }
+    }
 }

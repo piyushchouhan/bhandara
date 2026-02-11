@@ -181,12 +181,25 @@ fun ReportBhandaraScreen(
                                 return@launch
                             }
                             
+                            if (selectedImages.isEmpty()) {
+                                errorMessage = "Please add at least one photo"
+                                return@launch
+                            }
+                            
                             isLoading = true
                             errorMessage = null
                             
                             try {
-                                // Hardcoded placeholder
-                                val imageUrls = listOf("https://placehold.co/600x400/orange/white?text=Bhandara+Feast")
+                                // Upload images to Firebase Storage
+                                val imageUrls = imageUploadHelper.uploadImages(selectedImages) { progress ->
+                                    uploadProgress = progress
+                                }
+                                
+                                if (imageUrls.isEmpty()) {
+                                    errorMessage = "Failed to upload images. Please check your internet connection."
+                                    isLoading = false
+                                    return@launch
+                                }
                                 
                                 // Get current location
                                 val location = locationHelper.getCurrentLocation()

@@ -71,4 +71,14 @@ interface ApiService {
     suspend fun reportFeast(
         @retrofit2.http.Path("id") id: String
     ): Response<FeastResponse>
+
+    /**
+     * Get details of a specific feast by its ID
+     * @param id The ID of the feast to fetch
+     * @return Response containing the feast details
+     */
+    @GET("api/feasts/{id}")
+    suspend fun getFeastById(
+        @retrofit2.http.Path("id") id: String
+    ): Response<FeastResponse>
 }

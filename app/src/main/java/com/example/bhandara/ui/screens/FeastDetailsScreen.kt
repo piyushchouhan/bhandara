@@ -44,31 +44,13 @@ fun FeastDetailsScreen(
     var isReporting by remember { mutableStateOf(false) }
     var showReportDialog by remember { mutableStateOf(false) }
     
-    // Fetch feast details - TODO: Add getFeastById API endpoint
-    // For now, we create a mock feast based on the ID
+    // Fetch feast details from backend
     LaunchedEffect(feastId) {
-        // Mock data for testing - replace with actual API call
-        feast = FeastResponse(
-            id = feastId,
-            firebaseUid = null,
-            organizerName = "Sample Organizer",
-            contactPhone = "+91 98765 43210",
-            menuItems = listOf("Rajma Chawal", "Roti", "Sabzi", "Gulab Jamun"),
-            foodType = "Vegetarian",
-            description = "Join us for a community feast serving traditional home-style food",
-            imageUrls = emptyList(),
-            feastDate = "2026-02-06",
-            startTime = "12:00",
-            endTime = "15:00",
-            latitude = 28.6139,
-            longitude = 77.2090,
-            address = "Connaught Place, New Delhi",
-            landmark = "Near Central Park",
-            distance = 500.0,
-            estimatedCapacity = 100,
-            isActive = true,
-            isVerified = true
-        )
+        isLoading = true
+        val result = repository.getFeastById(feastId)
+        if (result != null) {
+            feast = result
+        }
         isLoading = false
     }
     
