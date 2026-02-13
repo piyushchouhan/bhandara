@@ -1,5 +1,8 @@
 <resources>
-    <string name="app_name" translatable="false">Bhandara</string>
+    <string name="app_name" translatable="false">Local Feast</string>
     <string name="button_i_am_hungry" >I am Hungry</string>
-    <string name="button_report_feast" >Report a Feast</string>
+    <string name="button_report_feast" >Post a Feast</string>
+    <string name="community_feast">Community Feast</string>
+    <string name="local_shops">Local Shops</string>
+    <string name="button_add_food_shop">Add Food Shop</string>
 </resources>

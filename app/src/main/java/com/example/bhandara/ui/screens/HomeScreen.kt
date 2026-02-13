@@ -3,20 +3,22 @@ package com.example.bhandara.ui.screens
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.Text
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -26,7 +28,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.bhandara.R
 import com.example.bhandara.ui.theme.BhandaraTheme
+import com.example.bhandara.ui.theme.FoodShopPrimary
+import com.example.bhandara.ui.theme.FoodShopPrimaryContainer
+import androidx.compose.ui.graphics.Color
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     modifier: Modifier = Modifier,
@@ -51,48 +57,59 @@ fun HomeScreen(
                 .padding(top = 80.dp)
         )
         
-        // Buttons centered vertically
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(start = 24.dp, end = 24.dp, top = 80.dp, bottom = 24.dp),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
+
+        // Content Switching using State
+        var selectedIndex by remember { mutableStateOf(0) }
+        val options = listOf(
+            stringResource(R.string.community_feast),
+            stringResource(R.string.local_shops)
+        )
+
+        Box(
+            modifier = Modifier.fillMaxSize()
         ) {
-            // Button 1: I am Hungry
-            Button(
-                onClick = onHungryClick,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(80.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
+            if (selectedIndex == 0) {
+                CommunityFeastContent(
+                    onHungryClick = onHungryClick,
+                    onReportFeastClick = onReportFeastClick
                 )
-            ) {
-                Text(
-                    text = stringResource(R.string.button_i_am_hungry),
-                    fontSize = 24.sp
-                )
+            } else {
+                LocalShopsContent()
             }
+        }
 
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Button 2: Report a Feast
-            Button(
-                onClick = onReportFeastClick,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(60.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.secondary,
-                    contentColor = MaterialTheme.colorScheme.onSecondary
-                )
-            ) {
-                Text(
-                    text = stringResource(R.string.button_report_feast),
-                    fontSize = 24.sp
-                )
+        // Toggle positioned at the bottom
+        SingleChoiceSegmentedButtonRow(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 32.dp)
+                .fillMaxWidth()
+                .padding(horizontal = 48.dp)
+        ) {
+            options.forEachIndexed { index, label ->
+                val buttonColors = if (index == 1) {
+                    SegmentedButtonDefaults.colors(
+                        activeContainerColor = FoodShopPrimaryContainer,
+                        activeContentColor = FoodShopPrimary
+                    )
+                } else {
+                    SegmentedButtonDefaults.colors()
+                }
+                
+                SegmentedButton(
+                    shape = SegmentedButtonDefaults.itemShape(
+                        index = index,
+                        count = options.size
+                    ),
+                    onClick = { selectedIndex = index },
+                    selected = index == selectedIndex,
+                    colors = buttonColors
+                ) {
+                    Text(
+                        text = label,
+                        maxLines = 1
+                    )
+                }
             }
         }
     }

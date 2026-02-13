@@ -12,3 +12,5 @@ val Pink40 = Color(0xFF7D5260)
 
 val Black = Color(0xFF000000)
 val White = Color(0xFFFFFFFF)
+val FoodShopPrimary = Color(0xFF34A853)
+val FoodShopPrimaryContainer = Color(0xFFE6F4EA)
