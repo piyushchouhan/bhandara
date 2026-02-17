@@ -5,20 +5,15 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
-import androidx.compose.material3.Text
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -27,12 +22,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.bhandara.R
+import com.example.bhandara.ui.components.PillToggle
 import com.example.bhandara.ui.theme.BhandaraTheme
 import com.example.bhandara.ui.theme.FoodShopPrimary
 import com.example.bhandara.ui.theme.FoodShopPrimaryContainer
-import androidx.compose.ui.graphics.Color
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     modifier: Modifier = Modifier,
@@ -78,40 +72,15 @@ fun HomeScreen(
             }
         }
 
-        // Toggle positioned at the bottom
-        SingleChoiceSegmentedButtonRow(
+        // Reusable PillToggle component
+        PillToggle(
+            selectedIndex = selectedIndex,
+            options = options,
+            onOptionSelected = { selectedIndex = it },
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 32.dp)
-                .fillMaxWidth()
-                .padding(horizontal = 48.dp)
-        ) {
-            options.forEachIndexed { index, label ->
-                val buttonColors = if (index == 1) {
-                    SegmentedButtonDefaults.colors(
-                        activeContainerColor = FoodShopPrimaryContainer,
-                        activeContentColor = FoodShopPrimary
-                    )
-                } else {
-                    SegmentedButtonDefaults.colors()
-                }
-                
-                SegmentedButton(
-                    shape = SegmentedButtonDefaults.itemShape(
-                        index = index,
-                        count = options.size
-                    ),
-                    onClick = { selectedIndex = index },
-                    selected = index == selectedIndex,
-                    colors = buttonColors
-                ) {
-                    Text(
-                        text = label,
-                        maxLines = 1
-                    )
-                }
-            }
-        }
+        )
     }
 }
 
