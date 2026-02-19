@@ -2,7 +2,6 @@ package com.example.bhandara.ui.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -24,8 +23,7 @@ import androidx.compose.ui.unit.sp
 import com.example.bhandara.R
 import com.example.bhandara.ui.components.PillToggle
 import com.example.bhandara.ui.theme.BhandaraTheme
-import com.example.bhandara.ui.theme.FoodShopPrimary
-import com.example.bhandara.ui.theme.FoodShopPrimaryContainer
+
 
 @Composable
 fun HomeScreen(
@@ -33,9 +31,7 @@ fun HomeScreen(
     onHungryClick: () -> Unit = {},
     onReportFeastClick: () -> Unit = {}
 ) {
-    val isDarkMode = isSystemInDarkTheme()
-    val logoResource = if (isDarkMode) R.drawable.logo_1 else R.drawable.logo
-    
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -43,12 +39,12 @@ fun HomeScreen(
     ) {
         // Logo positioned independently at top center
         Image(
-            painter = painterResource(id = logoResource),
+            painter = painterResource(id = R.drawable.localfeast),
             contentDescription = "Bhandara Logo",
             modifier = Modifier
-                .size(300.dp)
+                .size(320.dp)
                 .align(Alignment.TopCenter)
-                .padding(top = 80.dp)
+                .padding(top = 10.dp)
         )
         
 

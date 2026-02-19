@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import com.example.bhandara.ui.theme.bhandaraColors
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -26,7 +27,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.layout.size
 import com.example.bhandara.R
 
-import com.example.bhandara.ui.theme.FoodShopPrimary
 
 @Composable
 fun LocalShopsContent(
@@ -47,7 +47,7 @@ fun LocalShopsContent(
                 .fillMaxWidth()
                 .height(80.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = FoodShopPrimary,
+                containerColor = MaterialTheme.bhandaraColors.foodShopPrimary,
                 contentColor = Color.White
             )
         ) {
