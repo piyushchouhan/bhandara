@@ -29,7 +29,9 @@ import com.example.bhandara.ui.theme.BhandaraTheme
 fun HomeScreen(
     modifier: Modifier = Modifier,
     onHungryClick: () -> Unit = {},
-    onReportFeastClick: () -> Unit = {}
+    onReportFeastClick: () -> Unit = {},
+    onFindShopsClick: () -> Unit = {},
+    onAddShopClick: () -> Unit = {}
 ) {
 
     Box(
@@ -64,7 +66,10 @@ fun HomeScreen(
                     onReportFeastClick = onReportFeastClick
                 )
             } else {
-                LocalShopsContent()
+                LocalShopsContent(
+                    onFindShopsClick = onFindShopsClick,
+                    onAddShopClick = onAddShopClick
+                )
             }
         }
 

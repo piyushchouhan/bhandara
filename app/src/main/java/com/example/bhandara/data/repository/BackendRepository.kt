@@ -149,4 +149,70 @@ class BackendRepository {
             null
         }
     }
+
+    /**
+     * Create a new local shop
+     * @param request LocalShopRequest with all shop details
+     * @return LocalShopResponse if successful, null otherwise
+     */
+    suspend fun createLocalShop(
+        request: com.example.bhandara.data.models.api.LocalShopRequest
+    ): com.example.bhandara.data.models.api.LocalShopResponse? {
+        return try {
+            val response = apiService.createLocalShop(request)
+            
+            if (response.isSuccessful) {
+                response.body()
+            } else {
+                Log.e(TAG, "Failed to create local shop: ${response.code()}")
+                null
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error creating local shop in backend", e)
+            null
+        }
+    }
+
+    /**
+     * Get nearby local shops based on user location
+     * @param lat Latitude of the user's location
+     * @param lon Longitude of the user's location
+     * @param radius Search radius in meters (default 5000m)
+     * @return List of nearby local shops with distance information
+     */
+    suspend fun getLocalShopsNearby(lat: Double, lon: Double, radius: Double = 5000.0): List<com.example.bhandara.data.models.api.LocalShopResponse>? {
+        return try {
+            val response = apiService.getLocalShopsNearby(lat, lon, radius)
+            if (response.isSuccessful) {
+                response.body()
+            } else {
+                Log.e(TAG, "Failed to get local shops nearby: ${response.code()}")
+                null
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error getting local shops nearby", e)
+            null
+        }
+    }
+
+    /**
+     * Get details of a specific local shop by its ID
+     * @param id The ID of the shop to fetch
+     * @return LocalShopResponse if successful, null otherwise
+     */
+    suspend fun getLocalShopById(id: String): com.example.bhandara.data.models.api.LocalShopResponse? {
+        return try {
+            val response = apiService.getLocalShopById(id)
+            if (response.isSuccessful) {
+                response.body()
+            } else {
+                Log.e(TAG, "Failed to get local shop by ID: ${response.code()}")
+                null
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error getting local shop by ID", e)
+            null
+        }
+    }
+
 }

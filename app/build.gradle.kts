@@ -35,7 +35,7 @@ android {
         // API Configuration
         // Using computer's local IP for physical device testing
         // Phone must be on same WiFi network OR use USB with ADB reverse port forwarding
-        buildConfigField("String", "API_BASE_URL", "\"https://localfeast-backend-app.azurewebsites.net/\"")
+        buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:8080/\"")
         
         // Google Maps API Key from local.properties
         manifestPlaceholders["MAPS_API_KEY"] = localProperties.getProperty("MAPS_API_KEY", "")

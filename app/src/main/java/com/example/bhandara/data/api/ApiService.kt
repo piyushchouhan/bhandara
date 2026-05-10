@@ -81,4 +81,38 @@ interface ApiService {
     suspend fun getFeastById(
         @retrofit2.http.Path("id") id: String
     ): Response<FeastResponse>
+
+    /**
+     * Create a new local food shop
+     * @param request Shop data including name, type, location, etc.
+     * @return Response containing created shop data
+     */
+    @POST("api/localshops")
+    suspend fun createLocalShop(
+        @Body request: com.example.bhandara.data.models.api.LocalShopRequest
+    ): Response<com.example.bhandara.data.models.api.LocalShopResponse>
+
+    /**
+     * Get nearby local shops based on user location
+     * @param lat Latitude of the user's location
+     * @param lon Longitude of the user's location
+     * @param radius Search radius in meters (default 5000m)
+     * @return List of nearby local shops with distance information
+     */
+    @GET("api/localshops/nearby")
+    suspend fun getLocalShopsNearby(
+        @Query("latitude") lat: Double,
+        @Query("longitude") lon: Double,
+        @Query("radius") radius: Double = 500.0
+    ): Response<List<com.example.bhandara.data.models.api.LocalShopResponse>>
+
+    /**
+     * Get details of a specific local shop by its ID
+     * @param id The ID of the shop to fetch
+     * @return Response containing the shop details
+     */
+    @GET("api/localshops/{id}")
+    suspend fun getLocalShopById(
+        @retrofit2.http.Path("id") id: String
+    ): Response<com.example.bhandara.data.models.api.LocalShopResponse>
 }

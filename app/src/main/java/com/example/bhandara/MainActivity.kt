@@ -22,17 +22,21 @@ import com.example.bhandara.ui.screens.FeastDetailsScreen
 import com.example.bhandara.ui.screens.HomeScreen
 import com.example.bhandara.ui.screens.HungryScreen
 import com.example.bhandara.ui.screens.ReportBhandaraScreen
+import com.example.bhandara.ui.screens.AddLocalShopScreen
+import com.example.bhandara.ui.screens.LocalShopsMapScreen
+import com.example.bhandara.ui.screens.LocalShopDetailsScreen
 import com.example.bhandara.ui.theme.BhandaraTheme
 import com.example.bhandara.utils.LocationHelper
 
 // Simple navigation states
 enum class Screen {
-    HOME, HUNGRY, REPORT_BHANDARA, FEAST_DETAILS
+    HOME, HUNGRY, REPORT_BHANDARA, FEAST_DETAILS, ADD_LOCAL_SHOP, LOCAL_SHOPS_MAP, SHOP_DETAILS
 }
 
 // Navigation arguments
 data class NavArgs(
-    val feastId: String? = null
+    val feastId: String? = null,
+    val shopId: String? = null
 )
 
 class MainActivity : AppCompatActivity() {
@@ -104,7 +108,9 @@ class MainActivity : AppCompatActivity() {
                             HomeScreen(
                                 modifier = Modifier.padding(innerPadding),
                                 onHungryClick = { navigateTo(Screen.HUNGRY) },
-                                onReportFeastClick = { navigateTo(Screen.REPORT_BHANDARA) }
+                                onReportFeastClick = { navigateTo(Screen.REPORT_BHANDARA) },
+                                onFindShopsClick = { navigateTo(Screen.LOCAL_SHOPS_MAP) },
+                                onAddShopClick = { navigateTo(Screen.ADD_LOCAL_SHOP) }
                             )
                         }
                         Screen.HUNGRY -> {
@@ -124,6 +130,27 @@ class MainActivity : AppCompatActivity() {
                             currentArgs.feastId?.let { feastId ->
                                 FeastDetailsScreen(
                                     feastId = feastId,
+                                    onBackClick = { navigateBack() }
+                                )
+                            }
+                        }
+                        Screen.ADD_LOCAL_SHOP -> {
+                            AddLocalShopScreen(
+                                onNavigateBack = { navigateBack() }
+                            )
+                        }
+                        Screen.LOCAL_SHOPS_MAP -> {
+                            LocalShopsMapScreen(
+                                onBackClick = { navigateBack() },
+                                onShopClick = { shopId ->
+                                    navigateTo(Screen.SHOP_DETAILS, NavArgs(shopId = shopId))
+                                }
+                            )
+                        }
+                        Screen.SHOP_DETAILS -> {
+                            currentArgs.shopId?.let { shopId ->
+                                LocalShopDetailsScreen(
+                                    shopId = shopId,
                                     onBackClick = { navigateBack() }
                                 )
                             }

@@ -30,7 +30,7 @@ import com.example.bhandara.R
 
 @Composable
 fun LocalShopsContent(
-    onHungryClick: () -> Unit = {},
+    onFindShopsClick: () -> Unit = {},
     onAddShopClick: () -> Unit = {}
 ) {
     Column(
@@ -42,7 +42,7 @@ fun LocalShopsContent(
     ) {
         // Button 1: I am Hungry
         Button(
-            onClick = onHungryClick,
+            onClick = onFindShopsClick,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(80.dp),
@@ -52,7 +52,7 @@ fun LocalShopsContent(
             )
         ) {
             Text(
-                text = stringResource(R.string.button_i_am_hungry),
+                text = stringResource(R.string.button_find_food_shop),
                 fontSize = 24.sp
             )
         }
