@@ -2,6 +2,9 @@ package com.example.bhandara.data.api
 
 import com.example.bhandara.data.models.api.CreateUserRequest
 import com.example.bhandara.data.models.api.CreateUserResponse
+import com.example.bhandara.data.models.api.CrowdPingRequest
+import com.example.bhandara.data.models.api.CrowdPingResponse
+import com.example.bhandara.data.models.api.HeatmapPoint
 import com.example.bhandara.data.models.api.FeastRequest
 import com.example.bhandara.data.models.api.FeastResponse
 import com.example.bhandara.data.models.api.UpdateLocationRequest
@@ -115,4 +118,28 @@ interface ApiService {
     suspend fun getLocalShopById(
         @retrofit2.http.Path("id") id: String
     ): Response<com.example.bhandara.data.models.api.LocalShopResponse>
+
+    /**
+     * Report the current user's location for crowd tracking.
+     * Requires Firebase auth — handled automatically by AuthInterceptor.
+     * Call every 30–60 seconds while the map screen is visible.
+     */
+    @POST("api/crowd/ping")
+    suspend fun crowdPing(
+        @Body request: CrowdPingRequest
+    ): Response<CrowdPingResponse>
+
+    /**
+     * Fetch heatmap density points around a coordinate.
+     * No auth required. Feed directly into HeatmapTileProvider.
+     * @param lat Center latitude
+     * @param lng Center longitude
+     * @param radius Radius in metres (default 500 m)
+     */
+    @GET("api/crowd/heatmap")
+    suspend fun getCrowdHeatmap(
+        @Query("lat") lat: Double,
+        @Query("lng") lng: Double,
+        @Query("radius") radius: Int = 500
+    ): Response<List<HeatmapPoint>>
 }

@@ -35,7 +35,7 @@ android {
         // API Configuration
         // Using computer's local IP for physical device testing
         // Phone must be on same WiFi network OR use USB with ADB reverse port forwarding
-        buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:8080/\"")
+        buildConfigField("String", "API_BASE_URL", "\"http://192.168.1.4:8080/\"")
         
         // Google Maps API Key from local.properties
         manifestPlaceholders["MAPS_API_KEY"] = localProperties.getProperty("MAPS_API_KEY", "")
@@ -127,4 +127,6 @@ dependencies {
     implementation("com.google.android.gms:play-services-maps:19.0.0")
     // Google Maps Compose
     implementation("com.google.maps.android:maps-compose:4.3.3")
+    // Google Maps Android Utilities (HeatmapTileProvider, etc.)
+    implementation("com.google.maps.android:android-maps-utils:3.8.2")
 }
