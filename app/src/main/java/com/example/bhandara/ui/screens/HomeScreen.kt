@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -28,6 +29,8 @@ import com.example.bhandara.ui.theme.BhandaraTheme
 @Composable
 fun HomeScreen(
     modifier: Modifier = Modifier,
+    selectedTabIndex: Int = 0,
+    onTabSelected: (Int) -> Unit = {},
     onHungryClick: () -> Unit = {},
     onReportFeastClick: () -> Unit = {},
     onFindShopsClick: () -> Unit = {},
@@ -51,33 +54,33 @@ fun HomeScreen(
         
 
         // Content Switching using State
-        var selectedIndex by remember { mutableStateOf(0) }
+        // Content Switching using State
         val options = listOf(
-            stringResource(R.string.community_feast),
-            stringResource(R.string.local_shops)
+            stringResource(R.string.local_shops),
+            stringResource(R.string.community_feast)
         )
 
         Box(
             modifier = Modifier.fillMaxSize()
         ) {
-            if (selectedIndex == 0) {
-                CommunityFeastContent(
-                    onHungryClick = onHungryClick,
-                    onReportFeastClick = onReportFeastClick
-                )
-            } else {
+            if (selectedTabIndex == 0) {
                 LocalShopsContent(
                     onFindShopsClick = onFindShopsClick,
                     onAddShopClick = onAddShopClick
+                )
+            } else {
+                CommunityFeastContent(
+                    onHungryClick = onHungryClick,
+                    onReportFeastClick = onReportFeastClick
                 )
             }
         }
 
         // Reusable PillToggle component
         PillToggle(
-            selectedIndex = selectedIndex,
+            selectedIndex = selectedTabIndex,
             options = options,
-            onOptionSelected = { selectedIndex = it },
+            onOptionSelected = onTabSelected,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 32.dp)

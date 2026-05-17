@@ -13,6 +13,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.lifecycleScope
@@ -73,6 +75,9 @@ class MainActivity : AppCompatActivity() {
                 var backStack by remember { mutableStateOf(listOf(Pair(Screen.HOME, NavArgs()))) }
                 val (currentScreen, currentArgs) = backStack.last()
                 
+                // Lifted home tab state
+                var homeTabIndex by rememberSaveable { mutableIntStateOf(0) }
+                
                 // Request permissions on first composition
                 LaunchedEffect(Unit) {
                     requestPermissions()
@@ -107,6 +112,8 @@ class MainActivity : AppCompatActivity() {
                         Screen.HOME -> {
                             HomeScreen(
                                 modifier = Modifier.padding(innerPadding),
+                                selectedTabIndex = homeTabIndex,
+                                onTabSelected = { homeTabIndex = it },
                                 onHungryClick = { navigateTo(Screen.HUNGRY) },
                                 onReportFeastClick = { navigateTo(Screen.REPORT_BHANDARA) },
                                 onFindShopsClick = { navigateTo(Screen.LOCAL_SHOPS_MAP) },

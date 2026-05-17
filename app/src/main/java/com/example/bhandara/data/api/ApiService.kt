@@ -120,6 +120,36 @@ interface ApiService {
     ): Response<com.example.bhandara.data.models.api.LocalShopResponse>
 
     /**
+     * Report a local shop
+     * @param id The ID of the shop to report
+     * @return Response containing the updated shop details
+     */
+    @PUT("api/localshops/{id}/report")
+    suspend fun reportLocalShop(
+        @retrofit2.http.Path("id") id: String
+    ): Response<com.example.bhandara.data.models.api.LocalShopResponse>
+
+    /**
+     * Deactivate a local shop (only allowed for owner)
+     * @param id The ID of the shop to deactivate
+     * @return Response containing the updated shop details
+     */
+    @PUT("api/localshops/{id}/deactivate")
+    suspend fun deactivateLocalShop(
+        @retrofit2.http.Path("id") id: String
+    ): Response<com.example.bhandara.data.models.api.LocalShopResponse>
+
+    /**
+     * Suggest deleting a local shop (available for non-owners)
+     * @param id The ID of the shop to suggest deleting
+     * @return Response containing the updated shop details
+     */
+    @PUT("api/localshops/{id}/suggest-delete")
+    suspend fun suggestDeleteLocalShop(
+        @retrofit2.http.Path("id") id: String
+    ): Response<com.example.bhandara.data.models.api.LocalShopResponse>
+
+    /**
      * Report the current user's location for crowd tracking.
      * Requires Firebase auth — handled automatically by AuthInterceptor.
      * Call every 30–60 seconds while the map screen is visible.

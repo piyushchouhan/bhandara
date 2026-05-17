@@ -215,4 +215,79 @@ class BackendRepository {
         }
     }
 
+    /**
+     * Report a local shop as fake or inappropriate
+     * @param shopId ID of the shop to report
+     * @return LocalShopResponse if successful, null otherwise
+     */
+    suspend fun reportLocalShop(shopId: String): com.example.bhandara.data.models.api.LocalShopResponse? {
+        return try {
+            Log.d(TAG, "Reporting local shop ID: $shopId")
+            
+            val response = apiService.reportLocalShop(shopId)
+            
+            if (response.isSuccessful) {
+                val body = response.body()
+                Log.d(TAG, "✅ Local shop reported successfully")
+                body
+            } else {
+                Log.e(TAG, "❌ Failed to report local shop: ${response.code()}")
+                null
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ Error reporting local shop", e)
+            null
+        }
+    }
+
+    /**
+     * Deactivate a local shop (only allowed for owner)
+     * @param shopId ID of the shop to deactivate
+     * @return LocalShopResponse if successful, null otherwise
+     */
+    suspend fun deactivateLocalShop(shopId: String): com.example.bhandara.data.models.api.LocalShopResponse? {
+        return try {
+            Log.d(TAG, "Deactivating local shop ID: $shopId")
+            
+            val response = apiService.deactivateLocalShop(shopId)
+            
+            if (response.isSuccessful) {
+                val body = response.body()
+                Log.d(TAG, "✅ Local shop deactivated successfully")
+                body
+            } else {
+                Log.e(TAG, "❌ Failed to deactivate local shop: ${response.code()}")
+                null
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ Error deactivating local shop", e)
+            null
+        }
+    }
+
+    /**
+     * Suggest deleting a local shop (for non-owners)
+     * @param shopId ID of the shop to suggest deleting
+     * @return LocalShopResponse if successful, null otherwise
+     */
+    suspend fun suggestDeleteLocalShop(shopId: String): com.example.bhandara.data.models.api.LocalShopResponse? {
+        return try {
+            Log.d(TAG, "Suggesting delete for local shop ID: $shopId")
+            
+            val response = apiService.suggestDeleteLocalShop(shopId)
+            
+            if (response.isSuccessful) {
+                val body = response.body()
+                Log.d(TAG, "✅ Local shop delete suggested successfully")
+                body
+            } else {
+                Log.e(TAG, "❌ Failed to suggest delete local shop: ${response.code()}")
+                null
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ Error suggesting delete local shop", e)
+            null
+        }
+    }
 }
+

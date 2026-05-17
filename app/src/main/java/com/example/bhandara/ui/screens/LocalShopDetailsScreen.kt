@@ -3,6 +3,8 @@ package com.example.bhandara.ui.screens
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -10,6 +12,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.Flag
 import androidx.compose.material3.*
 import androidx.compose.material3.carousel.HorizontalUncontainedCarousel
 import androidx.compose.material3.carousel.rememberCarouselState
@@ -24,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.bhandara.data.models.api.LocalShopResponse
 import com.example.bhandara.data.repository.BackendRepository
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -41,6 +45,16 @@ fun LocalShopDetailsScreen(
     
     var shop by remember { mutableStateOf<LocalShopResponse?>(null) }
     var isLoading by remember { mutableStateOf(true) }
+    var showReportDialog by remember { mutableStateOf(false) }
+    var showDeactivateDialog by remember { mutableStateOf(false) }
+    var showSuggestDeleteDialog by remember { mutableStateOf(false) }
+    var selectedTabIndex by remember { mutableIntStateOf(0) }
+    var selectedFullScreenImage by remember { mutableStateOf<String?>(null) }
+    val currentUserUid = remember { FirebaseAuth.getInstance().currentUser?.uid }
+    
+    val prefs = context.getSharedPreferences("ShopActionsPrefs", android.content.Context.MODE_PRIVATE)
+    var hasReported by remember { mutableStateOf(prefs.getBoolean("reported_shop_$shopId", false)) }
+    var hasSuggestedDelete by remember { mutableStateOf(prefs.getBoolean("suggested_delete_shop_$shopId", false)) }
     
     // Fetch shop details from backend
     LaunchedEffect(shopId) {
@@ -100,6 +114,7 @@ fun LocalShopDetailsScreen(
                             modifier = Modifier
                                 .height(260.dp)
                                 .maskClip(RoundedCornerShape(16.dp))
+                                .clickable { selectedFullScreenImage = shopImages[index] }
                         ) {
                             AsyncImage(
                                 model = shopImages[index],
@@ -136,12 +151,33 @@ fun LocalShopDetailsScreen(
                 
                 Spacer(modifier = Modifier.height(16.dp))
                 
-                // Main content
-                Column(
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                // Tabs
+                val tabs = listOf("Overview", "Reviews")
+                TabRow(
+                    selectedTabIndex = selectedTabIndex,
+                    containerColor = MaterialTheme.colorScheme.background
                 ) {
-                    // Shop info
+                    tabs.forEachIndexed { index, title ->
+                        Tab(
+                            selected = selectedTabIndex == index,
+                            onClick = { selectedTabIndex = index },
+                            text = { Text(
+                                text = title,
+                                fontWeight = if (selectedTabIndex == index) FontWeight.Bold else FontWeight.Normal
+                            ) }
+                        )
+                    }
+                }
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                if (selectedTabIndex == 0) {
+                    // Overview Content
+                    Column(
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        // Shop info
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -173,38 +209,66 @@ fun LocalShopDetailsScreen(
                             }
                         }
                         
-                        if (shop!!.isActive == false) {
-                            AssistChip(
-                                onClick = { },
-                                label = { Text("Inactive") },
-                                leadingIcon = {
-                                    Icon(
-                                        Icons.Default.Cancel,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(16.dp)
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            if (shop!!.isActive != false) {
+                                val isOwner = currentUserUid != null && shop!!.ownerUid == currentUserUid
+                                IconButton(
+                                    onClick = {
+                                        if (isOwner) {
+                                            showDeactivateDialog = true
+                                        } else {
+                                            showSuggestDeleteDialog = true
+                                        }
+                                    },
+                                    enabled = isOwner || !hasSuggestedDelete,
+                                    colors = IconButtonDefaults.iconButtonColors(
+                                        contentColor = MaterialTheme.colorScheme.error,
+                                        disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
                                     )
-                                },
-                                colors = AssistChipDefaults.assistChipColors(
-                                    containerColor = MaterialTheme.colorScheme.errorContainer,
-                                    labelColor = MaterialTheme.colorScheme.onErrorContainer
-                                )
-                            )
-                        } else if (shop!!.isCurrentlyOpen == true) {
-                            AssistChip(
-                                onClick = { },
-                                label = { Text("Open Now") },
-                                leadingIcon = {
+                                ) {
                                     Icon(
-                                        Icons.Default.CheckCircle,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(16.dp)
+                                        Icons.Default.DeleteForever,
+                                        contentDescription = if (isOwner) "Deactivate Shop" else "Suggest Delete"
                                     )
-                                },
-                                colors = AssistChipDefaults.assistChipColors(
-                                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                                    labelColor = MaterialTheme.colorScheme.onPrimaryContainer
+                                }
+                            }
+
+                            if (shop!!.isActive == false) {
+                                AssistChip(
+                                    onClick = { },
+                                    label = { Text("Inactive") },
+                                    leadingIcon = {
+                                        Icon(
+                                            Icons.Default.Cancel,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                    },
+                                    colors = AssistChipDefaults.assistChipColors(
+                                        containerColor = MaterialTheme.colorScheme.errorContainer,
+                                        labelColor = MaterialTheme.colorScheme.onErrorContainer
+                                    )
                                 )
-                            )
+                            } else if (shop!!.isCurrentlyOpen == true) {
+                                AssistChip(
+                                    onClick = { },
+                                    label = { Text("Open Now") },
+                                    leadingIcon = {
+                                        Icon(
+                                            Icons.Default.CheckCircle,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                    },
+                                    colors = AssistChipDefaults.assistChipColors(
+                                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                        labelColor = MaterialTheme.colorScheme.onPrimaryContainer
+                                    )
+                                )
+                            }
                         }
                     }
                     
@@ -224,6 +288,29 @@ fun LocalShopDetailsScreen(
                     // Additional Info
                     AdditionalInfoSection(shop!!)
                     
+                    // Report Button
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        TextButton(
+                            onClick = { showReportDialog = true },
+                            enabled = !hasReported,
+                            colors = ButtonDefaults.textButtonColors(
+                                contentColor = MaterialTheme.colorScheme.error,
+                                disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                            )
+                        ) {
+                            Icon(
+                                Icons.Outlined.Flag,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(if (hasReported) "Reported" else "Report this shop")
+                        }
+                    }
+                    
                     // Action Buttons
                     ActionButtons(
                         shop = shop!!,
@@ -239,8 +326,24 @@ fun LocalShopDetailsScreen(
                             }
                         }
                     )
+
                     
                     Spacer(modifier = Modifier.height(32.dp))
+                    }
+                } else if (selectedTabIndex == 1) {
+                    // Reviews Content
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 32.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Reviews coming soon",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             }
         } else {
@@ -254,6 +357,173 @@ fun LocalShopDetailsScreen(
                 Text("Failed to load shop details")
             }
         }
+    }
+
+    if (selectedFullScreenImage != null) {
+        androidx.compose.ui.window.Dialog(
+            onDismissRequest = { selectedFullScreenImage = null },
+            properties = androidx.compose.ui.window.DialogProperties(
+                usePlatformDefaultWidth = false,
+                dismissOnBackPress = true,
+                dismissOnClickOutside = true
+            )
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(androidx.compose.ui.graphics.Color.Black),
+                contentAlignment = Alignment.Center
+            ) {
+                AsyncImage(
+                    model = selectedFullScreenImage,
+                    contentDescription = "Full screen image",
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Fit
+                )
+                
+                IconButton(
+                    onClick = { selectedFullScreenImage = null },
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(16.dp)
+                        .statusBarsPadding()
+                ) {
+                    Icon(
+                        Icons.Default.Close,
+                        contentDescription = "Close",
+                        tint = androidx.compose.ui.graphics.Color.White
+                    )
+                }
+            }
+        }
+    }
+
+    if (showReportDialog) {
+        var selectedReason by remember { mutableStateOf("") }
+        val reasons = listOf("Not a food shop", "Incorrect location", "Inappropriate content", "Shop is permanently closed")
+        
+        AlertDialog(
+            onDismissRequest = { showReportDialog = false },
+            title = { Text("Report Shop") },
+            text = {
+                Column {
+                    Text("Please select a reason for reporting:")
+                    Spacer(modifier = Modifier.height(16.dp))
+                    reasons.forEach { reason ->
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                                .clickable { selectedReason = reason }
+                                .padding(vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(
+                                selected = (reason == selectedReason),
+                                onClick = { selectedReason = reason }
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(text = reason)
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showReportDialog = false
+                        scope.launch {
+                            val result = repository.reportLocalShop(shopId)
+                            if (result != null) {
+                                Toast.makeText(context, "Shop reported successfully", Toast.LENGTH_SHORT).show()
+                                prefs.edit().putBoolean("reported_shop_$shopId", true).apply()
+                                hasReported = true
+                                shop = result
+                            } else {
+                                Toast.makeText(context, "Failed to report shop", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    },
+                    enabled = selectedReason.isNotEmpty()
+                ) {
+                    Text("Submit Report")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showReportDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+    if (showDeactivateDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeactivateDialog = false },
+            title = { Text("Deactivate Shop") },
+            text = { Text("Are you sure you want to deactivate this shop? It will no longer be visible to users.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showDeactivateDialog = false
+                        scope.launch {
+                            val result = repository.deactivateLocalShop(shopId)
+                            if (result != null) {
+                                Toast.makeText(context, "Shop deactivated successfully", Toast.LENGTH_SHORT).show()
+                                shop = result
+                            } else {
+                                Toast.makeText(context, "Failed to deactivate shop", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    },
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text("Deactivate")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeactivateDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+    if (showSuggestDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showSuggestDeleteDialog = false },
+            title = { Text("Suggest Deletion") },
+            text = { Text("Are you sure you want to suggest deleting this shop? If multiple users report it, the shop will be reviewed and removed.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showSuggestDeleteDialog = false
+                        scope.launch {
+                            val result = repository.suggestDeleteLocalShop(shopId)
+                            if (result != null) {
+                                Toast.makeText(context, "Deletion suggested successfully", Toast.LENGTH_SHORT).show()
+                                prefs.edit().putBoolean("suggested_delete_shop_$shopId", true).apply()
+                                hasSuggestedDelete = true
+                                shop = result
+                            } else {
+                                Toast.makeText(context, "Failed to suggest deletion", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    },
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text("Suggest Delete")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showSuggestDeleteDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 }
 

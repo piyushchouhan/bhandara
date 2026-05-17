@@ -3,6 +3,8 @@ package com.example.bhandara.ui.screens
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -43,6 +45,7 @@ fun FeastDetailsScreen(
     var isLoading by remember { mutableStateOf(true) }
     var isReporting by remember { mutableStateOf(false) }
     var showReportDialog by remember { mutableStateOf(false) }
+    var selectedFullScreenImage by remember { mutableStateOf<String?>(null) }
     
     // Fetch feast details from backend
     LaunchedEffect(feastId) {
@@ -113,6 +116,7 @@ fun FeastDetailsScreen(
                             modifier = Modifier
                                 .height(260.dp)
                                 .maskClip(RoundedCornerShape(16.dp))
+                                .clickable { selectedFullScreenImage = feast!!.imageUrls[index] }
                         ) {
                             AsyncImage(
                                 model = feast!!.imageUrls[index],
@@ -247,6 +251,45 @@ fun FeastDetailsScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Text("Failed to load feast details")
+            }
+        }
+    }
+    
+    if (selectedFullScreenImage != null) {
+        androidx.compose.ui.window.Dialog(
+            onDismissRequest = { selectedFullScreenImage = null },
+            properties = androidx.compose.ui.window.DialogProperties(
+                usePlatformDefaultWidth = false,
+                dismissOnBackPress = true,
+                dismissOnClickOutside = true
+            )
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(androidx.compose.ui.graphics.Color.Black),
+                contentAlignment = Alignment.Center
+            ) {
+                AsyncImage(
+                    model = selectedFullScreenImage,
+                    contentDescription = "Full screen image",
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Fit
+                )
+                
+                IconButton(
+                    onClick = { selectedFullScreenImage = null },
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(16.dp)
+                        .statusBarsPadding()
+                ) {
+                    Icon(
+                        Icons.Default.Close,
+                        contentDescription = "Close",
+                        tint = androidx.compose.ui.graphics.Color.White
+                    )
+                }
             }
         }
     }

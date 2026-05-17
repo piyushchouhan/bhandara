@@ -69,6 +69,7 @@ fun CommunityFeastContent(
         ) {
             Text(
                 text = stringResource(R.string.button_report_feast),
+
                 fontSize = 24.sp
             )
             Spacer(modifier = Modifier.width(8.dp))
