@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.Flag
 import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -383,6 +384,9 @@ fun ReviewItem(
     onDelete: () -> Unit,
     onReport: () -> Unit
 ) {
+    val context = LocalContext.current
+    val prefs = remember { context.getSharedPreferences("ReviewActionsPrefs", android.content.Context.MODE_PRIVATE) }
+    var hasReported by remember { mutableStateOf(prefs.getBoolean("reported_review_${review.id}", false)) }
     var selectedImageIndex by remember { mutableStateOf<Int?>(null) }
 
     Card(
@@ -444,13 +448,31 @@ fun ReviewItem(
                                 )
                             }
                         } else {
-                            IconButton(onClick = onReport, modifier = Modifier.size(24.dp).padding(start = 8.dp)) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier
+                                    .padding(start = 8.dp)
+                                    .clickable(enabled = !hasReported) {
+                                        onReport()
+                                        hasReported = true
+                                        prefs.edit().putBoolean("reported_review_${review.id}", true).apply()
+                                    }
+                                    .padding(horizontal = 4.dp, vertical = 4.dp)
+                            ) {
                                 Icon(
-                                    Icons.Default.Flag,
-                                    contentDescription = "Report Review",
+                                    if (hasReported) Icons.Default.Flag else Icons.Outlined.Flag,
+                                    contentDescription = if (hasReported) "Reported" else "Report Review",
                                     modifier = Modifier.size(16.dp),
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                    tint = if (hasReported) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
                                 )
+                                if (hasReported) {
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(
+                                        text = "Reported",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.error
+                                    )
+                                }
                             }
                         }
                     }
