@@ -45,7 +45,7 @@ fun FeastDetailsScreen(
     var isLoading by remember { mutableStateOf(true) }
     var isReporting by remember { mutableStateOf(false) }
     var showReportDialog by remember { mutableStateOf(false) }
-    var selectedFullScreenImage by remember { mutableStateOf<String?>(null) }
+    var selectedFullScreenImageIndex by remember { mutableStateOf<Int?>(null) }
     
     // Fetch feast details from backend
     LaunchedEffect(feastId) {
@@ -116,7 +116,7 @@ fun FeastDetailsScreen(
                             modifier = Modifier
                                 .height(260.dp)
                                 .maskClip(RoundedCornerShape(16.dp))
-                                .clickable { selectedFullScreenImage = feast!!.imageUrls[index] }
+                                .clickable { selectedFullScreenImageIndex = index }
                         ) {
                             AsyncImage(
                                 model = feast!!.imageUrls[index],
@@ -254,44 +254,12 @@ fun FeastDetailsScreen(
             }
         }
     }
-    
-    if (selectedFullScreenImage != null) {
-        androidx.compose.ui.window.Dialog(
-            onDismissRequest = { selectedFullScreenImage = null },
-            properties = androidx.compose.ui.window.DialogProperties(
-                usePlatformDefaultWidth = false,
-                dismissOnBackPress = true,
-                dismissOnClickOutside = true
-            )
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(androidx.compose.ui.graphics.Color.Black),
-                contentAlignment = Alignment.Center
-            ) {
-                AsyncImage(
-                    model = selectedFullScreenImage,
-                    contentDescription = "Full screen image",
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Fit
-                )
-                
-                IconButton(
-                    onClick = { selectedFullScreenImage = null },
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(16.dp)
-                        .statusBarsPadding()
-                ) {
-                    Icon(
-                        Icons.Default.Close,
-                        contentDescription = "Close",
-                        tint = androidx.compose.ui.graphics.Color.White
-                    )
-                }
-            }
-        }
+    if (selectedFullScreenImageIndex != null && feast?.imageUrls?.isNotEmpty() == true) {
+        com.example.bhandara.ui.components.FullScreenImageCarousel(
+            imageUrls = feast!!.imageUrls,
+            initialIndex = selectedFullScreenImageIndex!!,
+            onDismissRequest = { selectedFullScreenImageIndex = null }
+        )
     }
     
     // Report Dialog

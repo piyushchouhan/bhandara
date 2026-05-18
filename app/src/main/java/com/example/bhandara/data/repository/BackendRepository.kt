@@ -289,5 +289,82 @@ class BackendRepository {
             null
         }
     }
+
+    // --- Reviews ---
+    
+    suspend fun getReviewsForShop(shopId: String): List<com.example.bhandara.data.models.api.ReviewResponse> {
+        return try {
+            val response = apiService.getReviewsForShop(shopId)
+            if (response.isSuccessful) {
+                response.body() ?: emptyList()
+            } else {
+                Log.e(TAG, "❌ Failed to fetch reviews: ${response.code()}")
+                emptyList()
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ Error fetching reviews", e)
+            emptyList()
+        }
+    }
+    
+    suspend fun createReview(request: com.example.bhandara.data.models.api.ReviewRequest): com.example.bhandara.data.models.api.ReviewResponse? {
+        return try {
+            val response = apiService.createReview(request)
+            if (response.isSuccessful) {
+                response.body()
+            } else {
+                Log.e(TAG, "❌ Failed to create review: ${response.code()}")
+                null
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ Error creating review", e)
+            null
+        }
+    }
+    
+    suspend fun updateReview(id: String, request: com.example.bhandara.data.models.api.ReviewRequest): com.example.bhandara.data.models.api.ReviewResponse? {
+        return try {
+            val response = apiService.updateReview(id, request)
+            if (response.isSuccessful) {
+                response.body()
+            } else {
+                Log.e(TAG, "❌ Failed to update review: ${response.code()}")
+                null
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ Error updating review", e)
+            null
+        }
+    }
+    
+    suspend fun deleteReview(id: String): Boolean {
+        return try {
+            val response = apiService.deleteReview(id)
+            if (response.isSuccessful) {
+                true
+            } else {
+                Log.e(TAG, "❌ Failed to delete review: ${response.code()}")
+                false
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ Error deleting review", e)
+            false
+        }
+    }
+    
+    suspend fun reportReview(reviewId: String): com.example.bhandara.data.models.api.ReviewResponse? {
+        return try {
+            val response = apiService.reportReview(reviewId)
+            if (response.isSuccessful) {
+                response.body()
+            } else {
+                Log.e(TAG, "❌ Failed to report review: ${response.code()}")
+                null
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ Error reporting review", e)
+            null
+        }
+    }
 }
 

@@ -11,6 +11,7 @@ import com.example.bhandara.data.models.api.UpdateLocationRequest
 import com.example.bhandara.data.models.api.UpdateLocationResponse
 import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.PUT
@@ -172,4 +173,32 @@ interface ApiService {
         @Query("lng") lng: Double,
         @Query("radius") radius: Int = 500
     ): Response<List<HeatmapPoint>>
+
+    // --- Reviews ---
+    
+    @POST("api/reviews")
+    suspend fun createReview(
+        @Body request: com.example.bhandara.data.models.api.ReviewRequest
+    ): Response<com.example.bhandara.data.models.api.ReviewResponse>
+    
+    @PUT("api/reviews/{id}")
+    suspend fun updateReview(
+        @retrofit2.http.Path("id") id: String,
+        @Body request: com.example.bhandara.data.models.api.ReviewRequest
+    ): Response<com.example.bhandara.data.models.api.ReviewResponse>
+    
+    @DELETE("api/reviews/{id}")
+    suspend fun deleteReview(
+        @retrofit2.http.Path("id") id: String
+    ): Response<com.example.bhandara.data.models.api.GenericResponse>
+    
+    @GET("api/reviews/shop/{shopId}")
+    suspend fun getReviewsForShop(
+        @retrofit2.http.Path("shopId") shopId: String
+    ): Response<List<com.example.bhandara.data.models.api.ReviewResponse>>
+    
+    @PUT("api/reviews/{reviewId}/report")
+    suspend fun reportReview(
+        @retrofit2.http.Path("reviewId") reviewId: String
+    ): Response<com.example.bhandara.data.models.api.ReviewResponse>
 }

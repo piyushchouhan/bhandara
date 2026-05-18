@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.bhandara.data.models.api.LocalShopResponse
 import com.example.bhandara.data.repository.BackendRepository
+import com.example.bhandara.ui.components.ReviewsSection
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 import java.time.LocalTime
@@ -49,7 +50,7 @@ fun LocalShopDetailsScreen(
     var showDeactivateDialog by remember { mutableStateOf(false) }
     var showSuggestDeleteDialog by remember { mutableStateOf(false) }
     var selectedTabIndex by remember { mutableIntStateOf(0) }
-    var selectedFullScreenImage by remember { mutableStateOf<String?>(null) }
+    var selectedFullScreenImageIndex by remember { mutableStateOf<Int?>(null) }
     val currentUserUid = remember { FirebaseAuth.getInstance().currentUser?.uid }
     
     val prefs = context.getSharedPreferences("ShopActionsPrefs", android.content.Context.MODE_PRIVATE)
@@ -114,7 +115,7 @@ fun LocalShopDetailsScreen(
                             modifier = Modifier
                                 .height(260.dp)
                                 .maskClip(RoundedCornerShape(16.dp))
-                                .clickable { selectedFullScreenImage = shopImages[index] }
+                                .clickable { selectedFullScreenImageIndex = index }
                         ) {
                             AsyncImage(
                                 model = shopImages[index],
@@ -332,18 +333,10 @@ fun LocalShopDetailsScreen(
                     }
                 } else if (selectedTabIndex == 1) {
                     // Reviews Content
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 32.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "Reviews coming soon",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
+                    ReviewsSection(
+                        targetId = shopId,
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
                 }
             }
         } else {
@@ -359,43 +352,12 @@ fun LocalShopDetailsScreen(
         }
     }
 
-    if (selectedFullScreenImage != null) {
-        androidx.compose.ui.window.Dialog(
-            onDismissRequest = { selectedFullScreenImage = null },
-            properties = androidx.compose.ui.window.DialogProperties(
-                usePlatformDefaultWidth = false,
-                dismissOnBackPress = true,
-                dismissOnClickOutside = true
-            )
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(androidx.compose.ui.graphics.Color.Black),
-                contentAlignment = Alignment.Center
-            ) {
-                AsyncImage(
-                    model = selectedFullScreenImage,
-                    contentDescription = "Full screen image",
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Fit
-                )
-                
-                IconButton(
-                    onClick = { selectedFullScreenImage = null },
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(16.dp)
-                        .statusBarsPadding()
-                ) {
-                    Icon(
-                        Icons.Default.Close,
-                        contentDescription = "Close",
-                        tint = androidx.compose.ui.graphics.Color.White
-                    )
-                }
-            }
-        }
+    if (selectedFullScreenImageIndex != null && shop?.imageUrls?.isNotEmpty() == true) {
+        com.example.bhandara.ui.components.FullScreenImageCarousel(
+            imageUrls = shop!!.imageUrls!!,
+            initialIndex = selectedFullScreenImageIndex!!,
+            onDismissRequest = { selectedFullScreenImageIndex = null }
+        )
     }
 
     if (showReportDialog) {

@@ -81,3 +81,28 @@ data class LocalShopResponse(
     val createdBy: String? = null,
     val updatedBy: String? = null
 )
+
+data class ReviewRequest(
+    val shopId: String? = null, // Optional for PUT
+    val rating: Int,
+    val comment: String? = null,
+    val imageUrls: List<String>? = null
+)
+
+data class ReviewResponse(
+    val id: String,
+    val shopId: String,
+    val reviewerUid: String,
+    val rating: Int,
+    val comment: String? = null,
+    val imageUrls: List<String>? = null,
+    val isActive: Boolean? = null,
+    val createdAt: String? = null,
+    val updatedAt: String? = null,
+    val createdBy: String? = null,
+    val updatedBy: String? = null
+)
+
+data class GenericResponse(
+    val message: String
+)
