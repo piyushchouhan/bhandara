@@ -211,9 +211,8 @@ interface ApiService {
     ): Response<List<com.example.bhandara.data.models.api.MenuItemResponse>>
 
     @retrofit2.http.Multipart
-    @POST("api/menu-items/image/shop/{shopId}")
-    suspend fun addMenuItemsFromImage(
-        @retrofit2.http.Path("shopId") shopId: String,
+    @POST("api/menu-items/image/extract")
+    suspend fun extractMenuItemsFromImage(
         @retrofit2.http.Part images: List<okhttp3.MultipartBody.Part>
-    ): Response<List<com.example.bhandara.data.models.api.MenuItemResponse>>
+    ): Response<com.example.bhandara.data.models.api.MenuItemExtractResponse>
 }

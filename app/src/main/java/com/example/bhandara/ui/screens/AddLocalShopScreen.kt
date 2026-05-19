@@ -274,9 +274,56 @@ fun AddLocalShopScreen(
                 menuItemPrefs.edit().putString("draft_items", json).apply()
                 showDetailedMenuScreen = false
             },
+            onClearAll = {
+                draftDetailedMenuItems = emptyList()
+                menuItemPrefs.edit().remove("draft_items").apply()
+                showDetailedMenuScreen = false
+            },
             onNavigateBack = { showDetailedMenuScreen = false }
         )
         return
+    }
+
+    var showClearAllDialog by remember { mutableStateOf(false) }
+
+    if (showClearAllDialog) {
+        AlertDialog(
+            onDismissRequest = { showClearAllDialog = false },
+            title = { Text("Clear Entire Form?") },
+            text = { Text("This will clear all fields — shop name, type, menu items, images, and all other details. This cannot be undone.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        // Clear all form fields
+                        shopName = ""
+                        shopType = ""
+                        menuItems = listOf()
+                        currentMenuItem = ""
+                        ownerPhone = ""
+                        ownerEmail = ""
+                        cuisineType = ""
+                        description = ""
+                        averageCostForTwo = ""
+                        priceRange = ""
+                        fullAddress = ""
+                        landmark = ""
+                        selectedImages = listOf()
+                        homeDelivery = false
+                        takeaway = true
+                        hasSeating = true
+                        wifiAvailable = false
+                        draftDetailedMenuItems = emptyList()
+                        menuItemPrefs.edit().remove("draft_items").apply()
+                        errorMessage = null
+                        showClearAllDialog = false
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                ) { Text("Clear All") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showClearAllDialog = false }) { Text("Cancel") }
+            }
+        )
     }
 
     Scaffold(
@@ -286,6 +333,14 @@ fun AddLocalShopScreen(
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.Default.ArrowBack, "Back")
+                    }
+                },
+                actions = {
+                    TextButton(
+                        onClick = { showClearAllDialog = true },
+                        colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                    ) {
+                        Text("Clear Menu")
                     }
                 }
             )

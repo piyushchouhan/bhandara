@@ -59,6 +59,7 @@ fun AddMenuItemsScreen(
     shopId: String? = null,
     initialItems: List<MenuItemRequest> = emptyList(),
     onSaveItems: ((List<MenuItemRequest>) -> Unit)? = null,
+    onClearAll: (() -> Unit)? = null,
     onNavigateBack: () -> Unit
 ) {
     val context = LocalContext.current
@@ -68,6 +69,27 @@ fun AddMenuItemsScreen(
     var selectedTab by remember { mutableIntStateOf(0) }
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    var showClearDialog by remember { mutableStateOf(false) }
+
+    if (showClearDialog) {
+        AlertDialog(
+            onDismissRequest = { showClearDialog = false },
+            title = { Text("Clear All Items?") },
+            text = { Text("This will remove all draft menu items. You'll start fresh.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showClearDialog = false
+                        onClearAll?.invoke()
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                ) { Text("Clear All") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showClearDialog = false }) { Text("Cancel") }
+            }
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -76,6 +98,16 @@ fun AddMenuItemsScreen(
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
+                    }
+                },
+                actions = {
+                    if (onClearAll != null) {
+                        TextButton(
+                            onClick = { showClearDialog = true },
+                            colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                        ) {
+                            Text("Clear All")
+                        }
                     }
                 }
             )
@@ -321,24 +353,22 @@ fun AiImageScanSection(
     var showImageSourceSheet by remember { mutableStateOf(false) }
     var tempPhotoUri by remember { mutableStateOf<Uri?>(null) }
 
+    // Once AI extracts items, we switch to the editable review phase
+    var extractedItems by remember { mutableStateOf<List<MenuItemRequest>?>(null) }
+
     fun createTempImageUri(): Uri {
         val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
-        val imageFileName = "JPEG_${timeStamp}_"
         val storageDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)
-        val image = File.createTempFile(imageFileName, ".jpg", storageDir)
+        val image = File.createTempFile("MENU_${timeStamp}_", ".jpg", storageDir)
         return FileProvider.getUriForFile(context, "${context.packageName}.provider", image)
     }
 
-    val cameraLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.TakePicture()
-    ) { success ->
+    val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
         if (success && tempPhotoUri != null) selectedImages = selectedImages + tempPhotoUri!!
         showImageSourceSheet = false
     }
 
-    val cameraPermissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
         if (isGranted) {
             tempPhotoUri = createTempImageUri()
             cameraLauncher.launch(tempPhotoUri!!)
@@ -348,21 +378,176 @@ fun AiImageScanSection(
     }
 
     val galleryLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickMultipleVisualMedia(maxItems = 10)
+        ActivityResultContracts.PickMultipleVisualMedia(maxItems = 10)
     ) { uris ->
         selectedImages = selectedImages + uris
         showImageSourceSheet = false
     }
 
+    // Phase 2: Show extracted items in an editable form
+    if (extractedItems != null) {
+        var editableItems by remember { mutableStateOf(extractedItems!!) }
+
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Card(
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Text(
+                        "✅ AI extracted ${editableItems.size} item(s). Review and edit before saving.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                }
+            }
+
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                editableItems.forEachIndexed { index, item ->
+                    Card(modifier = Modifier.fillMaxWidth()) {
+                        Column(
+                            modifier = Modifier.padding(12.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text("Item ${index + 1}", fontWeight = FontWeight.Bold)
+                                IconButton(onClick = {
+                                    editableItems = editableItems.toMutableList().apply { removeAt(index) }
+                                }) {
+                                    Icon(Icons.Default.Close, "Remove", tint = MaterialTheme.colorScheme.error)
+                                }
+                            }
+
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                OutlinedTextField(
+                                    value = item.name,
+                                    onValueChange = { newName ->
+                                        editableItems = editableItems.toMutableList()
+                                            .apply { this[index] = item.copy(name = newName) }
+                                    },
+                                    label = { Text("Dish Name") },
+                                    modifier = Modifier.weight(2f)
+                                )
+                                OutlinedTextField(
+                                    value = item.price?.let {
+                                        if (it % 1 == 0.0) it.toInt().toString() else it.toString()
+                                    } ?: "",
+                                    onValueChange = { newPrice ->
+                                        val v = newPrice.toDoubleOrNull()
+                                        if (newPrice.isEmpty() || v != null) {
+                                            editableItems = editableItems.toMutableList()
+                                                .apply { this[index] = item.copy(price = v) }
+                                        }
+                                    },
+                                    label = { Text("Price (₹)") },
+                                    modifier = Modifier.weight(1f),
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                                )
+                            }
+
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    RadioButton(
+                                        selected = item.foodType == "VEG",
+                                        onClick = {
+                                            editableItems = editableItems.toMutableList()
+                                                .apply { this[index] = item.copy(foodType = "VEG") }
+                                        }
+                                    )
+                                    Text("Veg")
+                                }
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    RadioButton(
+                                        selected = item.foodType == "NON_VEG",
+                                        onClick = {
+                                            editableItems = editableItems.toMutableList()
+                                                .apply { this[index] = item.copy(foodType = "NON_VEG") }
+                                        }
+                                    )
+                                    Text("Non-Veg")
+                                }
+                            }
+                        }
+                    }
+                }
+
+                OutlinedButton(
+                    onClick = {
+                        editableItems = editableItems + MenuItemRequest("", "VEG")
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(Icons.Default.Add, null)
+                    Spacer(Modifier.width(8.dp))
+                    Text("Add Another Item")
+                }
+
+                Spacer(Modifier.height(8.dp))
+            }
+
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(
+                    onClick = { extractedItems = null },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("Re-scan")
+                }
+
+                Button(
+                    onClick = {
+                        val validItems = editableItems.filter { it.name.isNotBlank() }
+                        if (validItems.isEmpty()) {
+                            onError("Please keep at least one item.")
+                            return@Button
+                        }
+                        if (onSaveItems != null) {
+                            onSaveItems(validItems)
+                        } else if (shopId != null) {
+                            scope.launch {
+                                onLoadingChange(true)
+                                onError(null)
+                                val response = repository.addMenuItemsManual(
+                                    shopId,
+                                    com.example.bhandara.data.models.api.ManualMenuItemsRequest(validItems)
+                                )
+                                if (response != null) onSuccess()
+                                else onError("Failed to save menu items.")
+                                onLoadingChange(false)
+                            }
+                        }
+                    },
+                    modifier = Modifier.weight(2f),
+                    enabled = !isLoading
+                ) {
+                    Text(if (onSaveItems != null) "Save & Go Back" else "Save Menu Items")
+                }
+            }
+        }
+        return
+    }
+
+    // Phase 1: Image upload UI
     Column(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Text(
-            text = if (shopId == null)
-                "Upload photos of your menu. After scanning, items will be saved as a draft and submitted when you create the shop."
-            else
-                "Upload photos of the menu. Our AI will automatically extract the dish names and types!",
+            text = "Upload photos of your menu. AI will extract the items — you can review and edit before saving.",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -393,9 +578,7 @@ fun AiImageScanSection(
                         AsyncImage(
                             model = uri,
                             contentDescription = null,
-                            modifier = Modifier
-                                .size(120.dp)
-                                .clip(RoundedCornerShape(8.dp)),
+                            modifier = Modifier.size(120.dp).clip(RoundedCornerShape(8.dp)),
                             contentScale = ContentScale.Crop
                         )
                         IconButton(
@@ -403,8 +586,7 @@ fun AiImageScanSection(
                             modifier = Modifier.align(Alignment.TopEnd)
                         ) {
                             Icon(
-                                Icons.Default.Close,
-                                contentDescription = "Remove",
+                                Icons.Default.Close, "Remove",
                                 tint = MaterialTheme.colorScheme.error,
                                 modifier = Modifier.background(
                                     MaterialTheme.colorScheme.surface.copy(alpha = 0.6f),
@@ -435,22 +617,16 @@ fun AiImageScanSection(
                     onError("Please add at least one photo of the menu.")
                     return@Button
                 }
-
                 scope.launch {
                     onLoadingChange(true)
                     onError(null)
 
                     val parts = withContext(Dispatchers.IO) {
                         selectedImages.mapNotNull { uri ->
-                            val inputStream =
-                                context.contentResolver.openInputStream(uri) ?: return@mapNotNull null
-                            val bytes = inputStream.readBytes()
+                            val stream = context.contentResolver.openInputStream(uri) ?: return@mapNotNull null
+                            val bytes = stream.readBytes()
                             val requestBody = bytes.toRequestBody("image/*".toMediaTypeOrNull())
-                            MultipartBody.Part.createFormData(
-                                "images",
-                                "menu_${System.currentTimeMillis()}.jpg",
-                                requestBody
-                            )
+                            MultipartBody.Part.createFormData("images", "menu_${System.currentTimeMillis()}.jpg", requestBody)
                         }
                     }
 
@@ -460,18 +636,14 @@ fun AiImageScanSection(
                         return@launch
                     }
 
-                    if (shopId != null) {
-                        // Direct API mode
-                        val response = repository.addMenuItemsFromImage(shopId, parts)
-                        if (response != null) {
-                            onSuccess()
-                        } else {
-                            onError("Failed to analyze menu images.")
-                        }
-                    } else if (onSaveItems != null) {
-                        // Draft mode: scan images but save result as local draft
-                        // We still need a real shopId to call the API, so inform the user
-                        onError("AI scan requires the shop to be created first. Use Manual Entry to add items now, or create the shop and then use AI scan from the shop details page.")
+                    val response = repository.extractMenuItemsFromImage(parts)
+                    if (response != null && response.items.isNotEmpty()) {
+                        extractedItems = response.items
+                        onError(null)
+                    } else if (response != null && response.items.isEmpty()) {
+                        onError("AI couldn't find any menu items in these photos. Try clearer images.")
+                    } else {
+                        onError("Failed to analyze menu images. Please try again.")
                     }
                     onLoadingChange(false)
                 }
@@ -487,7 +659,7 @@ fun AiImageScanSection(
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("Analyzing with AI...")
             } else {
-                Text("Scan and Add Items")
+                Text("Scan Menu Photos")
             }
         }
     }
@@ -505,8 +677,7 @@ fun AiImageScanSection(
                     leadingContent = { Icon(Icons.Default.PhotoCamera, null) },
                     modifier = Modifier.clickable {
                         if (ContextCompat.checkSelfPermission(
-                                context,
-                                Manifest.permission.CAMERA
+                                context, Manifest.permission.CAMERA
                             ) == android.content.pm.PackageManager.PERMISSION_GRANTED
                         ) {
                             tempPhotoUri = createTempImageUri()
@@ -527,3 +698,4 @@ fun AiImageScanSection(
         }
     }
 }
+

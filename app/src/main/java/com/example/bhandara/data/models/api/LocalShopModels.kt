@@ -135,3 +135,7 @@ data class MenuItemResponse(
     val createdBy: String? = null,
     val updatedBy: String? = null
 )
+
+data class MenuItemExtractResponse(
+    val items: List<MenuItemRequest>
+)

@@ -384,17 +384,17 @@ class BackendRepository {
         }
     }
 
-    suspend fun addMenuItemsFromImage(shopId: String, images: List<okhttp3.MultipartBody.Part>): List<com.example.bhandara.data.models.api.MenuItemResponse>? {
+    suspend fun extractMenuItemsFromImage(images: List<okhttp3.MultipartBody.Part>): com.example.bhandara.data.models.api.MenuItemExtractResponse? {
         return try {
-            val response = apiService.addMenuItemsFromImage(shopId, images)
+            val response = apiService.extractMenuItemsFromImage(images)
             if (response.isSuccessful) {
                 response.body()
             } else {
-                Log.e(TAG, "❌ Failed to add menu items from image: ${response.code()}")
+                Log.e(TAG, "❌ Failed to extract menu items from image: ${response.code()}")
                 null
             }
         } catch (e: Exception) {
-            Log.e(TAG, "❌ Error adding menu items from image", e)
+            Log.e(TAG, "❌ Error extracting menu items from image", e)
             null
         }
     }
