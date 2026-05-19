@@ -366,5 +366,37 @@ class BackendRepository {
             null
         }
     }
+
+    // --- Menu Items ---
+
+    suspend fun addMenuItemsManual(shopId: String, request: com.example.bhandara.data.models.api.ManualMenuItemsRequest): List<com.example.bhandara.data.models.api.MenuItemResponse>? {
+        return try {
+            val response = apiService.addMenuItemsManual(shopId, request)
+            if (response.isSuccessful) {
+                response.body()
+            } else {
+                Log.e(TAG, "❌ Failed to add manual menu items: ${response.code()}")
+                null
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ Error adding manual menu items", e)
+            null
+        }
+    }
+
+    suspend fun addMenuItemsFromImage(shopId: String, images: List<okhttp3.MultipartBody.Part>): List<com.example.bhandara.data.models.api.MenuItemResponse>? {
+        return try {
+            val response = apiService.addMenuItemsFromImage(shopId, images)
+            if (response.isSuccessful) {
+                response.body()
+            } else {
+                Log.e(TAG, "❌ Failed to add menu items from image: ${response.code()}")
+                null
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ Error adding menu items from image", e)
+            null
+        }
+    }
 }
 

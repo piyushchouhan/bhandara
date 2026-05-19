@@ -100,6 +100,27 @@ fun AddLocalShopScreen(
     var priceRangeExpanded by remember { mutableStateOf(false) }
     val priceRanges = listOf("$", "$$", "$$$", "$$$$")
 
+    // Detailed menu items (from AddMenuItemsScreen, saved locally before shop is created)
+    val menuItemPrefs = remember { context.getSharedPreferences("DraftMenuItems", android.content.Context.MODE_PRIVATE) }
+    val initialDraftItems: List<com.example.bhandara.data.models.api.MenuItemRequest> = remember {
+        val json = menuItemPrefs.getString("draft_items", null)
+        if (json != null) {
+            try {
+                val arr = org.json.JSONArray(json)
+                List(arr.length()) { i ->
+                    val obj = arr.getJSONObject(i)
+                    com.example.bhandara.data.models.api.MenuItemRequest(
+                        name = obj.getString("name"),
+                        foodType = obj.getString("foodType"),
+                        price = if (obj.has("price") && !obj.isNull("price")) obj.getDouble("price") else null
+                    )
+                }
+            } catch (e: Exception) { listOf() }
+        } else listOf()
+    }
+    var draftDetailedMenuItems by remember { mutableStateOf(initialDraftItems) }
+    var showDetailedMenuScreen by remember { mutableStateOf(false) }
+
     // Camera/Image logic
     var showImageSourceSheet by remember { mutableStateOf(false) }
     var tempPhotoUri by remember { mutableStateOf<Uri?>(null) }
@@ -139,6 +160,125 @@ fun AddLocalShopScreen(
         showImageSourceSheet = false
     }
 
+    val saveShop: () -> Unit = {
+        scope.launch {
+            val finalMenuItems = if (currentMenuItem.isNotBlank()) {
+                menuItems + currentMenuItem.trim()
+            } else {
+                menuItems
+            }
+
+            // Validation
+            if (shopName.isBlank()) {
+                errorMessage = "Shop name is required"
+                return@launch
+            }
+            if (shopType.isBlank()) {
+                errorMessage = "Shop type is required"
+                return@launch
+            }
+            val allMenuItems = (finalMenuItems + draftDetailedMenuItems.map { it.name }).distinct()
+            if (allMenuItems.isEmpty()) {
+                errorMessage = "At least one menu item is required"
+                return@launch
+            }
+
+            isLoading = true
+            errorMessage = null
+
+            try {
+                val firebaseUid = userRepository.getCurrentUserId()
+                if (firebaseUid == null) {
+                    errorMessage = "User not authenticated"
+                    isLoading = false
+                    return@launch
+                }
+
+                val location = locationHelper.getCurrentLocation()
+                if (location == null) {
+                    errorMessage = "Could not get your location. Please enable GPS."
+                    isLoading = false
+                    return@launch
+                }
+
+                // Upload images if any
+                var imageUrls: List<String>? = null
+                if (selectedImages.isNotEmpty()) {
+                    imageUrls = imageUploadHelper.uploadImages(selectedImages) { progress ->
+                        uploadProgress = progress
+                    }
+                }
+
+                val request = LocalShopRequest(
+                    ownerUid = firebaseUid,
+                    ownerPhone = ownerPhone.ifBlank { null },
+                    ownerEmail = ownerEmail.ifBlank { null },
+                    shopName = shopName.trim(),
+                    shopType = shopType,
+                    cuisineType = cuisineType.ifBlank { null },
+                    description = description.ifBlank { null },
+                    menuItems = allMenuItems,
+                    priceRange = priceRange.ifBlank { null },
+                    averageCostForTwo = averageCostForTwo.toIntOrNull(),
+                    imageUrls = imageUrls,
+                    latitude = location.latitude,
+                    longitude = location.longitude,
+                    fullAddress = fullAddress.ifBlank { null },
+                    landmark = landmark.ifBlank { null },
+                    homeDelivery = homeDelivery,
+                    takeaway = takeaway,
+                    hasSeating = hasSeating,
+                    wifiAvailable = wifiAvailable
+                )
+
+                val response = backendRepository.createLocalShop(request)
+                if (response != null) {
+                    // Now save the detailed menu items if any
+                    if (draftDetailedMenuItems.isNotEmpty()) {
+                        backendRepository.addMenuItemsManual(
+                            response.id,
+                            com.example.bhandara.data.models.api.ManualMenuItemsRequest(draftDetailedMenuItems)
+                        )
+                    }
+                    // Clear local draft
+                    menuItemPrefs.edit().remove("draft_items").apply()
+                    onNavigateBack()
+                } else {
+                    errorMessage = "Failed to add shop. Please try again."
+                }
+            } catch (e: Exception) {
+                errorMessage = "Error: ${e.message}"
+            } finally {
+                isLoading = false
+                uploadProgress = 0
+            }
+        }
+    }
+
+    // Show the detailed menu local form (no API calls, just local state)
+    if (showDetailedMenuScreen) {
+        AddMenuItemsScreen(
+            initialItems = draftDetailedMenuItems,
+            onSaveItems = { items ->
+                draftDetailedMenuItems = items
+                // Persist to SharedPreferences
+                val json = org.json.JSONArray().apply {
+                    items.forEach { item ->
+                        put(org.json.JSONObject().apply {
+                            put("name", item.name)
+                            put("foodType", item.foodType)
+                            if (item.price != null) put("price", item.price) else put("price", org.json.JSONObject.NULL)
+                        })
+                    }
+                }.toString()
+                menuItemPrefs.edit().putString("draft_items", json).apply()
+                showDetailedMenuScreen = false
+            },
+            onNavigateBack = { showDetailedMenuScreen = false }
+        )
+        return
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -157,101 +297,12 @@ fun AddLocalShopScreen(
                 tonalElevation = 3.dp
             ) {
                 Button(
-                    onClick = {
-                        scope.launch {
-                            val finalMenuItems = if (currentMenuItem.isNotBlank()) {
-                                menuItems + currentMenuItem.trim()
-                            } else {
-                                menuItems
-                            }
-
-                            // Validation
-                            if (shopName.isBlank()) {
-                                errorMessage = "Shop name is required"
-                                return@launch
-                            }
-                            if (shopType.isBlank()) {
-                                errorMessage = "Shop type is required"
-                                return@launch
-                            }
-                            if (finalMenuItems.isEmpty()) {
-                                errorMessage = "At least one menu item is required"
-                                return@launch
-                            }
-
-                            isLoading = true
-                            errorMessage = null
-
-                            try {
-                                val firebaseUid = userRepository.getCurrentUserId()
-                                if (firebaseUid == null) {
-                                    errorMessage = "User not authenticated"
-                                    isLoading = false
-                                    return@launch
-                                }
-
-                                val location = locationHelper.getCurrentLocation()
-                                if (location == null) {
-                                    errorMessage = "Could not get your location. Please enable GPS."
-                                    isLoading = false
-                                    return@launch
-                                }
-
-                                // Upload images if any
-                                var imageUrls: List<String>? = null
-                                if (selectedImages.isNotEmpty()) {
-                                    imageUrls = imageUploadHelper.uploadImages(selectedImages) { progress ->
-                                        uploadProgress = progress
-                                    }
-                                }
-
-                                val request = LocalShopRequest(
-                                    ownerUid = firebaseUid,
-                                    ownerPhone = ownerPhone.ifBlank { null },
-                                    ownerEmail = ownerEmail.ifBlank { null },
-                                    shopName = shopName.trim(),
-                                    shopType = shopType,
-                                    cuisineType = cuisineType.ifBlank { null },
-                                    description = description.ifBlank { null },
-                                    menuItems = finalMenuItems,
-                                    priceRange = priceRange.ifBlank { null },
-                                    averageCostForTwo = averageCostForTwo.toIntOrNull(),
-                                    imageUrls = imageUrls,
-                                    latitude = location.latitude,
-                                    longitude = location.longitude,
-                                    fullAddress = fullAddress.ifBlank { null },
-                                    landmark = landmark.ifBlank { null },
-                                    homeDelivery = homeDelivery,
-                                    takeaway = takeaway,
-                                    hasSeating = hasSeating,
-                                    wifiAvailable = wifiAvailable
-                                )
-
-                                val response = backendRepository.createLocalShop(request)
-                                if (response != null) {
-                                    onNavigateBack()
-                                } else {
-                                    errorMessage = "Failed to add shop. Please try again."
-                                }
-                            } catch (e: Exception) {
-                                errorMessage = "Error: ${e.message}"
-                            } finally {
-                                isLoading = false
-                                uploadProgress = 0
-                            }
-                        }
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                        .height(48.dp),
+                    onClick = { saveShop() },
+                    modifier = Modifier.fillMaxWidth().padding(16.dp).height(48.dp),
                     enabled = !isLoading
                 ) {
                     if (isLoading) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(24.dp),
-                            color = MaterialTheme.colorScheme.onPrimary
-                        )
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp), color = MaterialTheme.colorScheme.onPrimary)
                     } else {
                         Icon(Icons.Default.Storefront, null, modifier = Modifier.size(20.dp))
                         Spacer(modifier = Modifier.width(8.dp))
@@ -458,6 +509,44 @@ fun AddLocalShopScreen(
                         }
                     )
                 )
+
+                Text(
+                    text = "Want to add detailed menu with pricing and types? Use the button below.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+
+                if (draftDetailedMenuItems.isNotEmpty()) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "${draftDetailedMenuItems.size} detailed item(s) added",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.weight(1f)
+                            )
+                            TextButton(onClick = { showDetailedMenuScreen = true }) {
+                                Text("Edit")
+                            }
+                        }
+                    }
+                }
+                
+                OutlinedButton(
+                    onClick = { showDetailedMenuScreen = true },
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
+                ) {
+                    Icon(Icons.Default.MenuBook, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(if (draftDetailedMenuItems.isEmpty()) "Add Detailed Menu Items" else "Update Detailed Menu Items")
+                }
             }
 
             Divider(modifier = Modifier.padding(vertical = 8.dp))

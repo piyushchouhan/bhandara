@@ -106,3 +106,32 @@ data class ReviewResponse(
 data class GenericResponse(
     val message: String
 )
+
+// --- Menu Items ---
+
+data class MenuItemRequest(
+    val name: String,
+    val foodType: String,
+    val price: Double? = null,
+    val isAvailable: Boolean = true
+)
+
+data class ManualMenuItemsRequest(
+    val items: List<MenuItemRequest>
+)
+
+data class MenuItemResponse(
+    val id: String,
+    val shopId: String,
+    val name: String,
+    val foodType: String,
+    val price: Double? = null,
+    val isAvailable: Boolean,
+    val isActive: Boolean? = null,
+    val source: String? = null,
+    val confidence: Double? = null,
+    val createdAt: String? = null,
+    val updatedAt: String? = null,
+    val createdBy: String? = null,
+    val updatedBy: String? = null
+)

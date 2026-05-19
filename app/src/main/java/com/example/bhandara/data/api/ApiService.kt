@@ -201,4 +201,19 @@ interface ApiService {
     suspend fun reportReview(
         @retrofit2.http.Path("reviewId") reviewId: String
     ): Response<com.example.bhandara.data.models.api.ReviewResponse>
+
+    // --- Menu Items ---
+
+    @POST("api/menu-items/manual/shop/{shopId}")
+    suspend fun addMenuItemsManual(
+        @retrofit2.http.Path("shopId") shopId: String,
+        @Body request: com.example.bhandara.data.models.api.ManualMenuItemsRequest
+    ): Response<List<com.example.bhandara.data.models.api.MenuItemResponse>>
+
+    @retrofit2.http.Multipart
+    @POST("api/menu-items/image/shop/{shopId}")
+    suspend fun addMenuItemsFromImage(
+        @retrofit2.http.Path("shopId") shopId: String,
+        @retrofit2.http.Part images: List<okhttp3.MultipartBody.Part>
+    ): Response<List<com.example.bhandara.data.models.api.MenuItemResponse>>
 }
