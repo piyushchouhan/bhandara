@@ -35,7 +35,8 @@ data class LocalShopRequest(
     val onlinePayment: Boolean? = false,
     val parking: String? = null,
     val wifiAvailable: Boolean? = false,
-    val isMovingCart: Boolean? = false
+    val isMovingCart: Boolean? = false,
+    val mapIcon: String? = null
 )
 
 data class LocalShopResponse(
@@ -81,7 +82,8 @@ data class LocalShopResponse(
     val updatedAt: String? = null,
     val createdBy: String? = null,
     val updatedBy: String? = null,
-    val isMovingCart: Boolean? = null
+    val isMovingCart: Boolean? = null,
+    val mapIcon: String? = null
 )
 
 data class ReviewRequest(

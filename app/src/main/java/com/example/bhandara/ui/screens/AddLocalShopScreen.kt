@@ -96,6 +96,7 @@ fun AddLocalShopScreen(
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var showMovingCartDialog by remember { mutableStateOf(true) }
     var isMovingCart by remember { mutableStateOf(false) }
+    var selectedMapIcon by remember { mutableStateOf("default") }
     
     // Dropdowns
     var shopTypeExpanded by remember { mutableStateOf(false) }
@@ -233,7 +234,8 @@ fun AddLocalShopScreen(
                     takeaway = takeaway,
                     hasSeating = hasSeating,
                     wifiAvailable = wifiAvailable,
-                    isMovingCart = isMovingCart
+                    isMovingCart = isMovingCart,
+                    mapIcon = selectedMapIcon
                 )
 
                 val response = backendRepository.createLocalShop(request)
@@ -635,6 +637,43 @@ fun AddLocalShopScreen(
                     Icon(Icons.Default.MenuBook, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(if (draftDetailedMenuItems.isEmpty()) "Add Detailed Menu Items" else "Update Detailed Menu Items")
+                }
+
+                // Map Icon Picker
+                val mapIconOptions = listOf(
+                    "chai_stall" to "☕ Chai Stall",
+                    "veg_cart"   to "🥗 Veg Cart",
+                    "juice_cart" to "🍹 Juice Cart",
+                    "snacks_cart" to "🍿 Snacks Cart",
+                    "biryani_cart" to "🍛 Biryani Cart",
+                    "fruit_cart" to "🍎 Fruit Cart",
+                    "restaurant" to "🍽️ Restaurant",
+                    "cafe"       to "☕ Cafe",
+                    "bakery"     to "🥐 Bakery",
+                    "default"    to "🛒 Other"
+                )
+                Text(
+                    text = "Map Icon",
+                    style = MaterialTheme.typography.labelLarge,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+                Text(
+                    text = "Choose how your shop appears on the map",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    mapIconOptions.forEach { (slug, label) ->
+                        FilterChip(
+                            selected = selectedMapIcon == slug,
+                            onClick = { selectedMapIcon = slug },
+                            label = { Text(label) }
+                        )
+                    }
                 }
             }
 

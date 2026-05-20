@@ -2,8 +2,18 @@ package com.example.bhandara.ui.screens
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.Typeface
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -399,6 +409,9 @@ fun LocalShopsMapScreen(
                 // ── Shop markers (hidden when moving vendor mode is on) ───────
                 if (!showMovingVendors) {
                     nearbyShops.forEach { shop ->
+                        val icon = remember(shop.id) {
+                            emojiToBitmapDescriptor(mapIconToEmoji(shop.mapIcon), sizeDp = 72)
+                        }
                         Marker(
                             state = MarkerState(position = LatLng(shop.latitude, shop.longitude)),
                             title = shop.shopName,
@@ -409,7 +422,7 @@ fun LocalShopsMapScreen(
                                     append(" • ${String.format("%.1f", distanceKm)} km away")
                                 }
                             },
-                            icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE),
+                            icon = icon,
                             onClick = {
                                 onShopClick(shop.id)
                                 true
@@ -421,11 +434,14 @@ fun LocalShopsMapScreen(
                 // ── Moving cart markers ───────────────────────────────────────
                 if (showMovingVendors) {
                     movingCarts.forEach { cart ->
+                        val icon = remember(cart.id) {
+                            emojiToBitmapDescriptor(mapIconToEmoji(cart.mapIcon), sizeDp = 72)
+                        }
                         Marker(
                             state = MarkerState(position = LatLng(cart.latitude, cart.longitude)),
                             title = cart.shopName,
-                            snippet = "🛒 Moving Vendor",
-                            icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE),
+                            snippet = "Moving Vendor",
+                            icon = icon,
                             onClick = {
                                 trackedCartShopId = cart.id.toLongOrNull() ?: -1L
                                 trackedCartName = cart.shopName
@@ -503,6 +519,36 @@ fun LocalShopsMapScreen(
 }
 
 // ─── Helper ───────────────────────────────────────────────────────────────────
+
+/** Maps a backend mapIcon slug to a display emoji. */
+private fun mapIconToEmoji(slug: String?): String = when (slug) {
+    "chai_stall"   -> "☕"
+    "veg_cart"     -> "🥗"
+    "juice_cart"   -> "🍹"
+    "snacks_cart"  -> "🍿"
+    "biryani_cart" -> "🍛"
+    "fruit_cart"   -> "🍎"
+    "restaurant"   -> "🍽️"
+    "cafe"         -> "☕"
+    "bakery"       -> "🥐"
+    else           -> "🛒"
+}
+
+/** Renders an emoji string into a [BitmapDescriptor] for use as a map marker icon. */
+private fun emojiToBitmapDescriptor(emoji: String, sizeDp: Int): com.google.android.gms.maps.model.BitmapDescriptor {
+    val size = sizeDp.coerceAtLeast(24)
+    val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bitmap)
+    val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        textSize = size * 0.75f
+        textAlign = Paint.Align.CENTER
+        typeface = Typeface.DEFAULT
+    }
+    val x = size / 2f
+    val y = size / 2f - (paint.ascent() + paint.descent()) / 2f
+    canvas.drawText(emoji, x, y, paint)
+    return BitmapDescriptorFactory.fromBitmap(bitmap)
+}
 
 /**
  * Builds a [HeatmapTileProvider] from the list of points returned by the API.
