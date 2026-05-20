@@ -19,7 +19,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.lifecycleScope
 import com.example.bhandara.managers.UserManager
-import com.example.bhandara.ui.components.LanguageSwitcher
+import com.example.bhandara.ui.components.AppDrawerMenu
 import com.example.bhandara.ui.screens.FeastDetailsScreen
 import com.example.bhandara.ui.screens.HomeScreen
 import com.example.bhandara.ui.screens.HungryScreen
@@ -101,24 +101,21 @@ class MainActivity : AppCompatActivity() {
                 }
                 
                 Scaffold(
-                    modifier = Modifier.fillMaxSize(),
-                    topBar = { 
-                        if (currentScreen == Screen.HOME) {
-                            LanguageSwitcher() 
-                        }
-                    }
+                    modifier = Modifier.fillMaxSize()
                 ) { innerPadding ->
                     when (currentScreen) {
                         Screen.HOME -> {
-                            HomeScreen(
-                                modifier = Modifier.padding(innerPadding),
-                                selectedTabIndex = homeTabIndex,
-                                onTabSelected = { homeTabIndex = it },
-                                onHungryClick = { navigateTo(Screen.HUNGRY) },
-                                onReportFeastClick = { navigateTo(Screen.REPORT_BHANDARA) },
-                                onFindShopsClick = { navigateTo(Screen.LOCAL_SHOPS_MAP) },
-                                onAddShopClick = { navigateTo(Screen.ADD_LOCAL_SHOP) }
-                            )
+                            AppDrawerMenu {
+                                HomeScreen(
+                                    modifier = Modifier.padding(innerPadding),
+                                    selectedTabIndex = homeTabIndex,
+                                    onTabSelected = { homeTabIndex = it },
+                                    onHungryClick = { navigateTo(Screen.HUNGRY) },
+                                    onReportFeastClick = { navigateTo(Screen.REPORT_BHANDARA) },
+                                    onFindShopsClick = { navigateTo(Screen.LOCAL_SHOPS_MAP) },
+                                    onAddShopClick = { navigateTo(Screen.ADD_LOCAL_SHOP) }
+                                )
+                            }
                         }
                         Screen.HUNGRY -> {
                             HungryScreen(

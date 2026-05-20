@@ -32,9 +32,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import coil.compose.AsyncImage
+import com.example.bhandara.R
 import com.example.bhandara.data.models.api.LocalShopRequest
 import com.example.bhandara.data.repository.BackendRepository
 import com.example.bhandara.data.repository.UserRepository
@@ -92,6 +94,8 @@ fun AddLocalShopScreen(
     var isLoading by remember { mutableStateOf(false) }
     var uploadProgress by remember { mutableStateOf(0) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    var showMovingCartDialog by remember { mutableStateOf(true) }
+    var isMovingCart by remember { mutableStateOf(false) }
     
     // Dropdowns
     var shopTypeExpanded by remember { mutableStateOf(false) }
@@ -228,7 +232,8 @@ fun AddLocalShopScreen(
                     homeDelivery = homeDelivery,
                     takeaway = takeaway,
                     hasSeating = hasSeating,
-                    wifiAvailable = wifiAvailable
+                    wifiAvailable = wifiAvailable,
+                    isMovingCart = isMovingCart
                 )
 
                 val response = backendRepository.createLocalShop(request)
@@ -239,6 +244,14 @@ fun AddLocalShopScreen(
                             response.id,
                             com.example.bhandara.data.models.api.ManualMenuItemsRequest(draftDetailedMenuItems)
                         )
+                    }
+                    // Save vendor info if moving cart
+                    if (isMovingCart) {
+                        val vendorPrefs = context.getSharedPreferences("VendorPrefs", android.content.Context.MODE_PRIVATE)
+                        vendorPrefs.edit()
+                            .putLong("vendor_shop_id", response.id.toLongOrNull() ?: -1L)
+                            .putString("vendor_owner_uid", firebaseUid)
+                            .apply()
                     }
                     // Clear local draft
                     menuItemPrefs.edit().remove("draft_items").apply()
@@ -326,6 +339,27 @@ fun AddLocalShopScreen(
         )
     }
 
+    // Moving Cart Dialog
+    if (showMovingCartDialog) {
+        AlertDialog(
+            onDismissRequest = { showMovingCartDialog = false },
+            title = { Text(stringResource(R.string.is_moving_cart_title)) },
+            text = { Text(stringResource(R.string.is_moving_cart_message)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    isMovingCart = true
+                    showMovingCartDialog = false
+                }) { Text(stringResource(R.string.yes)) }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    isMovingCart = false
+                    showMovingCartDialog = false
+                }) { Text(stringResource(R.string.no)) }
+            }
+        )
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -340,7 +374,7 @@ fun AddLocalShopScreen(
                         onClick = { showClearAllDialog = true },
                         colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
                     ) {
-                        Text("Clear Menu")
+                        Text("Clear All")
                     }
                 }
             )

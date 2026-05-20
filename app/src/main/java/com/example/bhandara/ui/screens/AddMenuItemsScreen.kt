@@ -74,7 +74,7 @@ fun AddMenuItemsScreen(
     if (showClearDialog) {
         AlertDialog(
             onDismissRequest = { showClearDialog = false },
-            title = { Text("Clear All Items?") },
+            title = { Text("Clear All Menu Items?") },
             text = { Text("This will remove all draft menu items. You'll start fresh.") },
             confirmButton = {
                 TextButton(
@@ -106,7 +106,7 @@ fun AddMenuItemsScreen(
                             onClick = { showClearDialog = true },
                             colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
                         ) {
-                            Text("Clear All")
+                            Text("Clear Menu")
                         }
                     }
                 }

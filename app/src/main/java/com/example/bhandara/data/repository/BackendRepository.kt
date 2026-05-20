@@ -180,9 +180,9 @@ class BackendRepository {
      * @param radius Search radius in meters (default 5000m)
      * @return List of nearby local shops with distance information
      */
-    suspend fun getLocalShopsNearby(lat: Double, lon: Double, radius: Double = 5000.0): List<com.example.bhandara.data.models.api.LocalShopResponse>? {
+    suspend fun getLocalShopsNearby(lat: Double, lon: Double, radius: Double = 5000.0, isMovingCart: Boolean? = null): List<com.example.bhandara.data.models.api.LocalShopResponse>? {
         return try {
-            val response = apiService.getLocalShopsNearby(lat, lon, radius)
+            val response = apiService.getLocalShopsNearby(lat, lon, radius, isMovingCart)
             if (response.isSuccessful) {
                 response.body()
             } else {

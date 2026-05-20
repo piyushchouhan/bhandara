@@ -5,35 +5,49 @@ import android.annotation.SuppressLint
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.bhandara.R
 import com.example.bhandara.data.api.NetworkModule
 import com.example.bhandara.data.models.api.CrowdPingRequest
 import com.example.bhandara.data.models.api.HeatmapPoint
 import com.example.bhandara.data.models.api.LocalShopResponse
+import com.example.bhandara.ui.components.MovingCartTracker
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
@@ -100,6 +114,17 @@ fun LocalShopsMapScreen(
     // Null means "no data yet" — the TileOverlay is not added until we have points.
     var heatmapProvider by remember { mutableStateOf<HeatmapTileProvider?>(null) }
 
+    // ── Moving vendor state ───────────────────────────────────────────────────
+    var showMovingVendors by remember { mutableStateOf(false) }
+    var movingCarts by remember { mutableStateOf<List<LocalShopResponse>>(emptyList()) }
+    var isRefreshingCarts by remember { mutableStateOf(false) }
+
+    // Cart tracking bottom sheet state
+    var trackedCartShopId by remember { mutableLongStateOf(-1L) }
+    var trackedCartName by remember { mutableStateOf("") }
+    var trackedCartLat by remember { mutableStateOf(0.0) }
+    var trackedCartLng by remember { mutableStateOf(0.0) }
+    var showCartTracker by remember { mutableStateOf(false) }
 
     val apiService = NetworkModule.apiService
 
@@ -138,18 +163,48 @@ fun LocalShopsMapScreen(
             cameraPositionState.position = CameraPosition.fromLatLngZoom(latLng, 14f)
 
             coroutineScope.launch {
-                // Fetch nearby shops
+                // Fetch nearby shops (non-moving)
                 runCatching {
                     val response = apiService.getLocalShopsNearby(
                         lat = location.latitude,
                         lon = location.longitude,
-                        radius = 5000.0
+                        radius = 5000.0,
+                        isMovingCart = false
                     )
                     if (response.isSuccessful) {
                         nearbyShops = response.body() ?: emptyList()
                     }
                 }
             }
+        }
+    }
+
+    // ── Fetch moving carts when toggle is on ──────────────────────────────────
+    fun fetchMovingCarts() {
+        val loc = currentLocation ?: return
+        isRefreshingCarts = true
+        coroutineScope.launch {
+            runCatching {
+                val response = apiService.getLocalShopsNearby(
+                    lat = loc.latitude,
+                    lon = loc.longitude,
+                    radius = 5000.0,
+                    isMovingCart = true
+                )
+                if (response.isSuccessful) {
+                    movingCarts = response.body() ?: emptyList()
+                }
+            }
+            isRefreshingCarts = false
+        }
+    }
+
+    // Auto-fetch when toggle turns on
+    LaunchedEffect(showMovingVendors) {
+        if (showMovingVendors && currentLocation != null) {
+            fetchMovingCarts()
+        } else {
+            movingCarts = emptyList()
         }
     }
 
@@ -289,14 +344,34 @@ fun LocalShopsMapScreen(
         },
         floatingActionButton = {
             if (hasLocationPermission) {
-                FloatingActionButton(
-                    onClick = recenterToCurrentLocation,
-                    modifier = Modifier.padding(bottom = 16.dp)
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    horizontalAlignment = Alignment.End
                 ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.explore_24px),
-                        contentDescription = "My Location"
-                    )
+                    // Refresh moving carts FAB
+                    if (showMovingVendors) {
+                        SmallFloatingActionButton(
+                            onClick = { fetchMovingCarts() },
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer
+                        ) {
+                            Icon(
+                                Icons.Default.Refresh,
+                                contentDescription = stringResource(R.string.refresh),
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+
+                    // Re-center FAB
+                    FloatingActionButton(
+                        onClick = recenterToCurrentLocation,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.explore_24px),
+                            contentDescription = "My Location"
+                        )
+                    }
                 }
             }
         }
@@ -321,27 +396,109 @@ fun LocalShopsMapScreen(
                     )
                 }
 
-                // ── Shop markers ──────────────────────────────────────────────
-                nearbyShops.forEach { shop ->
-                    Marker(
-                        state = MarkerState(position = LatLng(shop.latitude, shop.longitude)),
-                        title = shop.shopName,
-                        snippet = buildString {
-                            append(shop.fullAddress ?: shop.area ?: "Local Shop")
-                            shop.distance?.let {
-                                val distanceKm = it / 1000.0
-                                append(" • ${String.format("%.1f", distanceKm)} km away")
+                // ── Shop markers (hidden when moving vendor mode is on) ───────
+                if (!showMovingVendors) {
+                    nearbyShops.forEach { shop ->
+                        Marker(
+                            state = MarkerState(position = LatLng(shop.latitude, shop.longitude)),
+                            title = shop.shopName,
+                            snippet = buildString {
+                                append(shop.fullAddress ?: shop.area ?: "Local Shop")
+                                shop.distance?.let {
+                                    val distanceKm = it / 1000.0
+                                    append(" • ${String.format("%.1f", distanceKm)} km away")
+                                }
+                            },
+                            icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE),
+                            onClick = {
+                                onShopClick(shop.id)
+                                true
                             }
-                        },
-                        icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE),
-                        onClick = {
-                            onShopClick(shop.id)
-                            true
-                        }
+                        )
+                    }
+                }
+
+                // ── Moving cart markers ───────────────────────────────────────
+                if (showMovingVendors) {
+                    movingCarts.forEach { cart ->
+                        Marker(
+                            state = MarkerState(position = LatLng(cart.latitude, cart.longitude)),
+                            title = cart.shopName,
+                            snippet = "🛒 Moving Vendor",
+                            icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE),
+                            onClick = {
+                                trackedCartShopId = cart.id.toLongOrNull() ?: -1L
+                                trackedCartName = cart.shopName
+                                trackedCartLat = cart.latitude
+                                trackedCartLng = cart.longitude
+                                showCartTracker = true
+                                true
+                            }
+                        )
+                    }
+                }
+            }
+
+            // ── No moving carts message ───────────────────────────────────────
+            if (showMovingVendors && !isRefreshingCarts && movingCarts.isEmpty()) {
+                Card(
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .padding(horizontal = 32.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                ) {
+                    Text(
+                        text = "No moving vendors nearby",
+                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp),
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
+
+            // ── Moving Vendors toggle chip ────────────────────────────────────
+            Row(
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(start = 12.dp, top = 12.dp)
+            ) {
+                FilterChip(
+                    selected = showMovingVendors,
+                    onClick = { showMovingVendors = !showMovingVendors },
+                    label = { Text(stringResource(R.string.show_moving_vendors)) },
+                    leadingIcon = if (showMovingVendors) {
+                        {
+                            Icon(
+                                painter = painterResource(id = R.drawable.explore_24px),
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    } else null,
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                        selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                )
+            }
         }
+    }
+
+    // ── Cart tracking bottom sheet ────────────────────────────────────────────
+    if (showCartTracker && trackedCartShopId > 0) {
+        MovingCartTracker(
+            shopId = trackedCartShopId,
+            shopName = trackedCartName,
+            initialLat = trackedCartLat,
+            initialLng = trackedCartLng,
+            onDismiss = { showCartTracker = false },
+            onViewDetails = {
+                showCartTracker = false
+                onShopClick(trackedCartShopId.toString())
+            }
+        )
     }
 }
 

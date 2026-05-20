@@ -2,4 +2,22 @@
 <resources>
     <string name="button_i_am_hungry">मुझे भूख लगी है</string>
     <string name="button_report_feast">भंडारे की सूचना दें</string>
+    <string name="button_find_food_shop">खाने की दुकान खोजें</string>
+    <string name="community_feast">सामुदायिक भोज</string>
+    <string name="local_shops">स्थानीय दुकानें</string>
+    <string name="button_add_food_shop">खाने की दुकान जोड़ें</string>
+    <string name="is_moving_cart_title">चलती गाड़ी?</string>
+    <string name="is_moving_cart_message">क्या यह चलती गाड़ी है (पहियों पर स्ट्रीट फ़ूड विक्रेता)?</string>
+    <string name="yes">हाँ</string>
+    <string name="no">नहीं</string>
+    <string name="vendor_mode">विक्रेता मोड</string>
+    <string name="vendor_mode_active">📍 लाइव लोकेशन शेयर हो रही है — ग्राहक आपको देख सकते हैं</string>
+    <string name="vendor_mode_description">अपनी लाइव लोकेशन शेयर करें ताकि आस-पास के ग्राहक आपकी गाड़ी ढूंढ सकें</string>
+    <string name="language">भाषा</string>
+    <string name="show_moving_vendors">चलते विक्रेता</string>
+    <string name="tracking_cart">गाड़ी ट्रैक करना</string>
+    <string name="view_details">विवरण देखें</string>
+    <string name="speed_label">गति</string>
+    <string name="refresh">रीफ़्रेश</string>
+    <string name="vendor_mode_no_shop">विक्रेता मोड चालू करने के लिए पहले चलती गाड़ी दुकान बनाएं</string>
 </resources>

@@ -107,7 +107,8 @@ interface ApiService {
     suspend fun getLocalShopsNearby(
         @Query("latitude") lat: Double,
         @Query("longitude") lon: Double,
-        @Query("radius") radius: Double = 500.0
+        @Query("radius") radius: Double = 500.0,
+        @Query("isMovingCart") isMovingCart: Boolean? = null
     ): Response<List<com.example.bhandara.data.models.api.LocalShopResponse>>
 
     /**
