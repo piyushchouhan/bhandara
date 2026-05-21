@@ -173,27 +173,6 @@ class BackendRepository {
         }
     }
 
-    /**
-     * Get nearby local shops based on user location
-     * @param lat Latitude of the user's location
-     * @param lon Longitude of the user's location
-     * @param radius Search radius in meters (default 5000m)
-     * @return List of nearby local shops with distance information
-     */
-    suspend fun getLocalShopsNearby(lat: Double, lon: Double, radius: Double = 5000.0, isMovingCart: Boolean? = null): List<com.example.bhandara.data.models.api.LocalShopResponse>? {
-        return try {
-            val response = apiService.getLocalShopsNearby(lat, lon, radius, isMovingCart)
-            if (response.isSuccessful) {
-                response.body()
-            } else {
-                Log.e(TAG, "Failed to get local shops nearby: ${response.code()}")
-                null
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Error getting local shops nearby", e)
-            null
-        }
-    }
 
     /**
      * Get details of a specific local shop by its ID
@@ -380,6 +359,39 @@ class BackendRepository {
             }
         } catch (e: Exception) {
             Log.e(TAG, "❌ Error adding manual menu items", e)
+            null
+        }
+    }
+
+    // --- Feed ---
+
+    suspend fun getFeed(lat: Double, lon: Double, radius: Double = 5000.0): com.example.bhandara.data.models.api.FeedResponse? {
+        return try {
+            val response = apiService.getFeed(lat, lon, radius)
+            if (response.isSuccessful) {
+                response.body()
+            } else {
+                Log.e(TAG, "Failed to get feed: ${response.code()}")
+                null
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error getting feed", e)
+            null
+        }
+    }
+
+    suspend fun verifyShop(shopId: String, vote: String): com.example.bhandara.data.models.api.LocalShopResponse? {
+        return try {
+            val request = com.example.bhandara.data.models.api.VerifyShopRequest(vote = vote)
+            val response = apiService.verifyShop(shopId, request)
+            if (response.isSuccessful) {
+                response.body()
+            } else {
+                Log.e(TAG, "Failed to verify shop: ${response.code()}")
+                null
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error verifying shop", e)
             null
         }
     }

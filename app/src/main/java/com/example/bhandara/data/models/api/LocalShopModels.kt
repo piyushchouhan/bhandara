@@ -143,3 +143,12 @@ data class MenuItemResponse(
 data class MenuItemExtractResponse(
     val items: List<MenuItemRequest>
 )
+
+data class FeedResponse(
+    val activeShops: List<LocalShopResponse>,
+    val verificationPrompt: LocalShopResponse?
+)
+
+data class VerifyShopRequest(
+    val vote: String
+)

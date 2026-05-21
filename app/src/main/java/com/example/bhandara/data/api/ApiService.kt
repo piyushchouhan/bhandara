@@ -97,21 +97,6 @@ interface ApiService {
     ): Response<com.example.bhandara.data.models.api.LocalShopResponse>
 
     /**
-     * Get nearby local shops based on user location
-     * @param lat Latitude of the user's location
-     * @param lon Longitude of the user's location
-     * @param radius Search radius in meters (default 5000m)
-     * @return List of nearby local shops with distance information
-     */
-    @GET("api/localshops/nearby")
-    suspend fun getLocalShopsNearby(
-        @Query("latitude") lat: Double,
-        @Query("longitude") lon: Double,
-        @Query("radius") radius: Double = 500.0,
-        @Query("isMovingCart") isMovingCart: Boolean? = null
-    ): Response<List<com.example.bhandara.data.models.api.LocalShopResponse>>
-
-    /**
      * Get details of a specific local shop by its ID
      * @param id The ID of the shop to fetch
      * @return Response containing the shop details
@@ -216,4 +201,19 @@ interface ApiService {
     suspend fun extractMenuItemsFromImage(
         @retrofit2.http.Part images: List<okhttp3.MultipartBody.Part>
     ): Response<com.example.bhandara.data.models.api.MenuItemExtractResponse>
+
+    // --- Feed ---
+
+    @GET("api/feed")
+    suspend fun getFeed(
+        @Query("lat") lat: Double,
+        @Query("lon") lon: Double,
+        @Query("radius") radius: Double = 5000.0
+    ): Response<com.example.bhandara.data.models.api.FeedResponse>
+
+    @POST("api/localshops/{id}/verify")
+    suspend fun verifyShop(
+        @retrofit2.http.Path("id") id: String,
+        @Body request: com.example.bhandara.data.models.api.VerifyShopRequest
+    ): Response<com.example.bhandara.data.models.api.LocalShopResponse>
 }

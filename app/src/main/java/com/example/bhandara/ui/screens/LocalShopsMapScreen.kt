@@ -8,22 +8,18 @@ import android.graphics.Paint
 import android.graphics.Typeface
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Card
@@ -36,6 +32,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SmallFloatingActionButton
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -121,13 +118,15 @@ fun LocalShopsMapScreen(
     var nearbyShops by remember { mutableStateOf<List<LocalShopResponse>>(emptyList()) }
 
     // ── Crowd heatmap state ───────────────────────────────────────────────────
-    // Null means "no data yet" — the TileOverlay is not added until we have points.
     var heatmapProvider by remember { mutableStateOf<HeatmapTileProvider?>(null) }
 
     // ── Moving vendor state ───────────────────────────────────────────────────
     var showMovingVendors by remember { mutableStateOf(false) }
     var movingCarts by remember { mutableStateOf<List<LocalShopResponse>>(emptyList()) }
-    var isRefreshingCarts by remember { mutableStateOf(false) }
+
+    // ── Verification prompt state ────────────────────────────────────────────
+    var verificationPrompt by remember { mutableStateOf<LocalShopResponse?>(null) }
+    val verifyPrefs = remember { context.getSharedPreferences("VerificationPrefs", android.content.Context.MODE_PRIVATE) }
 
     // Cart tracking bottom sheet state
     var trackedCartShopId by remember { mutableLongStateOf(-1L) }
@@ -137,6 +136,7 @@ fun LocalShopsMapScreen(
     var showCartTracker by remember { mutableStateOf(false) }
 
     val apiService = NetworkModule.apiService
+    val repository = remember { com.example.bhandara.data.repository.BackendRepository() }
 
     val defaultLocation = LatLng(28.6139, 77.2090)
     val cameraPositionState = rememberCameraPositionState {
@@ -161,7 +161,7 @@ fun LocalShopsMapScreen(
         )
     }
 
-    // ── Location → fetch shops & kick off crowd loops ─────────────────────────
+    // ── Location → fetch feed (shops + moving carts + verification) ─────────
     LaunchedEffect(hasLocationPermission) {
         if (!hasLocationPermission) return@LaunchedEffect
 
@@ -173,48 +173,17 @@ fun LocalShopsMapScreen(
             cameraPositionState.position = CameraPosition.fromLatLngZoom(latLng, 14f)
 
             coroutineScope.launch {
-                // Fetch nearby shops (non-moving)
-                runCatching {
-                    val response = apiService.getLocalShopsNearby(
-                        lat = location.latitude,
-                        lon = location.longitude,
-                        radius = 5000.0,
-                        isMovingCart = false
-                    )
-                    if (response.isSuccessful) {
-                        nearbyShops = response.body() ?: emptyList()
+                val feed = repository.getFeed(location.latitude, location.longitude)
+                if (feed != null) {
+                    nearbyShops = feed.activeShops.filter { it.isMovingCart != true }
+                    movingCarts = feed.activeShops.filter { it.isMovingCart == true }
+                    // Show verification prompt if not already voted
+                    val prompt = feed.verificationPrompt
+                    if (prompt != null && !verifyPrefs.getBoolean("verified_${prompt.id}", false)) {
+                        verificationPrompt = prompt
                     }
                 }
             }
-        }
-    }
-
-    // ── Fetch moving carts when toggle is on ──────────────────────────────────
-    fun fetchMovingCarts() {
-        val loc = currentLocation ?: return
-        isRefreshingCarts = true
-        coroutineScope.launch {
-            runCatching {
-                val response = apiService.getLocalShopsNearby(
-                    lat = loc.latitude,
-                    lon = loc.longitude,
-                    radius = 5000.0,
-                    isMovingCart = true
-                )
-                if (response.isSuccessful) {
-                    movingCarts = response.body() ?: emptyList()
-                }
-            }
-            isRefreshingCarts = false
-        }
-    }
-
-    // Auto-fetch when toggle turns on
-    LaunchedEffect(showMovingVendors) {
-        if (showMovingVendors && currentLocation != null) {
-            fetchMovingCarts()
-        } else {
-            movingCarts = emptyList()
         }
     }
 
@@ -358,20 +327,6 @@ fun LocalShopsMapScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     horizontalAlignment = Alignment.End
                 ) {
-                    // Refresh moving carts FAB
-                    if (showMovingVendors) {
-                        SmallFloatingActionButton(
-                            onClick = { fetchMovingCarts() },
-                            containerColor = MaterialTheme.colorScheme.secondaryContainer
-                        ) {
-                            Icon(
-                                Icons.Default.Refresh,
-                                contentDescription = stringResource(R.string.refresh),
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-                    }
-
                     // Re-center FAB
                     FloatingActionButton(
                         onClick = recenterToCurrentLocation,
@@ -456,7 +411,7 @@ fun LocalShopsMapScreen(
             }
 
             // ── No moving carts message ───────────────────────────────────────
-            if (showMovingVendors && !isRefreshingCarts && movingCarts.isEmpty()) {
+            if (showMovingVendors && movingCarts.isEmpty()) {
                 Card(
                     modifier = Modifier
                         .align(Alignment.Center)
@@ -498,6 +453,100 @@ fun LocalShopsMapScreen(
                         selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                 )
+            }
+
+            // ── Verification prompt card ─────────────────────────────────────
+            if (verificationPrompt != null) {
+                val prompt = verificationPrompt!!
+                Card(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(start = 16.dp, end = 16.dp, bottom = 24.dp)
+                        .fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Help verify this shop",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer
+                            )
+                            IconButton(
+                                onClick = { verificationPrompt = null },
+                                modifier = Modifier.size(24.dp)
+                            ) {
+                                Icon(
+                                    Icons.Default.Close,
+                                    contentDescription = "Dismiss",
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                text = mapIconToEmoji(prompt.mapIcon),
+                                style = MaterialTheme.typography.headlineMedium
+                            )
+                            Column {
+                                Text(
+                                    text = prompt.shopName,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                                )
+                                Text(
+                                    text = buildString {
+                                        append(prompt.shopType ?: "Shop")
+                                        prompt.distance?.let {
+                                            append(" • ${String.format("%.0f", it)} m away")
+                                        }
+                                    },
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
+                                )
+                            }
+                        }
+                        Text(
+                            text = "Have you seen this shop at the marked location?",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f)
+                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            listOf("YES" to "Yes", "NO" to "No", "NOT_SURE" to "Not Sure").forEach { (vote, label) ->
+                                OutlinedButton(
+                                    onClick = {
+                                        coroutineScope.launch {
+                                            repository.verifyShop(prompt.id, vote)
+                                            verifyPrefs.edit().putBoolean("verified_${prompt.id}", true).apply()
+                                            verificationPrompt = null
+                                            android.widget.Toast.makeText(context, "Thanks for verifying!", android.widget.Toast.LENGTH_SHORT).show()
+                                        }
+                                    },
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Text(label, style = MaterialTheme.typography.labelMedium)
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }
