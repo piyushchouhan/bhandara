@@ -83,7 +83,8 @@ data class LocalShopResponse(
     val createdBy: String? = null,
     val updatedBy: String? = null,
     val isMovingCart: Boolean? = null,
-    val mapIcon: String? = null
+    val mapIcon: String? = null,
+    val score: Double? = null
 )
 
 data class ReviewRequest(

@@ -341,6 +341,15 @@ fun LocalShopsMapScreen(
             }
         }
     ) { paddingValues ->
+        // Progressive reveal: show top-scored shops, more on zoom
+        val zoom = cameraPositionState.position.zoom
+        val maxShopsForZoom = when {
+            zoom >= 16f -> Int.MAX_VALUE
+            zoom >= 15f -> 10
+            else -> 5
+        }
+        val visibleShops = nearbyShops.take(maxShopsForZoom)
+
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -363,7 +372,7 @@ fun LocalShopsMapScreen(
 
                 // ── Shop markers (hidden when moving vendor mode is on) ───────
                 if (!showMovingVendors) {
-                    nearbyShops.forEach { shop ->
+                    visibleShops.forEach { shop ->
                         val icon = remember(shop.id) {
                             emojiToBitmapDescriptor(mapIconToEmoji(shop.mapIcon), sizeDp = 72)
                         }
@@ -425,6 +434,25 @@ fun LocalShopsMapScreen(
                         modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            // ── Zoom hint message ─────────────────────────────────────────────
+            if (!showMovingVendors && nearbyShops.size > visibleShops.size) {
+                Card(
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(top = 56.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.inverseSurface
+                    )
+                ) {
+                    Text(
+                        text = "Showing top-rated shops. Zoom in for more",
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.inverseOnSurface
                     )
                 }
             }
