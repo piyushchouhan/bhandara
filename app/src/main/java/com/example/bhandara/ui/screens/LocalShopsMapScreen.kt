@@ -189,7 +189,7 @@ fun LocalShopsMapScreen(
 
     // ── Crowd heatmap: fetch around each shop, refresh every 60 s ─────────────
     // Keys on nearbyShops so it (re)starts once shops are loaded, and again if
-    // the shop list ever changes. Each shop gets its own 10 m radius query;
+    // the shop list ever changes. Each shop gets its own 20 m radius query;
     // all points are merged into a single heatmap layer.
     LaunchedEffect(nearbyShops) {
         if (nearbyShops.isEmpty()) return@LaunchedEffect
@@ -202,7 +202,7 @@ fun LocalShopsMapScreen(
                     val response = apiService.getCrowdHeatmap(
                         lat = shop.latitude,
                         lng = shop.longitude,
-                        radius = 10   // crowd within 10 m of this specific shop
+                        radius = 20   // crowd within 20 m of this specific shop
                     )
                     if (response.isSuccessful) {
                         allPoints.addAll(response.body() ?: emptyList())
@@ -230,7 +230,7 @@ fun LocalShopsMapScreen(
                     shop.latitude, shop.longitude,
                     results
                 )
-                results[0] <= 10f
+                results[0] <= 20f
             }
 
             if (isNearAnyShop) {
