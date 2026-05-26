@@ -189,7 +189,7 @@ fun LocalShopsMapScreen(
 
     // ── Crowd heatmap: fetch around each shop, refresh every 60 s ─────────────
     // Keys on nearbyShops so it (re)starts once shops are loaded, and again if
-    // the shop list ever changes. Each shop gets its own 300 m radius query;
+    // the shop list ever changes. Each shop gets its own 10 m radius query;
     // all points are merged into a single heatmap layer.
     LaunchedEffect(nearbyShops) {
         if (nearbyShops.isEmpty()) return@LaunchedEffect
@@ -202,7 +202,7 @@ fun LocalShopsMapScreen(
                     val response = apiService.getCrowdHeatmap(
                         lat = shop.latitude,
                         lng = shop.longitude,
-                        radius = 300   // crowd within 300 m of this specific shop
+                        radius = 10   // crowd within 10 m of this specific shop
                     )
                     if (response.isSuccessful) {
                         allPoints.addAll(response.body() ?: emptyList())
@@ -218,18 +218,30 @@ fun LocalShopsMapScreen(
         }
     }
 
-    // ── Crowd ping: send our own location every 45 s ──────────────────────────
+    // ── Crowd ping: send our own location every 45 s if near any shop ──────────
     LaunchedEffect(currentLocation) {
         val loc = currentLocation ?: return@LaunchedEffect
 
         while (true) {
-            runCatching {
-                apiService.crowdPing(
-                    CrowdPingRequest(
-                        latitude = loc.latitude,
-                        longitude = loc.longitude
-                    )
+            val isNearAnyShop = nearbyShops.any { shop ->
+                val results = FloatArray(1)
+                android.location.Location.distanceBetween(
+                    loc.latitude, loc.longitude,
+                    shop.latitude, shop.longitude,
+                    results
                 )
+                results[0] <= 10f
+            }
+
+            if (isNearAnyShop) {
+                runCatching {
+                    apiService.crowdPing(
+                        CrowdPingRequest(
+                            latitude = loc.latitude,
+                            longitude = loc.longitude
+                        )
+                    )
+                }
             }
             delay(CROWD_PING_INTERVAL_MS)
         }
