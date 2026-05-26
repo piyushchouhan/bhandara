@@ -374,7 +374,7 @@ fun LocalShopsMapScreen(
                 if (!showMovingVendors) {
                     visibleShops.forEach { shop ->
                         val icon = remember(shop.id) {
-                            emojiToBitmapDescriptor(mapIconToEmoji(shop.mapIcon), sizeDp = 72)
+                            emojiToBitmapDescriptor(mapIconToEmoji(shop.isMovingCart), sizeDp = 72)
                         }
                         Marker(
                             state = MarkerState(position = LatLng(shop.latitude, shop.longitude)),
@@ -399,7 +399,7 @@ fun LocalShopsMapScreen(
                 if (showMovingVendors) {
                     movingCarts.forEach { cart ->
                         val icon = remember(cart.id) {
-                            emojiToBitmapDescriptor(mapIconToEmoji(cart.mapIcon), sizeDp = 72)
+                            emojiToBitmapDescriptor(mapIconToEmoji(cart.isMovingCart), sizeDp = 72)
                         }
                         Marker(
                             state = MarkerState(position = LatLng(cart.latitude, cart.longitude)),
@@ -526,7 +526,7 @@ fun LocalShopsMapScreen(
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             Text(
-                                text = mapIconToEmoji(prompt.mapIcon),
+                                text = mapIconToEmoji(prompt.isMovingCart),
                                 style = MaterialTheme.typography.headlineMedium
                             )
                             Column {
@@ -597,19 +597,9 @@ fun LocalShopsMapScreen(
 
 // ─── Helper ───────────────────────────────────────────────────────────────────
 
-/** Maps a backend mapIcon slug to a display emoji. */
-private fun mapIconToEmoji(slug: String?): String = when (slug) {
-    "chai_stall"   -> "☕"
-    "veg_cart"     -> "🥗"
-    "juice_cart"   -> "🍹"
-    "snacks_cart"  -> "🍿"
-    "biryani_cart" -> "🍛"
-    "fruit_cart"   -> "🍎"
-    "restaurant"   -> "🍽️"
-    "cafe"         -> "☕"
-    "bakery"       -> "🥐"
-    else           -> "🛒"
-}
+/** Maps a shop to its display emoji based on whether it is moving or static. */
+private fun mapIconToEmoji(isMovingCart: Boolean?): String = 
+    if (isMovingCart == true) "🚚" else "📍"
 
 /** Renders an emoji string into a [BitmapDescriptor] for use as a map marker icon. */
 private fun emojiToBitmapDescriptor(emoji: String, sizeDp: Int): com.google.android.gms.maps.model.BitmapDescriptor {
