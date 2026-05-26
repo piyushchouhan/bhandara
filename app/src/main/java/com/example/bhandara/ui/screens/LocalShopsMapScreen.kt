@@ -67,11 +67,21 @@ import com.google.maps.android.compose.MapType
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
+import com.google.maps.android.compose.MarkerInfoWindow
 import com.google.maps.android.compose.TileOverlay
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.google.maps.android.heatmaps.Gradient
 import com.google.maps.android.heatmaps.HeatmapTileProvider
 import com.google.maps.android.heatmaps.WeightedLatLng
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -388,22 +398,122 @@ fun LocalShopsMapScreen(
                         val icon = remember(shop.id) {
                             emojiToBitmapDescriptor(mapIconToEmoji(shop.isMovingCart), sizeDp = 72)
                         }
-                        Marker(
+                        MarkerInfoWindow(
                             state = MarkerState(position = LatLng(shop.latitude, shop.longitude)),
-                            title = shop.shopName,
-                            snippet = buildString {
-                                append(shop.fullAddress ?: shop.area ?: "Local Shop")
-                                shop.distance?.let {
-                                    val distanceKm = it / 1000.0
-                                    append(" • ${String.format("%.1f", distanceKm)} km away")
-                                }
-                            },
                             icon = icon,
-                            onClick = {
+                            onInfoWindowClick = {
                                 onShopClick(shop.id)
-                                true
                             }
-                        )
+                        ) {
+                            Card(
+                                modifier = Modifier
+                                    .width(220.dp)
+                                    .padding(4.dp),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = Color.White
+                                ),
+                                elevation = CardDefaults.cardElevation(
+                                    defaultElevation = 6.dp
+                                )
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .padding(12.dp)
+                                        .fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    // Circular light-pink background with food emoji
+                                    Box(
+                                        modifier = Modifier
+                                            .size(40.dp)
+                                            .background(
+                                                color = Color(0xFFFFE3E8),
+                                                shape = CircleShape
+                                            ),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        val foodEmoji = remember(shop.id) { getFoodEmojiForShop(shop.id) }
+                                        Text(
+                                            text = foodEmoji,
+                                            style = MaterialTheme.typography.titleMedium
+                                        )
+                                    }
+
+                                    Spacer(modifier = Modifier.width(10.dp))
+
+                                    Column(
+                                        modifier = Modifier.weight(1f)
+                                    ) {
+                                        Text(
+                                            text = shop.shopName,
+                                            style = MaterialTheme.typography.bodyLarge.copy(
+                                                fontWeight = FontWeight.Bold,
+                                                color = Color(0xFF212121)
+                                            ),
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+
+                                        Text(
+                                            text = shop.cuisineType ?: "Local Shop",
+                                            style = MaterialTheme.typography.bodySmall.copy(
+                                                color = Color(0xFF757575)
+                                            ),
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+
+                                        Spacer(modifier = Modifier.height(4.dp))
+
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            val isOpen = shop.isCurrentlyOpen ?: true
+                                            val statusColor = if (isOpen) Color(0xFF4CAF50) else Color(0xFFE57373)
+                                            val statusText = if (isOpen) "Open" else "Closed"
+
+                                            // Tiny colored circle dot
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(6.dp)
+                                                    .background(
+                                                        color = statusColor,
+                                                        shape = CircleShape
+                                                    )
+                                            )
+
+                                            Spacer(modifier = Modifier.width(4.dp))
+
+                                            Text(
+                                                text = statusText,
+                                                style = MaterialTheme.typography.labelSmall.copy(
+                                                    color = statusColor,
+                                                    fontWeight = FontWeight.SemiBold
+                                                )
+                                            )
+
+                                            Text(
+                                                text = " • ",
+                                                style = MaterialTheme.typography.labelSmall.copy(
+                                                    color = Color(0xFF757575)
+                                                )
+                                            )
+
+                                            val distanceKm = (shop.distance ?: 0.0) / 1000.0
+                                            val distanceStr = if (distanceKm < 0.1) "nearby" else String.format("%.1f km", distanceKm)
+
+                                            Text(
+                                                text = distanceStr,
+                                                style = MaterialTheme.typography.labelSmall.copy(
+                                                    color = Color(0xFF757575)
+                                                )
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
 
@@ -652,4 +762,11 @@ private fun buildHeatmapProvider(points: List<HeatmapPoint>): HeatmapTileProvide
         .radius(50)       // pixel radius per point — matches Snapchat's blob size
         .opacity(0.8)
         .build()
+}
+
+/** Gets a random, deterministic food emoji for a shop based on its ID. */
+private fun getFoodEmojiForShop(shopId: String): String {
+    val emojis = listOf("🍔", "🍕", "🌮", "🍜", "🍩", "🍣", "🍦", "🥗", "🥪", "🍰", "🍛", "🥞", "🌯", "🌭", "🍟")
+    val index = Math.abs(shopId.hashCode()) % emojis.size
+    return emojis[index]
 }
