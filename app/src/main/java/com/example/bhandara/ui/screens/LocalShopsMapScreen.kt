@@ -109,7 +109,7 @@ private val HEATMAP_GRADIENT = Gradient(
 )
 
 // ─────────────────────────────────────────────────────────────────────────────
-
+// this screen is for local shops map to show shops and heatmap
 @SuppressLint("MissingPermission")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
