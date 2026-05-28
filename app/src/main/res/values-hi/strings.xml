@@ -20,4 +20,9 @@
     <string name="speed_label">गति</string>
     <string name="refresh">रीफ़्रेश</string>
     <string name="vendor_mode_no_shop">विक्रेता मोड चालू करने के लिए पहले चलती गाड़ी दुकान बनाएं</string>
+    
+    <!-- Map search & layer labels -->
+    <string name="search_local_feast">Local Feast खोजें</string>
+    <string name="crowd_heatmap_label">भीड़\nहीटमैप</string>
+    <string name="moving_vendors_label">चलते\nविक्रेता</string>
 </resources>

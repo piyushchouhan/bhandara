@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="button_i_am_hungry">मला भूक लागली आहे</string>
+    <string name="button_report_feast">भंडाराची माहिती द्या</string>
+    <string name="button_find_food_shop">खाद्यपदार्थांचे दुकान शोधा</string>
+    <string name="community_feast">सामुदायिक मेजवानी</string>
+    <string name="local_shops">स्थानिक दुकाने</string>
+    <string name="button_add_food_shop">खाद्य दुकान जोडा</string>
+    <string name="is_moving_cart_title">फिरती गाडी?</string>
+    <string name="is_moving_cart_message">ही फिरती गाडी आहे का (चाकांवरील स्ट्रीट फूड विक्रेता)?</string>
+    <string name="yes">होय</string>
+    <string name="no">नाही</string>
+    <string name="vendor_mode">विक्रेता मोड</string>
+    <string name="vendor_mode_active">📍 थेट स्थान शेअर केले जात आहे — ग्राहक तुम्हाला पाहू शकतात</string>
+    <string name="vendor_mode_description">तुमचे थेट स्थान शेअर करा जेणेकरून जवळील ग्राहक तुमची गाडी शोधू शकतील</string>
+    <string name="language">भाषा</string>
+    <string name="show_moving_vendors">फिरते विक्रेते</string>
+    <string name="tracking_cart">गाडी ट्रॅक करत आहे</string>
+    <string name="view_details">तपशील पहा</string>
+    <string name="speed_label">वेग</string>
+    <string name="refresh">रीफ्रेश</string>
+    <string name="vendor_mode_no_shop">विक्रेता मोड सुरू करण्यासाठी आधी फिरती गाडी दुकान तयार करा</string>
+    
+    <!-- Map search & layer labels -->
+    <string name="search_local_feast">Local Feast शोधा</string>
+    <string name="crowd_heatmap_label">गर्दी\nहीटमॅप</string>
+    <string name="moving_vendors_label">फिरते\nविक्रेते</string>
+</resources>

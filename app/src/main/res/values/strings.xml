@@ -20,4 +20,9 @@
     <string name="speed_label">Speed</string>
     <string name="refresh">Refresh</string>
     <string name="vendor_mode_no_shop">Create a moving cart shop first to enable vendor mode</string>
+    
+    <!-- Map search & layer labels -->
+    <string name="search_local_feast">Search Local Feast</string>
+    <string name="crowd_heatmap_label">Crowd\nHeatmap</string>
+    <string name="moving_vendors_label">Moving\nVendors</string>
 </resources>
