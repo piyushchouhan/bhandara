@@ -57,6 +57,8 @@ import com.example.bhandara.data.models.api.HeatmapPoint
 import com.example.bhandara.data.models.api.LocalShopResponse
 import com.example.bhandara.ui.components.MovingCartTracker
 import com.example.bhandara.ui.components.CrowdHeatmapToggle
+import com.example.bhandara.ui.components.MapSearchBar
+import com.example.bhandara.ui.components.MovingVendorsToggle
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
@@ -130,6 +132,7 @@ fun LocalShopsMapScreen(
     var hasLocationPermission by remember { mutableStateOf(false) }
     var currentLocation by remember { mutableStateOf<LatLng?>(null) }
     var nearbyShops by remember { mutableStateOf<List<LocalShopResponse>>(emptyList()) }
+    var searchQuery by remember { mutableStateOf("") }
 
     // ── Crowd heatmap state ───────────────────────────────────────────────────
     var heatmapProvider by remember { mutableStateOf<HeatmapTileProvider?>(null) }
@@ -337,19 +340,6 @@ fun LocalShopsMapScreen(
 
     // ── UI ────────────────────────────────────────────────────────────────────
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Find Local Shops") },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
-                        )
-                    }
-                }
-            )
-        },
         floatingActionButton = {
             if (hasLocationPermission) {
                 Column(
@@ -370,6 +360,33 @@ fun LocalShopsMapScreen(
             }
         }
     ) { paddingValues ->
+        // ── Filtered shops and moving carts ───────────────────────────────────
+        val filteredShops = remember(nearbyShops, searchQuery) {
+            if (searchQuery.isBlank()) {
+                nearbyShops
+            } else {
+                nearbyShops.filter { shop ->
+                    shop.shopName.contains(searchQuery, ignoreCase = true) ||
+                            (shop.cuisineType?.contains(searchQuery, ignoreCase = true) == true) ||
+                            (shop.shopType?.contains(searchQuery, ignoreCase = true) == true) ||
+                            (shop.menuItems?.any { it.contains(searchQuery, ignoreCase = true) } == true)
+                }
+            }
+        }
+
+        val filteredMovingCarts = remember(movingCarts, searchQuery) {
+            if (searchQuery.isBlank()) {
+                movingCarts
+            } else {
+                movingCarts.filter { cart ->
+                    cart.shopName.contains(searchQuery, ignoreCase = true) ||
+                            (cart.cuisineType?.contains(searchQuery, ignoreCase = true) == true) ||
+                            (cart.shopType?.contains(searchQuery, ignoreCase = true) == true) ||
+                            (cart.menuItems?.any { it.contains(searchQuery, ignoreCase = true) } == true)
+                }
+            }
+        }
+
         // Progressive reveal: show top-scored shops, more on zoom
         val zoom = cameraPositionState.position.zoom
         val maxShopsForZoom = when {
@@ -377,7 +394,7 @@ fun LocalShopsMapScreen(
             zoom >= 15f -> 10
             else -> 5
         }
-        val visibleShops = nearbyShops.take(maxShopsForZoom)
+        val visibleShops = filteredShops.take(maxShopsForZoom)
 
         Box(
             modifier = Modifier
@@ -528,7 +545,7 @@ fun LocalShopsMapScreen(
 
                 // ── Moving cart markers ───────────────────────────────────────
                 if (showMovingVendors) {
-                    movingCarts.forEach { cart ->
+                    filteredMovingCarts.forEach { cart ->
                         val icon = remember(cart.id) {
                             emojiToBitmapDescriptor(mapIconToEmoji(cart.isMovingCart), sizeDp = 72)
                         }
@@ -551,7 +568,7 @@ fun LocalShopsMapScreen(
             }
 
             // ── No moving carts message ───────────────────────────────────────
-            if (showMovingVendors && movingCarts.isEmpty()) {
+            if (showMovingVendors && filteredMovingCarts.isEmpty()) {
                 Card(
                     modifier = Modifier
                         .align(Alignment.Center)
@@ -570,11 +587,11 @@ fun LocalShopsMapScreen(
             }
 
             // ── Zoom hint message ─────────────────────────────────────────────
-            if (!showMovingVendors && nearbyShops.size > visibleShops.size) {
+            if (!showMovingVendors && filteredShops.size > visibleShops.size) {
                 Card(
                     modifier = Modifier
                         .align(Alignment.TopCenter)
-                        .padding(top = 56.dp),
+                        .padding(top = 80.dp),
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.inverseSurface
                     )
@@ -588,31 +605,15 @@ fun LocalShopsMapScreen(
                 }
             }
 
-            // ── Moving Vendors toggle chip ────────────────────────────────────
-            Row(
+            // ── Floating Search Bar ──────────────────────────────────────────
+            MapSearchBar(
+                query = searchQuery,
+                onQueryChange = { searchQuery = it },
+                onBackClick = onBackClick,
                 modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .padding(start = 12.dp, top = 12.dp)
-            ) {
-                FilterChip(
-                    selected = showMovingVendors,
-                    onClick = { showMovingVendors = !showMovingVendors },
-                    label = { Text(stringResource(R.string.show_moving_vendors)) },
-                    leadingIcon = if (showMovingVendors) {
-                        {
-                            Icon(
-                                painter = painterResource(id = R.drawable.explore_24px),
-                                contentDescription = null,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
-                    } else null,
-                    colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                        selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                )
-            }
+                    .align(Alignment.TopCenter)
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+            )
 
             // ── Verification prompt card ─────────────────────────────────────
             if (verificationPrompt != null) {
@@ -708,14 +709,24 @@ fun LocalShopsMapScreen(
                 }
             }
 
-            // ── Crowd Heatmap Layer Toggle (Bottom Left Corner) ──────────────
-            CrowdHeatmapToggle(
-                isSelected = showCrowdHeatmap,
-                onToggle = { showCrowdHeatmap = !showCrowdHeatmap },
+            // ── Side Floating Layer Toggles (Bottom Left Corner) ─────────────
+            Column(
                 modifier = Modifier
                     .align(Alignment.BottomStart)
-                    .padding(start = 16.dp, bottom = if (verificationPrompt != null) 180.dp else 24.dp)
-            )
+                    .padding(start = 16.dp, bottom = if (verificationPrompt != null) 180.dp else 24.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                MovingVendorsToggle(
+                    isSelected = showMovingVendors,
+                    onToggle = { showMovingVendors = !showMovingVendors }
+                )
+
+                CrowdHeatmapToggle(
+                    isSelected = showCrowdHeatmap,
+                    onToggle = { showCrowdHeatmap = !showCrowdHeatmap }
+                )
+            }
         }
     }
 
