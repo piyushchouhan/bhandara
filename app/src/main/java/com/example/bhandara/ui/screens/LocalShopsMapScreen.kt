@@ -21,6 +21,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Whatshot
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -55,6 +56,7 @@ import com.example.bhandara.data.models.api.CrowdPingRequest
 import com.example.bhandara.data.models.api.HeatmapPoint
 import com.example.bhandara.data.models.api.LocalShopResponse
 import com.example.bhandara.ui.components.MovingCartTracker
+import com.example.bhandara.ui.components.CrowdHeatmapToggle
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
@@ -74,12 +76,14 @@ import com.google.maps.android.heatmaps.Gradient
 import com.google.maps.android.heatmaps.HeatmapTileProvider
 import com.google.maps.android.heatmaps.WeightedLatLng
 import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import kotlinx.coroutines.delay
@@ -129,6 +133,7 @@ fun LocalShopsMapScreen(
 
     // ── Crowd heatmap state ───────────────────────────────────────────────────
     var heatmapProvider by remember { mutableStateOf<HeatmapTileProvider?>(null) }
+    var showCrowdHeatmap by remember { mutableStateOf(true) }
 
     // ── Moving vendor state ───────────────────────────────────────────────────
     var showMovingVendors by remember { mutableStateOf(false) }
@@ -198,11 +203,13 @@ fun LocalShopsMapScreen(
     }
 
     // ── Crowd heatmap: fetch around each shop, refresh every 60 s ─────────────
-    // Keys on nearbyShops so it (re)starts once shops are loaded, and again if
-    // the shop list ever changes. Each shop gets its own 20 m radius query;
-    // all points are merged into a single heatmap layer.
-    LaunchedEffect(nearbyShops) {
-        if (nearbyShops.isEmpty()) return@LaunchedEffect
+    // Keys on nearbyShops and showCrowdHeatmap so it (re)starts once shops are loaded,
+    // and toggles off/on based on user preference.
+    LaunchedEffect(nearbyShops, showCrowdHeatmap) {
+        if (!showCrowdHeatmap || nearbyShops.isEmpty()) {
+            heatmapProvider = null
+            return@LaunchedEffect
+        }
 
         while (true) {
             val allPoints = mutableListOf<HeatmapPoint>()
@@ -384,12 +391,14 @@ fun LocalShopsMapScreen(
                 uiSettings = uiSettings
             ) {
                 // ── Crowd heatmap layer ───────────────────────────────────────
-                // Only rendered when we have actual data from the server.
-                heatmapProvider?.let { provider ->
-                    TileOverlay(
-                        tileProvider = provider,
-                        transparency = 0.2f  // 80% opaque — visible but not blocking the map
-                    )
+                // Only rendered when we have actual data from the server and enabled.
+                if (showCrowdHeatmap) {
+                    heatmapProvider?.let { provider ->
+                        TileOverlay(
+                            tileProvider = provider,
+                            transparency = 0.2f  // 80% opaque — visible but not blocking the map
+                        )
+                    }
                 }
 
                 // ── Shop markers (hidden when moving vendor mode is on) ───────
@@ -698,6 +707,15 @@ fun LocalShopsMapScreen(
                     }
                 }
             }
+
+            // ── Crowd Heatmap Layer Toggle (Bottom Left Corner) ──────────────
+            CrowdHeatmapToggle(
+                isSelected = showCrowdHeatmap,
+                onToggle = { showCrowdHeatmap = !showCrowdHeatmap },
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(start = 16.dp, bottom = if (verificationPrompt != null) 180.dp else 24.dp)
+            )
         }
     }
 
