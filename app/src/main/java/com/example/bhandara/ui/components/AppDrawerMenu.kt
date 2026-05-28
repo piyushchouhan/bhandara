@@ -1,14 +1,17 @@
 package com.example.bhandara.ui.components
 
 import android.content.Context
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
@@ -40,6 +43,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.os.LocaleListCompat
 import com.example.bhandara.R
 import com.example.bhandara.services.VendorLocationManager
@@ -81,123 +85,149 @@ fun AppDrawerMenu(
             ModalDrawerSheet(
                 modifier = Modifier.width(300.dp)
             ) {
-                Spacer(modifier = Modifier.height(24.dp))
-
-                Text(
-                    text = stringResource(R.string.app_name),
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(horizontal = 24.dp)
-                )
-
-                Spacer(modifier = Modifier.height(24.dp))
-                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Language Dropdown Selector
-                var showLanguageMenu by remember { mutableStateOf(false) }
-
-                Box(
-                    modifier = Modifier.fillMaxWidth()
+                Column(
+                    modifier = Modifier.fillMaxHeight()
                 ) {
+                    // ─── Header: Logo + App Name ──────────────────────────────
+                    Spacer(modifier = Modifier.height(32.dp))
+
+                    Row(
+                        modifier = Modifier.padding(horizontal = 24.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.localfeast),
+                            contentDescription = "App Logo",
+                            modifier = Modifier.size(48.dp)
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Text(
+                                text = stringResource(R.string.app_name),
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = "v1.0.0",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(20.dp))
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        color = MaterialTheme.colorScheme.outlineVariant
+                    )
+
+                    // ─── Feature Items ────────────────────────────────────────
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Language
+                    var showLanguageMenu by remember { mutableStateOf(false) }
+
+                    Box(
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { showLanguageMenu = true }
+                                .padding(horizontal = 24.dp, vertical = 14.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.translate_indic_language),
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Text(
+                                text = stringResource(R.string.language),
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.weight(1f)
+                            )
+                            Text(
+                                text = when (currentLanguage) {
+                                    "hi" -> "हिंदी"
+                                    "mr" -> "मराठी"
+                                    else -> "English"
+                                },
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+
+                        DropdownMenu(
+                            expanded = showLanguageMenu,
+                            onDismissRequest = { showLanguageMenu = false },
+                            offset = androidx.compose.ui.unit.DpOffset(x = 24.dp, y = 0.dp)
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("English") },
+                                onClick = {
+                                    currentLanguage = "en"
+                                    showLanguageMenu = false
+                                    androidx.appcompat.app.AppCompatDelegate.setApplicationLocales(
+                                        LocaleListCompat.forLanguageTags("en")
+                                    )
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("हिंदी") },
+                                onClick = {
+                                    currentLanguage = "hi"
+                                    showLanguageMenu = false
+                                    androidx.appcompat.app.AppCompatDelegate.setApplicationLocales(
+                                        LocaleListCompat.forLanguageTags("hi")
+                                    )
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("मराठी") },
+                                onClick = {
+                                    currentLanguage = "mr"
+                                    showLanguageMenu = false
+                                    androidx.appcompat.app.AppCompatDelegate.setApplicationLocales(
+                                        LocaleListCompat.forLanguageTags("mr")
+                                    )
+                                }
+                            )
+                        }
+                    }
+
+                    // Vendor Mode
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { showLanguageMenu = true }
-                            .padding(horizontal = 24.dp, vertical = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.translate_indic_language),
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.width(16.dp))
-                        Text(
-                            text = stringResource(R.string.language),
-                            style = MaterialTheme.typography.bodyLarge,
-                            modifier = Modifier.weight(1f)
-                        )
-                        Text(
-                            text = when (currentLanguage) {
-                                "hi" -> "हिंदी"
-                                "mr" -> "मराठी"
-                                else -> "English"
-                            },
-                            style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-
-                    androidx.compose.material3.DropdownMenu(
-                        expanded = showLanguageMenu,
-                        onDismissRequest = { showLanguageMenu = false },
-                        offset = androidx.compose.ui.unit.DpOffset(x = 24.dp, y = 0.dp)
-                    ) {
-                        androidx.compose.material3.DropdownMenuItem(
-                            text = { Text("English") },
-                            onClick = {
-                                currentLanguage = "en"
-                                showLanguageMenu = false
-                                androidx.appcompat.app.AppCompatDelegate.setApplicationLocales(
-                                    LocaleListCompat.forLanguageTags("en")
-                                )
-                            }
-                        )
-                        androidx.compose.material3.DropdownMenuItem(
-                            text = { Text("हिंदी") },
-                            onClick = {
-                                currentLanguage = "hi"
-                                showLanguageMenu = false
-                                androidx.appcompat.app.AppCompatDelegate.setApplicationLocales(
-                                    LocaleListCompat.forLanguageTags("hi")
-                                )
-                            }
-                        )
-                        androidx.compose.material3.DropdownMenuItem(
-                            text = { Text("मराठी") },
-                            onClick = {
-                                currentLanguage = "mr"
-                                showLanguageMenu = false
-                                androidx.appcompat.app.AppCompatDelegate.setApplicationLocales(
-                                    LocaleListCompat.forLanguageTags("mr")
-                                )
-                            }
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // Vendor Mode
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 24.dp, vertical = 12.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
+                            .padding(horizontal = 24.dp, vertical = 14.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
                             painter = painterResource(id = R.drawable.explore_24px),
                             contentDescription = null,
                             tint = if (vendorModeOn) MaterialTheme.colorScheme.primary
-                            else MaterialTheme.colorScheme.onSurfaceVariant
+                            else MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(24.dp)
                         )
                         Spacer(modifier = Modifier.width(16.dp))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = stringResource(R.string.vendor_mode),
-                                style = MaterialTheme.typography.bodyLarge
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurface
                             )
-                            Text(
-                                text = stringResource(R.string.vendor_mode_description),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                            if (!hasMovingCartShop) {
+                                Text(
+                                    text = stringResource(R.string.vendor_mode_no_shop),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.error
+                                )
+                            }
                         }
                         Switch(
                             checked = vendorModeOn,
@@ -218,34 +248,45 @@ fun AppDrawerMenu(
                         )
                     }
 
-                    if (!hasMovingCartShop) {
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = stringResource(R.string.vendor_mode_no_shop),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.error
-                        )
-                    }
-
+                    // Vendor mode active info
                     if (vendorModeOn && hasMovingCartShop) {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        androidx.compose.material3.Card(
-                            colors = androidx.compose.material3.CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.tertiaryContainer
-                            ),
-                            modifier = Modifier.fillMaxWidth()
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 24.dp)
+                                .padding(bottom = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
+                            Spacer(modifier = Modifier.width(40.dp)) // indent to align with text above
                             Text(
                                 text = stringResource(R.string.vendor_mode_active),
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onTertiaryContainer,
-                                modifier = Modifier.padding(12.dp)
+                                color = MaterialTheme.colorScheme.primary
                             )
                         }
                     }
-                }
 
-                Spacer(modifier = Modifier.height(8.dp))
+                    // ─── Spacer pushes footer to the bottom ───────────────────
+                    Spacer(modifier = Modifier.weight(1f))
+
+                    // ─── Footer: Divider + Branding ───────────────────────────
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        color = MaterialTheme.colorScheme.outlineVariant
+                    )
+
+                    Text(
+                        text = "Upalio",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 0.5.sp
+                        ),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
             }
         }
     ) {
