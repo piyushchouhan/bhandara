@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Environment
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -28,11 +29,19 @@ import com.example.bhandara.data.repository.BackendRepository
 import com.example.bhandara.data.repository.UserRepository
 import com.example.bhandara.ui.screens.addshop.Step1ShopTypeStep
 import com.example.bhandara.ui.screens.addshop.Step2BasicDetailsStep
+import com.example.bhandara.ui.screens.addshop.Step2GoogleSignInStep
 import com.example.bhandara.ui.screens.addshop.Step3DetailedMenuStep
 import com.example.bhandara.ui.screens.addshop.Step4OptionalDetailsStep
 import com.example.bhandara.utils.ImageUploadHelper
 import com.example.bhandara.utils.LocationHelper
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.common.api.ApiException
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthUserCollisionException
+import com.google.firebase.auth.GoogleAuthProvider
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -45,6 +54,7 @@ fun AddLocalShopScreen(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val auth = remember { FirebaseAuth.getInstance() }
 
     // Repositories
     val backendRepository = remember { BackendRepository() }
@@ -55,6 +65,68 @@ fun AddLocalShopScreen(
     // Step navigation
     var currentStep by remember { mutableIntStateOf(1) }
     val totalSteps = 4
+
+    // ── Google Sign-In interstitial ─────────────────────────────────────────
+    // Shown as a full-screen overlay between Step 1 → Step 2 when user is anonymous
+    var showGoogleSignIn by remember { mutableStateOf(false) }
+    var signInLoading by remember { mutableStateOf(false) }
+    var signInError by remember { mutableStateOf<String?>(null) }
+
+    val googleSignInLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+        scope.launch {
+            try {
+                val account = task.getResult(ApiException::class.java)
+                val idToken = account?.idToken
+                if (idToken == null) {
+                    signInError = "Google Sign-In failed. Please try again."
+                    signInLoading = false
+                    return@launch
+                }
+
+                val credential = GoogleAuthProvider.getCredential(idToken, null)
+                val currentUser = auth.currentUser
+
+                try {
+                    // Try to link anonymous account with Google credential
+                    currentUser?.linkWithCredential(credential)?.await()
+                    Log.d("AddLocalShopScreen", "Linked anonymous account with Google.")
+                } catch (e: FirebaseAuthUserCollisionException) {
+                    // Google account already exists — sign into the existing account
+                    Log.d("AddLocalShopScreen", "Collision: signing into existing Google account.")
+                    auth.signInWithCredential(credential).await()
+                }
+
+                // Sign-in successful — dismiss overlay and advance to Step 2
+                signInLoading = false
+                signInError = null
+                showGoogleSignIn = false
+                currentStep = 2
+
+            } catch (e: ApiException) {
+                Log.e("AddLocalShopScreen", "Google Sign-In failed", e)
+                signInError = "Sign-in failed (code ${e.statusCode}). Please try again."
+                signInLoading = false
+            } catch (e: Exception) {
+                Log.e("AddLocalShopScreen", "Sign-in or linking error", e)
+                signInError = "Sign-in error: ${e.message}"
+                signInLoading = false
+            }
+        }
+    }
+
+    fun launchGoogleSignIn() {
+        signInLoading = true
+        signInError = null
+        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestIdToken(context.getString(com.example.bhandara.R.string.default_web_client_id))
+            .requestEmail()
+            .build()
+        val googleSignInClient = GoogleSignIn.getClient(context, gso)
+        googleSignInLauncher.launch(googleSignInClient.signInIntent)
+    }
 
     // Step 1 - Shop Type
     var isMovingCart by remember { mutableStateOf<Boolean?>(null) }
@@ -282,6 +354,21 @@ fun AddLocalShopScreen(
         }
     }
 
+    // Show Google Sign-In interstitial (full-screen overlay, same pattern as detailed menu)
+    if (showGoogleSignIn) {
+        Step2GoogleSignInStep(
+            isLoading = signInLoading,
+            errorMessage = signInError,
+            onGoogleSignInClick = { launchGoogleSignIn() },
+            onNavigateBack = {
+                showGoogleSignIn = false
+                signInError = null
+                signInLoading = false
+            }
+        )
+        return
+    }
+
     // Show the detailed menu local form (full-screen overlay)
     if (showDetailedMenuScreen) {
         AddMenuItemsScreen(
@@ -334,12 +421,12 @@ fun AddLocalShopScreen(
 
     // Step validation
     val canProceed = when (currentStep) {
-        1 -> isMovingCart != null
-        2 -> shopName.isNotBlank() && shopType.isNotBlank()
+            1 -> isMovingCart != null
+            2 -> shopName.isNotBlank() && shopType.isNotBlank()
         3 -> true // optional step
         4 -> true // optional step
-        else -> false
-    }
+            else -> false
+        }
 
     // Step labels for progress
     val stepLabels = listOf("Type", "Details", "Menu", "More")
@@ -391,42 +478,47 @@ fun AddLocalShopScreen(
                         }
                     }
 
-                    if (currentStep < totalSteps) {
+                        if (currentStep < totalSteps) {
                         // Next button
-                        Button(
-                            onClick = {
-                                errorMessage = null
-                                currentStep++
-                            },
-                            modifier = Modifier.weight(if (currentStep > 1) 2f else 1f).height(48.dp),
-                            enabled = canProceed
-                        ) {
+                            Button(
+                                onClick = {
+                                    errorMessage = null
+                                    // Intercept Step 1 → Step 2: if anonymous, show Google Sign-In
+                                    if (currentStep == 1 && (auth.currentUser?.isAnonymous != false)) {
+                                        showGoogleSignIn = true
+                                    } else {
+                                        currentStep++
+                                    }
+                                },
+                                modifier = Modifier.weight(if (currentStep > 1) 2f else 1f).height(48.dp),
+                                enabled = canProceed
+                            ) {
                             Text(if (currentStep == 3) "Skip / Next" else "Next")
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Icon(Icons.Default.ArrowForward, null, modifier = Modifier.size(18.dp))
-                        }
-                    } else {
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Icon(Icons.Default.ArrowForward, null, modifier = Modifier.size(18.dp))
+                            }
+                        } else {
                         // Final step - Add Shop button
-                        Button(
-                            onClick = { saveShop() },
-                            modifier = Modifier.weight(2f).height(48.dp),
-                            enabled = !isLoading
-                        ) {
-                            if (isLoading) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(24.dp),
-                                    color = MaterialTheme.colorScheme.onPrimary
-                                )
-                            } else {
-                                Icon(Icons.Default.Storefront, null, modifier = Modifier.size(20.dp))
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text("Add Shop")
+                            Button(
+                                onClick = { saveShop() },
+                                modifier = Modifier.weight(2f).height(48.dp),
+                                enabled = !isLoading
+                            ) {
+                                if (isLoading) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(24.dp),
+                                        color = MaterialTheme.colorScheme.onPrimary
+                                    )
+                                } else {
+                                    Icon(Icons.Default.Storefront, null, modifier = Modifier.size(20.dp))
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text("Add Shop")
+                                }
                             }
                         }
                     }
                 }
             }
-        }
     ) { padding ->
         Column(
             modifier = Modifier
@@ -508,57 +600,57 @@ fun AddLocalShopScreen(
                 },
                 label = "stepTransition"
             ) { step ->
-                when (step) {
-                    1 -> Step1ShopTypeStep(
-                        isMovingCart = isMovingCart,
-                        onMovingCartSelected = { isMovingCart = it }
-                    )
+                    when (step) {
+                        1 -> Step1ShopTypeStep(
+                            isMovingCart = isMovingCart,
+                            onMovingCartSelected = { isMovingCart = it }
+                        )
 
                     2 -> Step2BasicDetailsStep(
-                        selectedImages = selectedImages,
-                        onAddPhotosClick = { showImageSourceSheet = true },
-                        onRemoveImage = { uri -> selectedImages = selectedImages - uri },
-                        shopName = shopName,
-                        onShopNameChange = { shopName = it },
-                        shopType = shopType,
-                        onShopTypeChange = { shopType = it },
-                        menuItems = menuItems,
-                        onMenuItemsChange = { menuItems = it },
-                        currentMenuItem = currentMenuItem,
-                        onCurrentMenuItemChange = { currentMenuItem = it }
-                    )
+                            selectedImages = selectedImages,
+                            onAddPhotosClick = { showImageSourceSheet = true },
+                            onRemoveImage = { uri -> selectedImages = selectedImages - uri },
+                            shopName = shopName,
+                            onShopNameChange = { shopName = it },
+                            shopType = shopType,
+                            onShopTypeChange = { shopType = it },
+                            menuItems = menuItems,
+                            onMenuItemsChange = { menuItems = it },
+                            currentMenuItem = currentMenuItem,
+                            onCurrentMenuItemChange = { currentMenuItem = it }
+                        )
 
                     3 -> Step3DetailedMenuStep(
-                        menuItems = menuItems,
-                        draftDetailedMenuItems = draftDetailedMenuItems,
-                        onOpenDetailedMenu = { showDetailedMenuScreen = true }
-                    )
+                            menuItems = menuItems,
+                            draftDetailedMenuItems = draftDetailedMenuItems,
+                            onOpenDetailedMenu = { showDetailedMenuScreen = true }
+                        )
 
                     4 -> Step4OptionalDetailsStep(
-                        description = description,
-                        onDescriptionChange = { description = it },
-                        ownerPhone = ownerPhone,
-                        onOwnerPhoneChange = { ownerPhone = it },
-                        fullAddress = fullAddress,
-                        onFullAddressChange = { fullAddress = it },
-                        landmark = landmark,
-                        onLandmarkChange = { landmark = it },
-                        cuisineType = cuisineType,
-                        onCuisineTypeChange = { cuisineType = it },
-                        averageCostForTwo = averageCostForTwo,
-                        onAverageCostForTwoChange = { averageCostForTwo = it },
-                        takeaway = takeaway,
-                        onTakeawayChange = { takeaway = it },
-                        homeDelivery = homeDelivery,
-                        onHomeDeliveryChange = { homeDelivery = it },
-                        hasSeating = hasSeating,
-                        onHasSeatingChange = { hasSeating = it },
-                        wifiAvailable = wifiAvailable,
-                        onWifiAvailableChange = { wifiAvailable = it }
-                    )
+                            description = description,
+                            onDescriptionChange = { description = it },
+                            ownerPhone = ownerPhone,
+                            onOwnerPhoneChange = { ownerPhone = it },
+                            fullAddress = fullAddress,
+                            onFullAddressChange = { fullAddress = it },
+                            landmark = landmark,
+                            onLandmarkChange = { landmark = it },
+                            cuisineType = cuisineType,
+                            onCuisineTypeChange = { cuisineType = it },
+                            averageCostForTwo = averageCostForTwo,
+                            onAverageCostForTwoChange = { averageCostForTwo = it },
+                            takeaway = takeaway,
+                            onTakeawayChange = { takeaway = it },
+                            homeDelivery = homeDelivery,
+                            onHomeDeliveryChange = { homeDelivery = it },
+                            hasSeating = hasSeating,
+                            onHasSeatingChange = { hasSeating = it },
+                            wifiAvailable = wifiAvailable,
+                            onWifiAvailableChange = { wifiAvailable = it }
+                        )
+                    }
                 }
             }
-        }
 
         // Image Selection Bottom Sheet
         if (showImageSourceSheet) {

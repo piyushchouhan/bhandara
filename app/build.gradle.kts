@@ -111,6 +111,9 @@ dependencies {
     // Google Play Services for Location
     implementation("com.google.android.gms:play-services-location:21.3.0")
     
+    // Google Sign-In
+    implementation("com.google.android.gms:play-services-auth:21.2.0")
+    
     // Coil for image loading
     implementation("io.coil-kt:coil-compose:2.5.0")
     
