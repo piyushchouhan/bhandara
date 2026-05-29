@@ -8,56 +8,43 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.background
+import androidx.compose.animation.*
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.res.stringResource
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
-import coil.compose.AsyncImage
-import com.example.bhandara.R
 import com.example.bhandara.data.models.api.LocalShopRequest
 import com.example.bhandara.data.repository.BackendRepository
 import com.example.bhandara.data.repository.UserRepository
+import com.example.bhandara.ui.screens.addshop.Step1ShopTypeStep
+import com.example.bhandara.ui.screens.addshop.Step2BasicDetailsStep
+import com.example.bhandara.ui.screens.addshop.Step3DetailedMenuStep
+import com.example.bhandara.ui.screens.addshop.Step4OptionalDetailsStep
 import com.example.bhandara.utils.ImageUploadHelper
 import com.example.bhandara.utils.LocationHelper
 import kotlinx.coroutines.launch
 import java.io.File
 import java.text.SimpleDateFormat
-import java.time.LocalTime
-import java.time.format.DateTimeFormatter
 import java.util.Date
 import java.util.Locale
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddLocalShopScreen(
     onNavigateBack: () -> Unit
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val scrollState = rememberScrollState()
 
     // Repositories
     val backendRepository = remember { BackendRepository() }
@@ -65,47 +52,21 @@ fun AddLocalShopScreen(
     val locationHelper = remember { LocationHelper(context) }
     val imageUploadHelper = remember { ImageUploadHelper(context) }
 
-    // Required Fields State
+    // Step navigation
+    var currentStep by remember { mutableIntStateOf(1) }
+    val totalSteps = 4
+
+    // Step 1 - Shop Type
+    var isMovingCart by remember { mutableStateOf<Boolean?>(null) }
+
+    // Step 2 - Basic Details
     var shopName by remember { mutableStateOf("") }
     var shopType by remember { mutableStateOf("") }
     var menuItems by remember { mutableStateOf(listOf<String>()) }
     var currentMenuItem by remember { mutableStateOf("") }
-
-    // Optional Fields State
-    var showOptionalDetails by remember { mutableStateOf(false) }
-    
-    var ownerPhone by remember { mutableStateOf("") }
-    var ownerEmail by remember { mutableStateOf("") }
-    var cuisineType by remember { mutableStateOf("") }
-    var description by remember { mutableStateOf("") }
-    var averageCostForTwo by remember { mutableStateOf("") }
-    var priceRange by remember { mutableStateOf("") }
-    var fullAddress by remember { mutableStateOf("") }
-    var landmark by remember { mutableStateOf("") }
     var selectedImages by remember { mutableStateOf<List<Uri>>(emptyList()) }
-    
-    // Checkboxes / Toggles
-    var homeDelivery by remember { mutableStateOf(false) }
-    var takeaway by remember { mutableStateOf(true) }
-    var hasSeating by remember { mutableStateOf(true) }
-    var wifiAvailable by remember { mutableStateOf(false) }
 
-    // UI state
-    var isLoading by remember { mutableStateOf(false) }
-    var uploadProgress by remember { mutableStateOf(0) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
-    var showMovingCartDialog by remember { mutableStateOf(true) }
-    var isMovingCart by remember { mutableStateOf(false) }
-    var selectedMapIcon by remember { mutableStateOf("default") }
-    
-    // Dropdowns
-    var shopTypeExpanded by remember { mutableStateOf(false) }
-    val shopTypes = listOf("Restaurant", "Food Truck", "Street Food", "Cafe", "Fast Food", "Bakery", "Sweet Shop")
-    
-    var priceRangeExpanded by remember { mutableStateOf(false) }
-    val priceRanges = listOf("$", "$$", "$$$", "$$$$")
-
-    // Detailed menu items (from AddMenuItemsScreen, saved locally before shop is created)
+    // Step 3 - Detailed Menu
     val menuItemPrefs = remember { context.getSharedPreferences("DraftMenuItems", android.content.Context.MODE_PRIVATE) }
     val initialDraftItems: List<com.example.bhandara.data.models.api.MenuItemRequest> = remember {
         val json = menuItemPrefs.getString("draft_items", null)
@@ -126,10 +87,29 @@ fun AddLocalShopScreen(
     var draftDetailedMenuItems by remember { mutableStateOf(initialDraftItems) }
     var showDetailedMenuScreen by remember { mutableStateOf(false) }
 
-    // Camera/Image logic
+    // Step 4 - Optional Details
+    var ownerPhone by remember { mutableStateOf("") }
+    var ownerEmail by remember { mutableStateOf("") }
+    var cuisineType by remember { mutableStateOf("") }
+    var description by remember { mutableStateOf("") }
+    var averageCostForTwo by remember { mutableStateOf("") }
+    var priceRange by remember { mutableStateOf("") }
+    var fullAddress by remember { mutableStateOf("") }
+    var landmark by remember { mutableStateOf("") }
+    var homeDelivery by remember { mutableStateOf(false) }
+    var takeaway by remember { mutableStateOf(true) }
+    var hasSeating by remember { mutableStateOf(true) }
+    var wifiAvailable by remember { mutableStateOf(false) }
+
+    // UI state
+    var isLoading by remember { mutableStateOf(false) }
+    var uploadProgress by remember { mutableIntStateOf(0) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    // Camera/Image logic (must be at top-level composable, not inside AnimatedContent)
     var showImageSourceSheet by remember { mutableStateOf(false) }
     var tempPhotoUri by remember { mutableStateOf<Uri?>(null) }
-    
+
     fun createTempImageUri(): Uri {
         val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
         val imageFileName = "JPEG_" + timeStamp + "_"
@@ -165,6 +145,35 @@ fun AddLocalShopScreen(
         showImageSourceSheet = false
     }
 
+    // Clear All logic
+    var showClearAllDialog by remember { mutableStateOf(false) }
+
+    val clearAll: () -> Unit = {
+        shopName = ""
+        shopType = ""
+        menuItems = listOf()
+        currentMenuItem = ""
+        ownerPhone = ""
+        ownerEmail = ""
+        cuisineType = ""
+        description = ""
+        averageCostForTwo = ""
+        priceRange = ""
+        fullAddress = ""
+        landmark = ""
+        selectedImages = listOf()
+        homeDelivery = false
+        takeaway = true
+        hasSeating = true
+        wifiAvailable = false
+        isMovingCart = null
+        draftDetailedMenuItems = emptyList()
+        menuItemPrefs.edit().remove("draft_items").apply()
+        errorMessage = null
+        currentStep = 1
+    }
+
+    // Save shop logic
     val saveShop: () -> Unit = {
         scope.launch {
             val finalMenuItems = if (currentMenuItem.isNotBlank()) {
@@ -176,15 +185,18 @@ fun AddLocalShopScreen(
             // Validation
             if (shopName.isBlank()) {
                 errorMessage = "Shop name is required"
+                currentStep = 2
                 return@launch
             }
             if (shopType.isBlank()) {
                 errorMessage = "Shop type is required"
+                currentStep = 2
                 return@launch
             }
             val allMenuItems = (finalMenuItems + draftDetailedMenuItems.map { it.name }).distinct()
             if (allMenuItems.isEmpty()) {
                 errorMessage = "At least one menu item is required"
+                currentStep = 2
                 return@launch
             }
 
@@ -234,8 +246,8 @@ fun AddLocalShopScreen(
                     takeaway = takeaway,
                     hasSeating = hasSeating,
                     wifiAvailable = wifiAvailable,
-                    isMovingCart = isMovingCart,
-                    mapIcon = selectedMapIcon
+                    isMovingCart = isMovingCart ?: false,
+                    mapIcon = "default"
                 )
 
                 val response = backendRepository.createLocalShop(request)
@@ -248,7 +260,7 @@ fun AddLocalShopScreen(
                         )
                     }
                     // Save vendor info if moving cart
-                    if (isMovingCart) {
+                    if (isMovingCart == true) {
                         val vendorPrefs = context.getSharedPreferences("VendorPrefs", android.content.Context.MODE_PRIVATE)
                         vendorPrefs.edit()
                             .putLong("vendor_shop_id", response.id.toLongOrNull() ?: -1L)
@@ -270,7 +282,7 @@ fun AddLocalShopScreen(
         }
     }
 
-    // Show the detailed menu local form (no API calls, just local state)
+    // Show the detailed menu local form (full-screen overlay)
     if (showDetailedMenuScreen) {
         AddMenuItemsScreen(
             initialItems = draftDetailedMenuItems,
@@ -299,8 +311,7 @@ fun AddLocalShopScreen(
         return
     }
 
-    var showClearAllDialog by remember { mutableStateOf(false) }
-
+    // Clear All dialog
     if (showClearAllDialog) {
         AlertDialog(
             onDismissRequest = { showClearAllDialog = false },
@@ -309,27 +320,7 @@ fun AddLocalShopScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        // Clear all form fields
-                        shopName = ""
-                        shopType = ""
-                        menuItems = listOf()
-                        currentMenuItem = ""
-                        ownerPhone = ""
-                        ownerEmail = ""
-                        cuisineType = ""
-                        description = ""
-                        averageCostForTwo = ""
-                        priceRange = ""
-                        fullAddress = ""
-                        landmark = ""
-                        selectedImages = listOf()
-                        homeDelivery = false
-                        takeaway = true
-                        hasSeating = true
-                        wifiAvailable = false
-                        draftDetailedMenuItems = emptyList()
-                        menuItemPrefs.edit().remove("draft_items").apply()
-                        errorMessage = null
+                        clearAll()
                         showClearAllDialog = false
                     },
                     colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
@@ -341,33 +332,30 @@ fun AddLocalShopScreen(
         )
     }
 
-    // Moving Cart Dialog
-    if (showMovingCartDialog) {
-        AlertDialog(
-            onDismissRequest = { showMovingCartDialog = false },
-            title = { Text(stringResource(R.string.is_moving_cart_title)) },
-            text = { Text(stringResource(R.string.is_moving_cart_message)) },
-            confirmButton = {
-                TextButton(onClick = {
-                    isMovingCart = true
-                    showMovingCartDialog = false
-                }) { Text(stringResource(R.string.yes)) }
-            },
-            dismissButton = {
-                TextButton(onClick = {
-                    isMovingCart = false
-                    showMovingCartDialog = false
-                }) { Text(stringResource(R.string.no)) }
-            }
-        )
+    // Step validation
+    val canProceed = when (currentStep) {
+        1 -> isMovingCart != null
+        2 -> shopName.isNotBlank() && shopType.isNotBlank()
+        3 -> true // optional step
+        4 -> true // optional step
+        else -> false
     }
+
+    // Step labels for progress
+    val stepLabels = listOf("Type", "Details", "Menu", "More")
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Add Local Shop") },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(onClick = {
+                        if (currentStep > 1) {
+                            currentStep--
+                        } else {
+                            onNavigateBack()
+                        }
+                    }) {
                         Icon(Icons.Default.ArrowBack, "Back")
                     }
                 },
@@ -387,17 +375,54 @@ fun AddLocalShopScreen(
                 shadowElevation = 8.dp,
                 tonalElevation = 3.dp
             ) {
-                Button(
-                    onClick = { saveShop() },
-                    modifier = Modifier.fillMaxWidth().padding(16.dp).height(48.dp),
-                    enabled = !isLoading
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    if (isLoading) {
-                        CircularProgressIndicator(modifier = Modifier.size(24.dp), color = MaterialTheme.colorScheme.onPrimary)
+                    // Back button (steps 2-4)
+                    if (currentStep > 1) {
+                        OutlinedButton(
+                            onClick = { currentStep-- },
+                            modifier = Modifier.weight(1f).height(48.dp)
+                        ) {
+                            Text("Back")
+                        }
+                    }
+
+                    if (currentStep < totalSteps) {
+                        // Next button
+                        Button(
+                            onClick = {
+                                errorMessage = null
+                                currentStep++
+                            },
+                            modifier = Modifier.weight(if (currentStep > 1) 2f else 1f).height(48.dp),
+                            enabled = canProceed
+                        ) {
+                            Text(if (currentStep == 3) "Skip / Next" else "Next")
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Icon(Icons.Default.ArrowForward, null, modifier = Modifier.size(18.dp))
+                        }
                     } else {
-                        Icon(Icons.Default.Storefront, null, modifier = Modifier.size(20.dp))
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Add Shop")
+                        // Final step - Add Shop button
+                        Button(
+                            onClick = { saveShop() },
+                            modifier = Modifier.weight(2f).height(48.dp),
+                            enabled = !isLoading
+                        ) {
+                            if (isLoading) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(24.dp),
+                                    color = MaterialTheme.colorScheme.onPrimary
+                                )
+                            } else {
+                                Icon(Icons.Default.Storefront, null, modifier = Modifier.size(20.dp))
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Add Shop")
+                            }
+                        }
                     }
                 }
             }
@@ -407,15 +432,59 @@ fun AddLocalShopScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .verticalScroll(scrollState)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Error Message
+            // --- Progress Indicator ---
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+            ) {
+                // Step labels
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    stepLabels.forEachIndexed { index, label ->
+                        Text(
+                            text = label,
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = if (index + 1 == currentStep) FontWeight.Bold else FontWeight.Normal,
+                            color = if (index + 1 <= currentStep)
+                                MaterialTheme.colorScheme.primary
+                            else
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                // Linear progress bar
+                LinearProgressIndicator(
+                    progress = { currentStep.toFloat() / totalSteps.toFloat() },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(6.dp),
+                    trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                    drawStopIndicator = {}
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Text(
+                    text = "Step $currentStep of $totalSteps",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            // --- Error Message ---
             if (errorMessage != null) {
                 Card(
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
                 ) {
                     Text(
                         text = errorMessage!!,
@@ -425,368 +494,73 @@ fun AddLocalShopScreen(
                 }
             }
 
-            // Images Section
-            Text(
-                text = "Photos",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
-            )
-            
-            if (selectedImages.isEmpty()) {
-                OutlinedCard(
-                    onClick = { showImageSourceSheet = true },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(120.dp)
-                ) {
-                    Column(
-                        modifier = Modifier.fillMaxSize(),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        Icon(
-                            Icons.Default.PhotoCamera,
-                            contentDescription = null,
-                            modifier = Modifier.size(48.dp),
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            "Add Photos (Camera or Gallery)",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+            // --- Step Content ---
+            AnimatedContent(
+                targetState = currentStep,
+                transitionSpec = {
+                    if (targetState > initialState) {
+                        slideInHorizontally { it } + fadeIn() togetherWith
+                                slideOutHorizontally { -it } + fadeOut()
+                    } else {
+                        slideInHorizontally { -it } + fadeIn() togetherWith
+                                slideOutHorizontally { it } + fadeOut()
                     }
-                }
-            } else {
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(selectedImages) { uri ->
-                        Box {
-                            AsyncImage(
-                                model = uri,
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .size(100.dp)
-                                    .clip(RoundedCornerShape(8.dp)),
-                                contentScale = ContentScale.Crop
-                            )
-                            IconButton(
-                                onClick = { selectedImages = selectedImages - uri },
-                                modifier = Modifier.align(Alignment.TopEnd)
-                            ) {
-                                Icon(
-                                    Icons.Default.Close,
-                                    contentDescription = "Remove",
-                                    tint = MaterialTheme.colorScheme.error,
-                                    modifier = Modifier.background(MaterialTheme.colorScheme.surface.copy(alpha=0.6f), RoundedCornerShape(12.dp))
-                                )
-                            }
-                        }
-                    }
-                    
-                    if (selectedImages.size < 10) {
-                        item {
-                            OutlinedCard(
-                                onClick = { showImageSourceSheet = true },
-                                modifier = Modifier.size(100.dp)
-                            ) {
-                                Box(
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(Icons.Default.Add, "Add more")
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            Text(
-                text = "Basic Details",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.primary
-            )
-
-            // Shop Name
-            OutlinedTextField(
-                value = shopName,
-                onValueChange = { shopName = it },
-                label = { Text("Shop Name *") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true
-            )
-
-            // Shop Type
-            ExposedDropdownMenuBox(
-                expanded = shopTypeExpanded,
-                onExpandedChange = { shopTypeExpanded = !shopTypeExpanded }
-            ) {
-                OutlinedTextField(
-                    value = shopType,
-                    onValueChange = {},
-                    readOnly = true,
-                    label = { Text("Shop Type *") },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = shopTypeExpanded) },
-                    colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .menuAnchor()
-                )
-                ExposedDropdownMenu(
-                    expanded = shopTypeExpanded,
-                    onDismissRequest = { shopTypeExpanded = false }
-                ) {
-                    shopTypes.forEach { selectionOption ->
-                        DropdownMenuItem(
-                            text = { Text(selectionOption) },
-                            onClick = {
-                                shopType = selectionOption
-                                shopTypeExpanded = false
-                            }
-                        )
-                    }
-                }
-            }
-
-            // Menu Items
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("Menu Items *", style = MaterialTheme.typography.labelLarge)
-                
-                if (menuItems.isNotEmpty()) {
-                    FlowRow(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        menuItems.forEach { item ->
-                            InputChip(
-                                selected = true,
-                                onClick = { menuItems = menuItems - item },
-                                label = { Text(item) },
-                                trailingIcon = { Icon(Icons.Default.Close, "Remove", Modifier.size(16.dp)) }
-                            )
-                        }
-                    }
-                }
-                
-                OutlinedTextField(
-                    value = currentMenuItem,
-                    onValueChange = { 
-                        if (it.endsWith(",") || it.endsWith("\n")) {
-                            val newItem = it.trim().dropLast(1)
-                            if (newItem.isNotBlank() && !menuItems.contains(newItem)) {
-                                menuItems = menuItems + newItem
-                                currentMenuItem = ""
-                            }
-                        } else {
-                            currentMenuItem = it 
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Add Top Dishes") },
-                    placeholder = { Text("e.g. Samosa, Chai, Vada Pav") },
-                    supportingText = { Text("Type and press comma or done to add") },
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                    keyboardActions = KeyboardActions(
-                        onDone = {
-                            if (currentMenuItem.isNotBlank() && !menuItems.contains(currentMenuItem.trim())) {
-                                menuItems = menuItems + currentMenuItem.trim()
-                                currentMenuItem = ""
-                            }
-                        }
-                    )
-                )
-
-                Text(
-                    text = "Want to add detailed menu with pricing and types? Use the button below.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 8.dp)
-                )
-
-                if (draftDetailedMenuItems.isNotEmpty()) {
-                    Card(
-                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = "${draftDetailedMenuItems.size} detailed item(s) added",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                modifier = Modifier.weight(1f)
-                            )
-                            TextButton(onClick = { showDetailedMenuScreen = true }) {
-                                Text("Edit")
-                            }
-                        }
-                    }
-                }
-                
-                OutlinedButton(
-                    onClick = { showDetailedMenuScreen = true },
-                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
-                ) {
-                    Icon(Icons.Default.MenuBook, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(if (draftDetailedMenuItems.isEmpty()) "Add Detailed Menu Items" else "Update Detailed Menu Items")
-                }
-
-                // Map Icon Picker
-                val mapIconOptions = listOf(
-                    "chai_stall" to "☕ Chai Stall",
-                    "veg_cart"   to "🥗 Veg Cart",
-                    "juice_cart" to "🍹 Juice Cart",
-                    "snacks_cart" to "🍿 Snacks Cart",
-                    "biryani_cart" to "🍛 Biryani Cart",
-                    "fruit_cart" to "🍎 Fruit Cart",
-                    "restaurant" to "🍽️ Restaurant",
-                    "cafe"       to "☕ Cafe",
-                    "bakery"     to "🥐 Bakery",
-                    "default"    to "🛒 Other"
-                )
-                Text(
-                    text = "Map Icon",
-                    style = MaterialTheme.typography.labelLarge,
-                    modifier = Modifier.padding(top = 8.dp)
-                )
-                Text(
-                    text = "Choose how your shop appears on the map",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                FlowRow(
-                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    mapIconOptions.forEach { (slug, label) ->
-                        FilterChip(
-                            selected = selectedMapIcon == slug,
-                            onClick = { selectedMapIcon = slug },
-                            label = { Text(label) }
-                        )
-                    }
-                }
-            }
-
-            Divider(modifier = Modifier.padding(vertical = 8.dp))
-
-            // Expandable Additional Details
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { showOptionalDetails = !showOptionalDetails }
-                    .padding(vertical = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Add More Details (Optional)",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Medium
-                )
-                Icon(
-                    imageVector = if (showOptionalDetails) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                    contentDescription = "Toggle Details"
-                )
-            }
-
-            AnimatedVisibility(visible = showOptionalDetails) {
-                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                    
-                    // Description
-                    OutlinedTextField(
-                        value = description,
-                        onValueChange = { description = it },
-                        label = { Text("Description") },
-                        modifier = Modifier.fillMaxWidth(),
-                        minLines = 3
-                    )
-                    
-                    // Contact
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedTextField(
-                            value = ownerPhone,
-                            onValueChange = { ownerPhone = it },
-                            label = { Text("Phone") },
-                            modifier = Modifier.weight(1f),
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
-                        )
-                    }
-
-                    // Address
-                    OutlinedTextField(
-                        value = fullAddress,
-                        onValueChange = { fullAddress = it },
-                        label = { Text("Full Address") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    
-                    OutlinedTextField(
-                        value = landmark,
-                        onValueChange = { landmark = it },
-                        label = { Text("Landmark") },
-                        modifier = Modifier.fillMaxWidth()
+                },
+                label = "stepTransition"
+            ) { step ->
+                when (step) {
+                    1 -> Step1ShopTypeStep(
+                        isMovingCart = isMovingCart,
+                        onMovingCartSelected = { isMovingCart = it }
                     )
 
-                    // Cuisine & Cost
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedTextField(
-                            value = cuisineType,
-                            onValueChange = { cuisineType = it },
-                            label = { Text("Cuisine Type") },
-                            modifier = Modifier.weight(1f)
-                        )
-                        OutlinedTextField(
-                            value = averageCostForTwo,
-                            onValueChange = { averageCostForTwo = it.filter { char -> char.isDigit() } },
-                            label = { Text("Cost for 2 (₹)") },
-                            modifier = Modifier.weight(1f),
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-                        )
-                    }
+                    2 -> Step2BasicDetailsStep(
+                        selectedImages = selectedImages,
+                        onAddPhotosClick = { showImageSourceSheet = true },
+                        onRemoveImage = { uri -> selectedImages = selectedImages - uri },
+                        shopName = shopName,
+                        onShopNameChange = { shopName = it },
+                        shopType = shopType,
+                        onShopTypeChange = { shopType = it },
+                        menuItems = menuItems,
+                        onMenuItemsChange = { menuItems = it },
+                        currentMenuItem = currentMenuItem,
+                        onCurrentMenuItemChange = { currentMenuItem = it }
+                    )
 
-                    // Toggles
-                    Text("Facilities", style = MaterialTheme.typography.labelLarge)
-                    FlowRow(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Checkbox(checked = takeaway, onCheckedChange = { takeaway = it })
-                            Text("Takeaway")
-                        }
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Checkbox(checked = homeDelivery, onCheckedChange = { homeDelivery = it })
-                            Text("Delivery")
-                        }
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Checkbox(checked = hasSeating, onCheckedChange = { hasSeating = it })
-                            Text("Seating")
-                        }
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Checkbox(checked = wifiAvailable, onCheckedChange = { wifiAvailable = it })
-                            Text("WiFi")
-                        }
-                    }
+                    3 -> Step3DetailedMenuStep(
+                        menuItems = menuItems,
+                        draftDetailedMenuItems = draftDetailedMenuItems,
+                        onOpenDetailedMenu = { showDetailedMenuScreen = true }
+                    )
 
-
+                    4 -> Step4OptionalDetailsStep(
+                        description = description,
+                        onDescriptionChange = { description = it },
+                        ownerPhone = ownerPhone,
+                        onOwnerPhoneChange = { ownerPhone = it },
+                        fullAddress = fullAddress,
+                        onFullAddressChange = { fullAddress = it },
+                        landmark = landmark,
+                        onLandmarkChange = { landmark = it },
+                        cuisineType = cuisineType,
+                        onCuisineTypeChange = { cuisineType = it },
+                        averageCostForTwo = averageCostForTwo,
+                        onAverageCostForTwoChange = { averageCostForTwo = it },
+                        takeaway = takeaway,
+                        onTakeawayChange = { takeaway = it },
+                        homeDelivery = homeDelivery,
+                        onHomeDeliveryChange = { homeDelivery = it },
+                        hasSeating = hasSeating,
+                        onHasSeatingChange = { hasSeating = it },
+                        wifiAvailable = wifiAvailable,
+                        onWifiAvailableChange = { wifiAvailable = it }
+                    )
                 }
             }
-            
-            // Padding for scroll and bottom button
-            Spacer(modifier = Modifier.height(40.dp))
         }
 
-        // Image Selection Sheet
+        // Image Selection Bottom Sheet
         if (showImageSourceSheet) {
             ModalBottomSheet(onDismissRequest = { showImageSourceSheet = false }) {
                 Column(modifier = Modifier.fillMaxWidth().padding(bottom = 32.dp)) {
