@@ -21,10 +21,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -34,17 +36,23 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.bhandara.R
+import com.example.bhandara.data.repository.BackendRepository
+import kotlinx.coroutines.launch
 
 @Composable
 fun SuggestFeatureDialog(
     onDismissRequest: () -> Unit
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val repository = remember { BackendRepository() }
+
     var details by remember { mutableStateOf("") }
     var submitted by remember { mutableStateOf(false) }
-
+    var isLoading by remember { mutableStateOf(false) }
+ 
     AlertDialog(
-        onDismissRequest = onDismissRequest,
+        onDismissRequest = { if (!isLoading) onDismissRequest() },
         confirmButton = {
             if (submitted) {
                 TextButton(onClick = onDismissRequest) {
@@ -58,20 +66,40 @@ fun SuggestFeatureDialog(
                 Button(
                     onClick = {
                         if (details.isNotBlank()) {
-                            submitted = true
-                            Toast.makeText(context, context.getString(R.string.suggest_feature_success), Toast.LENGTH_SHORT).show()
+                            scope.launch {
+                                isLoading = true
+                                val response = repository.suggestFeature(details)
+                                isLoading = false
+                                if (response != null) {
+                                    submitted = true
+                                    Toast.makeText(context, context.getString(R.string.suggest_feature_success), Toast.LENGTH_SHORT).show()
+                                } else {
+                                    Toast.makeText(context, "Failed to submit suggestion. Please try again.", Toast.LENGTH_SHORT).show()
+                                }
+                            }
                         }
                     },
-                    enabled = details.isNotBlank(),
+                    enabled = details.isNotBlank() && !isLoading,
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text(text = stringResource(R.string.suggest_feature_submit))
+                    if (isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            strokeWidth = 2.dp,
+                            color = MaterialTheme.colorScheme.onPrimary
+                        )
+                    } else {
+                        Text(text = stringResource(R.string.suggest_feature_submit))
+                    }
                 }
             }
         },
         dismissButton = {
             if (!submitted) {
-                TextButton(onClick = onDismissRequest) {
+                TextButton(
+                    onClick = onDismissRequest,
+                    enabled = !isLoading
+                ) {
                     Text(text = stringResource(R.string.no))
                 }
             }

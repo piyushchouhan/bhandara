@@ -410,5 +410,21 @@ class BackendRepository {
             null
         }
     }
+
+    suspend fun suggestFeature(feature: String): com.example.bhandara.data.models.api.FeatureSuggestionResponse? {
+        return try {
+            val request = com.example.bhandara.data.models.api.FeatureSuggestionRequest(feature = feature)
+            val response = apiService.suggestFeature(request)
+            if (response.isSuccessful) {
+                response.body()
+            } else {
+                Log.e(TAG, "❌ Failed to suggest feature: ${response.code()}")
+                null
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ Error suggesting feature", e)
+            null
+        }
+    }
 }
 

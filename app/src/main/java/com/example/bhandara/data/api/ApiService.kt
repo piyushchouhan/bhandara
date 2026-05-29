@@ -216,4 +216,9 @@ interface ApiService {
         @retrofit2.http.Path("id") id: String,
         @Body request: com.example.bhandara.data.models.api.VerifyShopRequest
     ): Response<com.example.bhandara.data.models.api.LocalShopResponse>
+
+    @POST("api/support/features")
+    suspend fun suggestFeature(
+        @Body request: com.example.bhandara.data.models.api.FeatureSuggestionRequest
+    ): Response<com.example.bhandara.data.models.api.FeatureSuggestionResponse>
 }
