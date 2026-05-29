@@ -426,5 +426,21 @@ class BackendRepository {
             null
         }
     }
+
+    suspend fun reportBug(bug: String): com.example.bhandara.data.models.api.BugReportResponse? {
+        return try {
+            val request = com.example.bhandara.data.models.api.BugReportRequest(bug = bug)
+            val response = apiService.reportBug(request)
+            if (response.isSuccessful) {
+                response.body()
+            } else {
+                Log.e(TAG, "❌ Failed to report bug: ${response.code()}")
+                null
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ Error reporting bug", e)
+            null
+        }
+    }
 }
 

@@ -221,4 +221,9 @@ interface ApiService {
     suspend fun suggestFeature(
         @Body request: com.example.bhandara.data.models.api.FeatureSuggestionRequest
     ): Response<com.example.bhandara.data.models.api.FeatureSuggestionResponse>
+
+    @POST("api/support/bugs")
+    suspend fun reportBug(
+        @Body request: com.example.bhandara.data.models.api.BugReportRequest
+    ): Response<com.example.bhandara.data.models.api.BugReportResponse>
 }
