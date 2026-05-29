@@ -300,7 +300,7 @@ fun HungryScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Find Bhandara") },
+                title = { Text("Find Community Feast") },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(
