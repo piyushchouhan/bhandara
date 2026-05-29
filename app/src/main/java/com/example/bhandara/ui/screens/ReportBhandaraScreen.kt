@@ -9,39 +9,27 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.background
+import androidx.compose.animation.*
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
-import coil.compose.AsyncImage
 import com.example.bhandara.data.models.api.FeastRequest
 import com.example.bhandara.data.repository.BackendRepository
 import com.example.bhandara.data.repository.UserRepository
+import com.example.bhandara.ui.screens.reportbhandara.Step1FoodDetailsStep
+import com.example.bhandara.ui.screens.reportbhandara.Step2WhenContactStep
+import com.example.bhandara.ui.screens.reportbhandara.Step3LocationCapacityStep
 import com.example.bhandara.utils.ImageUploadHelper
 import com.example.bhandara.utils.LocationHelper
 import kotlinx.coroutines.launch
@@ -60,13 +48,16 @@ fun ReportBhandaraScreen(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val scrollState = rememberScrollState()
     
     // Repositories
     val backendRepository = remember { BackendRepository() }
     val userRepository = remember { UserRepository() }
     val locationHelper = remember { LocationHelper(context) }
     val imageUploadHelper = remember { ImageUploadHelper(context) }
+    
+    // Step navigation
+    var currentStep by remember { mutableIntStateOf(1) }
+    val totalSteps = 3
     
     // Form state
     var organizerName by remember { mutableStateOf("") }
@@ -96,6 +87,9 @@ fun ReportBhandaraScreen(
     
     // Camera-related
     var tempPhotoUri by remember { mutableStateOf<Uri?>(null) }
+    
+    // Clear all confirmation dialog
+    var showClearAllDialog by remember { mutableStateOf(false) }
     
     // Helper to create a temp file for camera image
     fun createTempImageUri(): Uri {
@@ -135,139 +129,267 @@ fun ReportBhandaraScreen(
         selectedImages = selectedImages + uris
         showImageSourceSheet = false
     }
-    
+
+    val clearAll: () -> Unit = {
+        organizerName = ""
+        contactPhone = ""
+        menuItems = listOf()
+        currentMenuItem = ""
+        foodType = ""
+        description = ""
+        selectedImages = listOf()
+        feastDate = null
+        startTime = null
+        endTime = null
+        address = ""
+        landmark = ""
+        estimatedCapacity = ""
+        errorMessage = null
+        currentStep = 1
+    }
+
+    // Step validation
+    val finalMenuItems = if (currentMenuItem.isNotBlank()) {
+        menuItems + currentMenuItem.trim()
+    } else {
+        menuItems
+    }
+
+    val canProceed = when (currentStep) {
+        1 -> selectedImages.isNotEmpty() && finalMenuItems.isNotEmpty()
+        2 -> feastDate != null && startTime != null && endTime != null
+        3 -> true
+        else -> false
+    }
+
+    // Step labels for progress
+    val stepLabels = listOf("Food & Photos", "When & Contact", "Location")
+
+    if (showClearAllDialog) {
+        AlertDialog(
+            onDismissRequest = { showClearAllDialog = false },
+            title = { Text("Clear Entire Form?") },
+            text = { Text("This will clear all fields — photos, menu items, date, times, organizer and location. This cannot be undone.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        clearAll()
+                        showClearAllDialog = false
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                ) { Text("Clear All") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showClearAllDialog = false }) { Text("Cancel") }
+            }
+        )
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Report Bhandara") },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(onClick = {
+                        if (currentStep > 1) {
+                            currentStep--
+                        } else {
+                            onNavigateBack()
+                        }
+                    }) {
                         Icon(Icons.Default.ArrowBack, "Back")
+                    }
+                },
+                actions = {
+                    TextButton(
+                        onClick = { showClearAllDialog = true },
+                        colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                    ) {
+                        Text("Clear All")
                     }
                 }
             )
         },
         bottomBar = {
-            // Fixed bottom bar with submit button
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 shadowElevation = 8.dp,
                 tonalElevation = 3.dp
             ) {
-                Button(
-                    onClick = {
-                        scope.launch {
-                            // Validation
-                            val finalMenuItems = if (currentMenuItem.isNotBlank()) {
-                                menuItems + currentMenuItem.trim()
-                            } else {
-                                menuItems
-                            }
+                Column(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    // Upload progress indicator
+                    if (isLoading && uploadProgress > 0) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            LinearProgressIndicator(
+                                progress = { uploadProgress / 100f },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            Text(
+                                "Uploading images... $uploadProgress%",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
 
-                            if (finalMenuItems.isEmpty()) {
-                                errorMessage = "Please enter menu items"
-                                return@launch
-                            }
-                            if (feastDate == null) {
-                                errorMessage = "Please select a date"
-                                return@launch
-                            }
-                            if (startTime == null) {
-                                errorMessage = "Please select start time"
-                                return@launch
-                            }
-                            if (endTime == null) {
-                                errorMessage = "Please select end time"
-                                return@launch
-                            }
-                            
-                            if (selectedImages.isEmpty()) {
-                                errorMessage = "Please add at least one photo"
-                                return@launch
-                            }
-                            
-                            isLoading = true
-                            errorMessage = null
-                            
-                            try {
-                                // Upload images to Firebase Storage
-                                val imageUrls = imageUploadHelper.uploadImages(selectedImages) { progress ->
-                                    uploadProgress = progress
-                                }
-                                
-                                if (imageUrls.isEmpty()) {
-                                    errorMessage = "Failed to upload images. Please check your internet connection."
-                                    isLoading = false
-                                    return@launch
-                                }
-                                
-                                // Get current location
-                                val location = locationHelper.getCurrentLocation()
-                                if (location == null) {
-                                    errorMessage = "Could not get your location. Please enable GPS."
-                                    isLoading = false
-                                    return@launch
-                                }
-                                
-                                // Get Firebase UID
-                                val firebaseUid = userRepository.getCurrentUserId()
-                                if (firebaseUid == null) {
-                                    errorMessage = "User not authenticated"
-                                    isLoading = false
-                                    return@launch
-                                }
-                                
-                                // Create feast request
-                                val request = FeastRequest(
-                                    firebaseUid = firebaseUid,
-                                    organizerName = organizerName.ifBlank { null },
-                                    contactPhone = contactPhone.ifBlank { null },
-                                    menuItems = finalMenuItems,
-                                    foodType = foodType.ifBlank { null },
-                                    description = description.ifBlank { null },
-                                    imageUrls = imageUrls,
-                                    feastDate = feastDate!!.format(DateTimeFormatter.ISO_LOCAL_DATE),
-                                    startTime = startTime!!.format(DateTimeFormatter.ISO_LOCAL_TIME),
-                                    endTime = endTime!!.format(DateTimeFormatter.ISO_LOCAL_TIME),
-                                    latitude = location.latitude,
-                                    longitude = location.longitude,
-                                    address = address.ifBlank { null },
-                                    landmark = landmark.ifBlank { null },
-                                    estimatedCapacity = estimatedCapacity.toIntOrNull()
-                                )
-                                
-                                // Submit to backend
-                                val response = backendRepository.createFeast(request)
-                                
-                                if (response != null) {
-                                    // Success - navigate back
-                                    onNavigateBack()
-                                } else {
-                                    errorMessage = "Failed to submit bhandara. Please try again."
-                                }
-                            } catch (e: Exception) {
-                                errorMessage = "Error: ${e.message}"
-                            } finally {
-                                isLoading = false
-                                uploadProgress = 0
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        // Back button (steps 2-3)
+                        if (currentStep > 1) {
+                            OutlinedButton(
+                                onClick = { currentStep-- },
+                                modifier = Modifier.weight(1f).height(48.dp),
+                                enabled = !isLoading
+                            ) {
+                                Text("Back")
                             }
                         }
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                        .height(48.dp),
-                    enabled = !isLoading
-                ) {
-                    if (isLoading) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(24.dp),
-                            color = MaterialTheme.colorScheme.onPrimary
-                        )
-                    } else {
-                        Icon(Icons.Default.Send, null, modifier = Modifier.size(20.dp))
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Submit Bhandara")
+
+                        if (currentStep < totalSteps) {
+                            // Next button
+                            Button(
+                                onClick = {
+                                    errorMessage = null
+                                    currentStep++
+                                },
+                                modifier = Modifier.weight(if (currentStep > 1) 2f else 1f).height(48.dp),
+                                enabled = canProceed
+                            ) {
+                                Text("Next")
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Icon(Icons.Default.ArrowForward, null, modifier = Modifier.size(18.dp))
+                            }
+                        } else {
+                            // Final step - Submit button
+                            Button(
+                                onClick = {
+                                    scope.launch {
+                                        // Final validation
+                                        val actualMenuItems = if (currentMenuItem.isNotBlank()) {
+                                            menuItems + currentMenuItem.trim()
+                                        } else {
+                                            menuItems
+                                        }
+
+                                        if (actualMenuItems.isEmpty()) {
+                                            errorMessage = "Please enter menu items"
+                                            currentStep = 1
+                                            return@launch
+                                        }
+                                        if (feastDate == null) {
+                                            errorMessage = "Please select a date"
+                                            currentStep = 2
+                                            return@launch
+                                        }
+                                        if (startTime == null) {
+                                            errorMessage = "Please select start time"
+                                            currentStep = 2
+                                            return@launch
+                                        }
+                                        if (endTime == null) {
+                                            errorMessage = "Please select end time"
+                                            currentStep = 2
+                                            return@launch
+                                        }
+                                        if (selectedImages.isEmpty()) {
+                                            errorMessage = "Please add at least one photo"
+                                            currentStep = 1
+                                            return@launch
+                                        }
+                                        
+                                        isLoading = true
+                                        errorMessage = null
+                                        
+                                        try {
+                                            // Upload images to Firebase Storage
+                                            val imageUrls = imageUploadHelper.uploadImages(selectedImages) { progress ->
+                                                uploadProgress = progress
+                                            }
+                                            
+                                            if (imageUrls.isEmpty()) {
+                                                errorMessage = "Failed to upload images. Please check your internet connection."
+                                                isLoading = false
+                                                return@launch
+                                            }
+                                            
+                                            // Get current location
+                                            val location = locationHelper.getCurrentLocation()
+                                            if (location == null) {
+                                                errorMessage = "Could not get your location. Please enable GPS."
+                                                isLoading = false
+                                                return@launch
+                                            }
+                                            
+                                            // Get Firebase UID
+                                            val firebaseUid = userRepository.getCurrentUserId()
+                                            if (firebaseUid == null) {
+                                                errorMessage = "User not authenticated"
+                                                isLoading = false
+                                                return@launch
+                                            }
+                                            
+                                            // Create feast request
+                                            val request = FeastRequest(
+                                                firebaseUid = firebaseUid,
+                                                organizerName = organizerName.ifBlank { null },
+                                                contactPhone = contactPhone.ifBlank { null },
+                                                menuItems = actualMenuItems,
+                                                foodType = foodType.ifBlank { null },
+                                                description = description.ifBlank { null },
+                                                imageUrls = imageUrls,
+                                                feastDate = feastDate!!.format(DateTimeFormatter.ISO_LOCAL_DATE),
+                                                startTime = startTime!!.format(DateTimeFormatter.ISO_LOCAL_TIME),
+                                                endTime = endTime!!.format(DateTimeFormatter.ISO_LOCAL_TIME),
+                                                latitude = location.latitude,
+                                                longitude = location.longitude,
+                                                address = address.ifBlank { null },
+                                                landmark = landmark.ifBlank { null },
+                                                estimatedCapacity = estimatedCapacity.toIntOrNull()
+                                            )
+                                            
+                                            // Submit to backend
+                                            val response = backendRepository.createFeast(request)
+                                            
+                                            if (response != null) {
+                                                // Success - navigate back
+                                                onNavigateBack()
+                                            } else {
+                                                errorMessage = "Failed to submit bhandara. Please try again."
+                                            }
+                                        } catch (e: Exception) {
+                                            errorMessage = "Error: ${e.message}"
+                                        } finally {
+                                            isLoading = false
+                                            uploadProgress = 0
+                                        }
+                                    }
+                                },
+                                modifier = Modifier.weight(if (currentStep > 1) 2f else 1f).height(48.dp),
+                                enabled = !isLoading
+                            ) {
+                                if (isLoading) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(24.dp),
+                                        color = MaterialTheme.colorScheme.onPrimary
+                                    )
+                                } else {
+                                    Icon(Icons.Default.Send, null, modifier = Modifier.size(20.dp))
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text("Submit Bhandara")
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -277,340 +399,59 @@ fun ReportBhandaraScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .verticalScroll(scrollState)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Images Section (Required)
-            Text(
-                text = "Photos *",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
-            )
-            
-            if (selectedImages.isEmpty()) {
-                OutlinedCard(
-                    onClick = { showImageSourceSheet = true },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(120.dp)
-                ) {
-                    Column(
-                        modifier = Modifier.fillMaxSize(),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        Icon(
-                            Icons.Default.PhotoCamera,
-                            contentDescription = null,
-                            modifier = Modifier.size(48.dp),
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            "Add Photos (Camera or Gallery)",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-            } else {
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(selectedImages) { uri ->
-                        Box {
-                            AsyncImage(
-                                model = uri,
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .size(100.dp)
-                                    .clip(RoundedCornerShape(8.dp)),
-                                contentScale = ContentScale.Crop
-                            )
-                            IconButton(
-                                onClick = { selectedImages = selectedImages - uri },
-                                modifier = Modifier.align(Alignment.TopEnd)
-                            ) {
-                                Icon(
-                                    Icons.Default.Close,
-                                    contentDescription = "Remove",
-                                    tint = MaterialTheme.colorScheme.error,
-                                    modifier = Modifier.background(MaterialTheme.colorScheme.surface.copy(alpha=0.6f), RoundedCornerShape(12.dp))
-                                )
-                            }
-                        }
-                    }
-                    
-                    if (selectedImages.size < 10) {
-                        item {
-                            OutlinedCard(
-                                onClick = { showImageSourceSheet = true },
-                                modifier = Modifier.size(100.dp)
-                            ) {
-                                Box(
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(Icons.Default.Add, "Add more")
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            
-            // Menu Items (Required)
-            // Menu Items (Required)
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(
-                    text = "Menu Items *",
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                
-                @OptIn(ExperimentalLayoutApi::class)
-                if (menuItems.isNotEmpty()) {
-                    FlowRow(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        menuItems.forEach { item ->
-                            InputChip(
-                                selected = true,
-                                onClick = { menuItems = menuItems - item },
-                                label = { Text(item) },
-                                trailingIcon = {
-                                    Icon(
-                                        Icons.Default.Close,
-                                        contentDescription = "Remove",
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                }
-                            )
-                        }
-                    }
-                }
-                
-                OutlinedTextField(
-                    value = currentMenuItem,
-                    onValueChange = { 
-                        if (it.endsWith(",") || it.endsWith("\n")) {
-                            val newItem = it.trim().dropLast(1)
-                            if (newItem.isNotBlank() && !menuItems.contains(newItem)) {
-                                menuItems = menuItems + newItem
-                                currentMenuItem = ""
-                            }
-                        } else {
-                            currentMenuItem = it 
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Add Item") },
-                    placeholder = { Text("Type and press comma or Done") },
-                    supportingText = { Text("Separate items with commas") },
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                    keyboardActions = KeyboardActions(
-                        onDone = {
-                            if (currentMenuItem.isNotBlank()) {
-                                if (!menuItems.contains(currentMenuItem.trim())) {
-                                    menuItems = menuItems + currentMenuItem.trim()
-                                }
-                                currentMenuItem = ""
-                            }
-                        }
-                    )
-                )
-            }
-            
-            // Food Type
-            OutlinedTextField(
-                value = foodType,
-                onValueChange = { foodType = it },
-                label = { Text("Food Type") },
-                placeholder = { Text("Vegetarian, Vegan, etc.") },
-                modifier = Modifier.fillMaxWidth()
-            )
-            
-            // Description
-            OutlinedTextField(
-                value = description,
-                onValueChange = { if (it.length <= 1000) description = it },
-                label = { Text("Description") },
-                placeholder = { Text("Tell us about this bhandara...") },
-                supportingText = { Text("${description.length}/1000") },
-                modifier = Modifier.fillMaxWidth(),
-                minLines = 3,
-                maxLines = 5
-            )
-            
-            Divider()
-            
-            // Date & Time Section
-            Text(
-                text = "When",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
-            )
-            
-            // Feast Date (Required)
-            OutlinedCard(
-                onClick = { showDatePicker = true },
-                modifier = Modifier.fillMaxWidth()
+            // --- Progress Indicator ---
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
             ) {
+                // Step labels
                 Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    stepLabels.forEachIndexed { index, label ->
+                        Text(
+                            text = label,
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = if (index + 1 == currentStep) FontWeight.Bold else FontWeight.Normal,
+                            color = if (index + 1 <= currentStep)
+                                MaterialTheme.colorScheme.primary
+                            else
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                // Linear progress bar
+                LinearProgressIndicator(
+                    progress = { currentStep.toFloat() / totalSteps.toFloat() },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text(
-                            "Date *",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            feastDate?.format(DateTimeFormatter.ofPattern("dd MMM yyyy")) ?: "Select date",
-                            style = MaterialTheme.typography.bodyLarge
-                        )
-                    }
-                    Icon(Icons.Default.CalendarToday, null)
-                }
+                        .height(6.dp),
+                    trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                    drawStopIndicator = {}
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Text(
+                    text = "Step $currentStep of $totalSteps",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
-            
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                // Start Time (Required)
-                OutlinedCard(
-                    onClick = { showStartTimePicker = true },
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column {
-                            Text(
-                                "Start Time *",
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Text(
-                                startTime?.format(DateTimeFormatter.ofPattern("hh:mm a")) ?: "Select",
-                                style = MaterialTheme.typography.bodyLarge
-                            )
-                        }
-                        Icon(Icons.Default.Schedule, null, modifier = Modifier.size(20.dp))
-                    }
-                }
-                
-                // End Time (Required)
-                OutlinedCard(
-                    onClick = { showEndTimePicker = true },
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column {
-                            Text(
-                                "End Time *",
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Text(
-                                endTime?.format(DateTimeFormatter.ofPattern("hh:mm a")) ?: "Select",
-                                style = MaterialTheme.typography.bodyLarge
-                            )
-                        }
-                        Icon(Icons.Default.Schedule, null, modifier = Modifier.size(20.dp))
-                    }
-                }
-            }
-            
-            Divider()
-            
-            // Contact Info
-            Text(
-                text = "Contact Information",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
-            )
-            
-            OutlinedTextField(
-                value = organizerName,
-                onValueChange = { organizerName = it },
-                label = { Text("Organizer Name") },
-                modifier = Modifier.fillMaxWidth(),
-                leadingIcon = { Icon(Icons.Default.Person, null) }
-            )
-            
-            OutlinedTextField(
-                value = contactPhone,
-                onValueChange = { contactPhone = it },
-                label = { Text("Contact Phone") },
-                placeholder = { Text("+919876543210") },
-                modifier = Modifier.fillMaxWidth(),
-                leadingIcon = { Icon(Icons.Default.Phone, null) }
-            )
-            
-            Divider()
-            
-            // Location
-            Text(
-                text = "Location",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
-            )
-            
-            OutlinedTextField(
-                value = address,
-                onValueChange = { if (it.length <= 500) address = it },
-                label = { Text("Address") },
-                modifier = Modifier.fillMaxWidth(),
-                minLines = 2,
-                leadingIcon = { Icon(Icons.Default.LocationOn, null) }
-            )
-            
-            OutlinedTextField(
-                value = landmark,
-                onValueChange = { if (it.length <= 255) landmark = it },
-                label = { Text("Landmark") },
-                modifier = Modifier.fillMaxWidth(),
-                leadingIcon = { Icon(Icons.Default.Place, null) }
-            )
-            
-            Divider()
-            
-            // Capacity
-            OutlinedTextField(
-                value = estimatedCapacity,
-                onValueChange = { if (it.isEmpty() || it.all { char -> char.isDigit() }) estimatedCapacity = it },
-                label = { Text("Estimated Capacity") },
-                placeholder = { Text("Number of people") },
-                modifier = Modifier.fillMaxWidth(),
-                leadingIcon = { Icon(Icons.Default.People, null) }
-            )
-            
-            // Error message
+
+            // --- Error Message ---
             if (errorMessage != null) {
                 Card(
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer
-                    ),
-                    modifier = Modifier.fillMaxWidth()
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
                 ) {
                     Text(
                         text = errorMessage!!,
@@ -619,21 +460,57 @@ fun ReportBhandaraScreen(
                     )
                 }
             }
-            
-            // Upload progress
-            if (isLoading && uploadProgress > 0) {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    LinearProgressIndicator(
-                        progress = uploadProgress / 100f,
-                        modifier = Modifier.fillMaxWidth()
+
+            // --- Step Content ---
+            AnimatedContent(
+                targetState = currentStep,
+                transitionSpec = {
+                    if (targetState > initialState) {
+                        slideInHorizontally { it } + fadeIn() togetherWith
+                                slideOutHorizontally { -it } + fadeOut()
+                    } else {
+                        slideInHorizontally { -it } + fadeIn() togetherWith
+                                slideOutHorizontally { it } + fadeOut()
+                    }
+                },
+                label = "stepTransition",
+                modifier = Modifier.weight(1f)
+            ) { step ->
+                when (step) {
+                    1 -> Step1FoodDetailsStep(
+                        selectedImages = selectedImages,
+                        onAddPhotosClick = { showImageSourceSheet = true },
+                        onRemoveImage = { uri -> selectedImages = selectedImages - uri },
+                        menuItems = menuItems,
+                        onMenuItemsChange = { menuItems = it },
+                        currentMenuItem = currentMenuItem,
+                        onCurrentMenuItemChange = { currentMenuItem = it },
+                        foodType = foodType,
+                        onFoodTypeChange = { foodType = it },
+                        description = description,
+                        onDescriptionChange = { description = it }
                     )
-                    Text(
-                        "Uploading images... $uploadProgress%",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+
+                    2 -> Step2WhenContactStep(
+                        feastDate = feastDate,
+                        onFeastDateClick = { showDatePicker = true },
+                        startTime = startTime,
+                        onStartTimeClick = { showStartTimePicker = true },
+                        endTime = endTime,
+                        onEndTimeClick = { showEndTimePicker = true },
+                        organizerName = organizerName,
+                        onOrganizerNameChange = { organizerName = it },
+                        contactPhone = contactPhone,
+                        onContactPhoneChange = { contactPhone = it }
+                    )
+
+                    3 -> Step3LocationCapacityStep(
+                        address = address,
+                        onAddressChange = { address = it },
+                        landmark = landmark,
+                        onLandmarkChange = { landmark = it },
+                        estimatedCapacity = estimatedCapacity,
+                        onEstimatedCapacityChange = { estimatedCapacity = it }
                     )
                 }
             }
