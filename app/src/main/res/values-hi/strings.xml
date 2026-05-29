@@ -25,4 +25,59 @@
     <string name="search_local_feast">Local Feast खोजें</string>
     <string name="crowd_heatmap_label">भीड़\nहीटमैप</string>
     <string name="moving_vendors_label">चलते\nविक्रेता</string>
+    
+    <!-- About Dialog strings -->
+    <string name="about">हमारे बारे में</string>
+    <string name="about_dialog_title">Local Feast के बारे में</string>
+    <string name="about_dialog_description">अपने आस-पास स्वादिष्ट स्थानीय स्ट्रीट फ़ूड खोजें, चलती-फिरती खाने की गाड़ियों को ट्रैक करें और वास्तविक समय में होने वाले सामुदायिक भंडारों का पता लगाएं।</string>
+    <string name="about_dialog_version">वर्जन 1.0.0</string>
+    <string name="about_dialog_crafted">upalio द्वारा ❤️ से निर्मित</string>
+    <string name="about_dialog_close">बंद करें</string>
+
+    <!-- Support Dialog strings -->
+    <string name="support">सहायता</string>
+    <string name="support_dialog_title">सहायता और प्रतिक्रिया</string>
+    <string name="support_dialog_description">मदद चाहिए या कोई सुझाव है? support@upalio.com पर हमसे संपर्क करें। हमें आपकी प्रतिक्रिया जानकर खुशी होगी!</string>
+    <string name="support_dialog_close">बंद करें</string>
+
+    <!-- Terms & Conditions Dialog strings -->
+    <string name="terms">नियम और शर्तें</string>
+    <string name="terms_dialog_title">नियम और शर्तें</string>
+    <string name="terms_dialog_description">Local Feast का उपयोग करके, आप निम्न के लिए सहमत हैं:\n\n1. सामुदायिक भंडारों के स्थलों और स्वयंसेवकों का सम्मान करें।\n2. सटीक स्थान की जानकारी साझा करें।\n3. स्थानीय स्वच्छता और व्यापार नियमों का पालन करें।\n\nहम सुरक्षा और सटीकता के लिए पोस्ट्स और प्रविष्टियों को मॉडरेट करने का अधिकार सुरक्षित रखते हैं।</string>
+    <string name="terms_dialog_close">स्वीकार करें और बंद करें</string>
+
+    <!-- Report Issue Dialog strings -->
+    <string name="report_issue">समस्या की रिपोर्ट करें</string>
+    <string name="report_issue_title">समस्या की रिपोर्ट करें</string>
+    <string name="report_issue_desc">आपको जो समस्या आई है उसका संक्षेप में वर्णन करें। हमारी टीम इसकी जांच करेगी।</string>
+    <string name="report_issue_hint">यहाँ विवरण दर्ज करें...</string>
+    <string name="report_issue_submit">रिपोर्ट जमा करें</string>
+    <string name="report_issue_success">धन्यवाद! समस्या की रिपोर्ट कर दी गई है।</string>
+    <string name="report_issue_close">बंद करें</string>
+
+    <!-- Suggest a Feature Dialog strings -->
+    <string name="suggest_feature">सुविधा का सुझाव दें</string>
+    <string name="suggest_feature_title">सुविधा का सुझाव दें</string>
+    <string name="suggest_feature_desc">आप Local Feast में कौन सी नई सुविधा देखना चाहेंगे? हम आपकी राय को महत्व देते हैं!</string>
+    <string name="suggest_feature_hint">अपना सुझाव यहाँ दर्ज करें...</string>
+    <string name="suggest_feature_submit">सुझाव जमा करें</string>
+    <string name="suggest_feature_success">आपकी प्रतिक्रिया के लिए धन्यवाद!</string>
+    <string name="suggest_feature_close">बंद करें</string>
+
+    <!-- How to Use Dialog strings -->
+    <string name="how_to_use">ऐप का उपयोग कैसे करें</string>
+    <string name="how_to_use_title">Local Feast का उपयोग कैसे करें</string>
+    <string name="how_to_use_step1">🔍 भोजन खोजें: मानचित्र पर स्थानीय दुकानों और सामुदायिक भंडारों का पता लगाएं।</string>
+    <string name="how_to_use_step2">📍 लाइव ट्रैकिंग: वास्तविक समय में चलती-फिरती खाने की गाड़ियों को ट्रैक करें।</string>
+    <string name="how_to_use_step3">📢 भंडारा पोस्ट करें: दूसरों के साथ सामुदायिक भंडारों का विवरण साझा करें।</string>
+    <string name="how_to_use_close">समझ गए!</string>
+
+    <!-- Share App Dialog strings -->
+    <string name="share_app">ऐप साझा करें</string>
+    <string name="share_app_title">Local Feast साझा करें</string>
+    <string name="share_app_desc">अपने दोस्तों और परिवार को स्वादिष्ट स्थानीय स्ट्रीट फ़ूड और सामुदायिक भंडारों की खोज के लिए आमंत्रित करें!</string>
+    <string name="share_app_link">https://localfeast.upalio.com</string>
+    <string name="share_app_copy">लिंक कॉपी करें</string>
+    <string name="share_app_copied">लिंक क्लिपबोर्ड पर कॉपी हो गया!</string>
+    <string name="share_app_close">बंद करें</string>
 </resources>

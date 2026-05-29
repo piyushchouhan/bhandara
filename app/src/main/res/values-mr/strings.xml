@@ -25,4 +25,59 @@
     <string name="search_local_feast">Local Feast शोधा</string>
     <string name="crowd_heatmap_label">गर्दी\nहीटमॅप</string>
     <string name="moving_vendors_label">फिरते\nविक्रेते</string>
+    
+    <!-- About Dialog strings -->
+    <string name="about">आमच्याबद्दल</string>
+    <string name="about_dialog_title">Local Feast बद्दल</string>
+    <string name="about_dialog_description">तुमच्या जवळचे चवदार स्थानिक स्ट्रीट फूड शोधा, फिरत्या खाद्य गाड्या ट्रॅक करा आणि रिअल-टाइममध्ये होणाऱ्या सामुदायिक भंडारांची माहिती मिळवा.</string>
+    <string name="about_dialog_version">आवृत्ती 1.0.0</string>
+    <string name="about_dialog_crafted">upalio द्वारे ❤️ सह निर्मित</string>
+    <string name="about_dialog_close">बंद करा</string>
+
+    <!-- Support Dialog strings -->
+    <string name="support">मदत</string>
+    <string name="support_dialog_title">मदत आणि अभिप्राय</string>
+    <string name="support_dialog_description">मदत हवी आहे की काही सूचना आहेत? support@upalio.com वर आमच्याशी संपर्क साधा. आम्हाला तुमच्याकडून ऐकायला आवडेल!</string>
+    <string name="support_dialog_close">बंद करा</string>
+
+    <!-- Terms & Conditions Dialog strings -->
+    <string name="terms">नियम आणि अटी</string>
+    <string name="terms_dialog_title">नियम आणि अटी</string>
+    <string name="terms_dialog_description">Local Feast वापरून, तुम्ही खालील गोष्टींशी सहमत आहात:\n\n1. सामुदायिक भंडारांच्या ठिकाणांचा och स्वयंसेवकांचा आदर करा.\n2. अचूक स्थानाची माहिती शेअर करा.\n3. स्थानिक स्वच्छता आणि व्यापार नियमांचे पालन करा.\n\nआम्ही सुरक्षितता आणि अचूकतेसाठी पोस्ट्स आणि नोंदी मॉडरेट करण्याचा अधिकार राखून ठेवतो.</string>
+    <string name="terms_dialog_close">स्वीकार करा आणि बंद करा</string>
+
+    <!-- Report Issue Dialog strings -->
+    <string name="report_issue">समस्या नोंदवा</string>
+    <string name="report_issue_title">समस्या नोंदवा</string>
+    <string name="report_issue_desc">तुम्हाला आलेल्या समस्येचे थोडक्यात वर्णन करा. आमची टीम त्याची चौकशी करेल.</string>
+    <string name="report_issue_hint">तपशील येथे प्रविष्ट करा...</string>
+    <string name="report_issue_submit">अहवाल सबमिट करा</string>
+    <string name="report_issue_success">धन्यवाद! समस्येची यशस्वी नोंद झाली आहे.</string>
+    <string name="report_issue_close">बंद करा</string>
+
+    <!-- Suggest a Feature Dialog strings -->
+    <string name="suggest_feature">नवीन वैशिष्ट्य सुचवा</string>
+    <string name="suggest_feature_title">नवीन वैशिष्ट्य सुचवा</string>
+    <string name="suggest_feature_desc">तुम्हाला Local Feast मध्ये कोणते नवीन वैशिष्ट्य पहायला आवडेल? आम्ही तुमच्या कल्पनांना महत्त्व देतो!</string>
+    <string name="suggest_feature_hint">तुमची सूचना येथे प्रविष्ट करा...</string>
+    <string name="suggest_feature_submit">सूचना सबमिट करा</string>
+    <string name="suggest_feature_success">तुमच्या अभिप्रायाबद्दल धन्यवाद!</string>
+    <string name="suggest_feature_close">बंद करा</string>
+
+    <!-- How to Use Dialog strings -->
+    <string name="how_to_use">अ‍ॅप कसे वापरावे</string>
+    <string name="how_to_use_title">Local Feast कसे वापरावे</string>
+    <string name="how_to_use_step1">🔍 अन्न शोधा: नकाशावर स्थानिक दुकाने आणि सामुदायिक भंडारा शोधा.</string>
+    <string name="how_to_use_step2">📍 थेट ट्रॅकिंग: रिअल-टाइममध्ये फिरत्या खाद्य गाड्यांचा मागोवा ठेवा.</string>
+    <string name="how_to_use_step3">📢 भंडारा पोस्ट करा: इतरांसह सामुदायिक भंडाराचे तपशील शेअर करा.</string>
+    <string name="how_to_use_close">समजले!</string>
+
+    <!-- Share App Dialog strings -->
+    <string name="share_app">अ‍ॅप शेअर करा</string>
+    <string name="share_app_title">Local Feast शेअर करा</string>
+    <string name="share_app_desc">तुमच्या मित्रांना आणि कुटुंबियांना चवदार स्थानिक स्ट्रीट फूड आणि सामुदायिक भंडारा शोधण्यासाठी आमंत्रित करा!</string>
+    <string name="share_app_link">https://localfeast.upalio.com</string>
+    <string name="share_app_copy">लिंक कॉपी करा</string>
+    <string name="share_app_copied">लिंक क्लिपबोर्डवर कॉपी झाली!</string>
+    <string name="share_app_close">बंद करा</string>
 </resources>

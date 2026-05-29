@@ -25,4 +25,59 @@
     <string name="search_local_feast">Search Local Feast</string>
     <string name="crowd_heatmap_label">Crowd\nHeatmap</string>
     <string name="moving_vendors_label">Moving\nVendors</string>
+    
+    <!-- About Dialog strings -->
+    <string name="about">About</string>
+    <string name="about_dialog_title">About Local Feast</string>
+    <string name="about_dialog_description">Discover delicious local street food, track moving food carts, and find community feasts (bhandaras) happening near you in real-time.</string>
+    <string name="about_dialog_version">Version 1.0.0</string>
+    <string name="about_dialog_crafted">Crafted with ❤️ by upalio</string>
+    <string name="about_dialog_close">Close</string>
+
+    <!-- Support Dialog strings -->
+    <string name="support">Support</string>
+    <string name="support_dialog_title">Support &amp; Feedback</string>
+    <string name="support_dialog_description">Need help or have suggestions? Reach out to us at support@upalio.com. We would love to hear from you!</string>
+    <string name="support_dialog_close">Close</string>
+
+    <!-- Terms & Conditions Dialog strings -->
+    <string name="terms">Terms &amp; Conditions</string>
+    <string name="terms_dialog_title">Terms &amp; Conditions</string>
+    <string name="terms_dialog_description">By using Local Feast, you agree to:\n\n1. Respect community feast venues and volunteers.\n2. Share accurate location information.\n3. Comply with local hygiene and trade regulations.\n\nWe reserve the right to moderate reports and entries for safety and accuracy.</string>
+    <string name="terms_dialog_close">Accept &amp; Close</string>
+
+    <!-- Report Issue Dialog strings -->
+    <string name="report_issue">Report an Issue</string>
+    <string name="report_issue_title">Report an Issue</string>
+    <string name="report_issue_desc">Briefly describe the issue you encountered. Our team will look into it.</string>
+    <string name="report_issue_hint">Enter details here...</string>
+    <string name="report_issue_submit">Submit Report</string>
+    <string name="report_issue_success">Thank you! The issue has been reported.</string>
+    <string name="report_issue_close">Close</string>
+
+    <!-- Suggest a Feature Dialog strings -->
+    <string name="suggest_feature">Suggest a Feature</string>
+    <string name="suggest_feature_title">Suggest a Feature</string>
+    <string name="suggest_feature_desc">What feature would you like to see in Local Feast? We value your ideas!</string>
+    <string name="suggest_feature_hint">Enter your suggestion...</string>
+    <string name="suggest_feature_submit">Submit Suggestion</string>
+    <string name="suggest_feature_success">Thank you for your feedback!</string>
+    <string name="suggest_feature_close">Close</string>
+
+    <!-- How to Use Dialog strings -->
+    <string name="how_to_use">How to Use</string>
+    <string name="how_to_use_title">How to Use Local Feast</string>
+    <string name="how_to_use_step1">🔍 Find Food: Explore local shops and community feasts on the map.</string>
+    <string name="how_to_use_step2">📍 Live Tracking: Keep track of moving food carts in real-time.</string>
+    <string name="how_to_use_step3">📢 Post a Feast: Share details of community feasts (bhandaras) with others.</string>
+    <string name="how_to_use_close">Got it!</string>
+
+    <!-- Share App Dialog strings -->
+    <string name="share_app">Share App</string>
+    <string name="share_app_title">Share Local Feast</string>
+    <string name="share_app_desc">Invite your friends and family to discover delicious local street food and community feasts!</string>
+    <string name="share_app_link">https://localfeast.upalio.com</string>
+    <string name="share_app_copy">Copy Link</string>
+    <string name="share_app_copied">Link copied to clipboard!</string>
+    <string name="share_app_close">Close</string>
 </resources>

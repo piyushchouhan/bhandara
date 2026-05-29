@@ -14,7 +14,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.BugReport
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Explore
+import androidx.compose.material.icons.filled.HelpOutline
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Lightbulb
+import androidx.compose.material.icons.filled.Mail
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -71,6 +80,13 @@ fun AppDrawerMenu(
 
     var currentLanguage by remember { mutableStateOf(Locale.getDefault().language) }
     var vendorModeOn by remember { mutableStateOf(prefs.getBoolean(KEY_VENDOR_MODE, false)) }
+    var showAboutDialog by remember { mutableStateOf(false) }
+    var showSupportDialog by remember { mutableStateOf(false) }
+    var showTermsDialog by remember { mutableStateOf(false) }
+    var showReportIssueDialog by remember { mutableStateOf(false) }
+    var showSuggestFeatureDialog by remember { mutableStateOf(false) }
+    var showHowToUseDialog by remember { mutableStateOf(false) }
+    var showShareAppDialog by remember { mutableStateOf(false) }
 
     val vendorLocationManager = remember { VendorLocationManager(context) }
 
@@ -135,11 +151,12 @@ fun AppDrawerMenu(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clickable { showLanguageMenu = true }
-                                .padding(horizontal = 24.dp, vertical = 14.dp),
+                                .height(56.dp)
+                                .padding(horizontal = 24.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Icon(
-                                painter = painterResource(id = R.drawable.translate_indic_language),
+                                imageVector = Icons.Default.Translate,
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.size(24.dp)
@@ -204,11 +221,12 @@ fun AppDrawerMenu(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 24.dp, vertical = 14.dp),
+                            .height(if (!hasMovingCartShop) 72.dp else 56.dp)
+                            .padding(horizontal = 24.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
-                            painter = painterResource(id = R.drawable.explore_24px),
+                            imageVector = Icons.Default.Explore,
                             contentDescription = null,
                             tint = if (vendorModeOn) MaterialTheme.colorScheme.primary
                             else MaterialTheme.colorScheme.onSurfaceVariant,
@@ -264,6 +282,216 @@ fun AppDrawerMenu(
                                 color = MaterialTheme.colorScheme.primary
                             )
                         }
+                    }
+
+                    // About
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { showAboutDialog = true }
+                            .height(56.dp)
+                            .padding(horizontal = 24.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Info,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Text(
+                            text = stringResource(R.string.about),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+
+                    // About Dialog
+                    if (showAboutDialog) {
+                        AboutDialog(
+                            onDismissRequest = { showAboutDialog = false }
+                        )
+                    }
+
+                    // Support
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { showSupportDialog = true }
+                            .height(56.dp)
+                            .padding(horizontal = 24.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Mail,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Text(
+                            text = stringResource(R.string.support),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+
+                    // Support Dialog
+                    if (showSupportDialog) {
+                        SupportDialog(
+                            onDismissRequest = { showSupportDialog = false }
+                        )
+                    }
+
+                    // Terms & Conditions
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { showTermsDialog = true }
+                            .height(56.dp)
+                            .padding(horizontal = 24.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Description,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Text(
+                            text = stringResource(R.string.terms),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+
+                    // Terms & Conditions Dialog
+                    if (showTermsDialog) {
+                        TermsAndConditionsDialog(
+                            onDismissRequest = { showTermsDialog = false }
+                        )
+                    }
+
+                    // Report Issue
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { showReportIssueDialog = true }
+                            .height(56.dp)
+                            .padding(horizontal = 24.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.BugReport,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Text(
+                            text = stringResource(R.string.report_issue),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+
+                    // Report Issue Dialog
+                    if (showReportIssueDialog) {
+                        ReportIssueDialog(
+                            onDismissRequest = { showReportIssueDialog = false }
+                        )
+                    }
+
+                    // Suggest a Feature
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { showSuggestFeatureDialog = true }
+                            .height(56.dp)
+                            .padding(horizontal = 24.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Lightbulb,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Text(
+                            text = stringResource(R.string.suggest_feature),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+
+                    // Suggest a Feature Dialog
+                    if (showSuggestFeatureDialog) {
+                        SuggestFeatureDialog(
+                            onDismissRequest = { showSuggestFeatureDialog = false }
+                        )
+                    }
+
+                    // How to Use
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { showHowToUseDialog = true }
+                            .height(56.dp)
+                            .padding(horizontal = 24.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.HelpOutline,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Text(
+                            text = stringResource(R.string.how_to_use),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+
+                    // How to Use Dialog
+                    if (showHowToUseDialog) {
+                        HowToUseDialog(
+                            onDismissRequest = { showHowToUseDialog = false }
+                        )
+                    }
+
+                    // Share App
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { showShareAppDialog = true }
+                            .height(56.dp)
+                            .padding(horizontal = 24.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Share,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Text(
+                            text = stringResource(R.string.share_app),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+
+                    // Share App Dialog
+                    if (showShareAppDialog) {
+                        ShareAppDialog(
+                            onDismissRequest = { showShareAppDialog = false }
+                        )
                     }
 
                     // ─── Spacer pushes footer to the bottom ───────────────────
