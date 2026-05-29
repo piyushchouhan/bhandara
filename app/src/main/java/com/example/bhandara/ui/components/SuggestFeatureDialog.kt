@@ -94,16 +94,6 @@ fun SuggestFeatureDialog(
                 }
             }
         },
-        dismissButton = {
-            if (!submitted) {
-                TextButton(
-                    onClick = onDismissRequest,
-                    enabled = !isLoading
-                ) {
-                    Text(text = stringResource(R.string.no))
-                }
-            }
-        },
         icon = {
             Box(
                 modifier = Modifier
