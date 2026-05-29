@@ -92,4 +92,10 @@
     <string name="share_app_copy">लिंक कॉपी करा</string>
     <string name="share_app_copied">लिंक क्लिपबोर्डवर कॉपी झाली!</string>
     <string name="share_app_close">बंद करा</string>
+
+    <!-- Owner Confirmation Dialog strings -->
+    <string name="owner_confirm_title">मालकाची खात्री</string>
+    <string name="owner_confirm_message">कृपया केवळ तेव्हाच दुकान जोडा जेव्हा तुम्ही खरोखर त्या दुकानाचे मालक असाल.</string>
+    <string name="owner_confirm_ok">ठीक आहे</string>
+    <string name="owner_confirm_cancel">रद्द करा</string>
 </resources>

@@ -92,4 +92,10 @@
     <string name="share_app_copy">Copy Link</string>
     <string name="share_app_copied">Link copied to clipboard!</string>
     <string name="share_app_close">Close</string>
+
+    <!-- Owner Confirmation Dialog strings -->
+    <string name="owner_confirm_title">Owner Confirmation</string>
+    <string name="owner_confirm_message">Please add a shop only if you are the actual owner of the shop.</string>
+    <string name="owner_confirm_ok">OK</string>
+    <string name="owner_confirm_cancel">Cancel</string>
 </resources>

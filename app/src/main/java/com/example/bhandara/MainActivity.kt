@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.lifecycleScope
 import com.example.bhandara.managers.UserManager
 import com.example.bhandara.ui.components.AppDrawerMenu
+import com.example.bhandara.ui.components.OwnerConfirmationDialog
 import com.example.bhandara.ui.screens.FeastDetailsScreen
 import com.example.bhandara.ui.screens.HomeScreen
 import com.example.bhandara.ui.screens.HungryScreen
@@ -79,6 +80,8 @@ class MainActivity : AppCompatActivity() {
                 // Lifted home tab state
                 var homeTabIndex by rememberSaveable { mutableIntStateOf(0) }
                 
+                var showOwnerConfirmDialog by remember { mutableStateOf(false) }
+                
                 // Request permissions on first composition
                 LaunchedEffect(Unit) {
                     requestPermissions()
@@ -116,7 +119,7 @@ class MainActivity : AppCompatActivity() {
                                     onHungryClick = { navigateTo(Screen.HUNGRY) },
                                     onReportFeastClick = { navigateTo(Screen.REPORT_BHANDARA) },
                                     onFindShopsClick = { navigateTo(Screen.LOCAL_SHOPS_MAP) },
-                                    onAddShopClick = { navigateTo(Screen.ADD_LOCAL_SHOP) }
+                                    onAddShopClick = { showOwnerConfirmDialog = true }
                                 )
                             }
                         }
@@ -168,6 +171,18 @@ class MainActivity : AppCompatActivity() {
                             )
                         }
                     }
+                }
+
+                if (showOwnerConfirmDialog) {
+                    OwnerConfirmationDialog(
+                        onConfirm = {
+                            showOwnerConfirmDialog = false
+                            navigateTo(Screen.ADD_LOCAL_SHOP)
+                        },
+                        onDismissRequest = {
+                            showOwnerConfirmDialog = false
+                        }
+                    )
                 }
             }
         }
