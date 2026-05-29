@@ -123,9 +123,12 @@ fun AddLocalShopScreen(
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
             .requestIdToken(context.getString(com.example.bhandara.R.string.default_web_client_id))
             .requestEmail()
+            .requestProfile()
             .build()
         val googleSignInClient = GoogleSignIn.getClient(context, gso)
-        googleSignInLauncher.launch(googleSignInClient.signInIntent)
+        googleSignInClient.signOut().addOnCompleteListener {
+            googleSignInLauncher.launch(googleSignInClient.signInIntent)
+        }
     }
 
     // Step 1 - Shop Type

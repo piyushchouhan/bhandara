@@ -26,6 +26,18 @@
     <string name="crowd_heatmap_label">Crowd\nHeatmap</string>
     <string name="moving_vendors_label">Moving\nVendors</string>
     
+    <!-- Profile Dialog strings -->
+    <string name="profile">Your Profile</string>
+    <string name="profile_dialog_title">Your Profile</string>
+    <string name="profile_dialog_guest_user">Guest User</string>
+    <string name="profile_dialog_guest_session">Anonymous Session</string>
+    <string name="profile_dialog_account_type">Account Status</string>
+    <string name="profile_dialog_linked_google">Google Account</string>
+    <string name="profile_dialog_guest_mode">Guest Mode (Temporary)</string>
+    <string name="profile_dialog_sign_out">Sign Out</string>
+    <string name="profile_dialog_sign_in">Sign In with Google</string>
+    <string name="profile_dialog_close">Close</string>
+
     <!-- About Dialog strings -->
     <string name="about">About</string>
     <string name="about_dialog_title">About Local Feast</string>

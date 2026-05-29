@@ -27,12 +27,13 @@ import com.example.bhandara.ui.screens.ReportBhandaraScreen
 import com.example.bhandara.ui.screens.AddLocalShopScreen
 import com.example.bhandara.ui.screens.LocalShopsMapScreen
 import com.example.bhandara.ui.screens.LocalShopDetailsScreen
+import com.example.bhandara.ui.screens.ProfileScreen
 import com.example.bhandara.ui.theme.BhandaraTheme
 import com.example.bhandara.utils.LocationHelper
 
 // Simple navigation states
 enum class Screen {
-    HOME, HUNGRY, REPORT_BHANDARA, FEAST_DETAILS, ADD_LOCAL_SHOP, LOCAL_SHOPS_MAP, SHOP_DETAILS
+    HOME, HUNGRY, REPORT_BHANDARA, FEAST_DETAILS, ADD_LOCAL_SHOP, LOCAL_SHOPS_MAP, SHOP_DETAILS, PROFILE
 }
 
 // Navigation arguments
@@ -105,7 +106,9 @@ class MainActivity : AppCompatActivity() {
                 ) { innerPadding ->
                     when (currentScreen) {
                         Screen.HOME -> {
-                            AppDrawerMenu {
+                            AppDrawerMenu(
+                                onProfileClick = { navigateTo(Screen.PROFILE) }
+                            ) {
                                 HomeScreen(
                                     modifier = Modifier.padding(innerPadding),
                                     selectedTabIndex = homeTabIndex,
@@ -158,6 +161,11 @@ class MainActivity : AppCompatActivity() {
                                     onBackClick = { navigateBack() }
                                 )
                             }
+                        }
+                        Screen.PROFILE -> {
+                            ProfileScreen(
+                                onBackClick = { navigateBack() }
+                            )
                         }
                     }
                 }

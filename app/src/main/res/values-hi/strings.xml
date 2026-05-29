@@ -26,6 +26,18 @@
     <string name="crowd_heatmap_label">भीड़\nहीटमैप</string>
     <string name="moving_vendors_label">चलते\nविक्रेता</string>
     
+    <!-- Profile Dialog strings -->
+    <string name="profile">आपकी प्रोफाइल</string>
+    <string name="profile_dialog_title">आपकी प्रोफाइल</string>
+    <string name="profile_dialog_guest_user">अतिथि उपयोगकर्ता</string>
+    <string name="profile_dialog_guest_session">अनाम सत्र</string>
+    <string name="profile_dialog_account_type">खाता स्थिति</string>
+    <string name="profile_dialog_linked_google">गूगल खाता</string>
+    <string name="profile_dialog_guest_mode">अतिथि मोड (अस्थायी)</string>
+    <string name="profile_dialog_sign_out">साइन आउट</string>
+    <string name="profile_dialog_sign_in">गूगल के साथ साइन इन करें</string>
+    <string name="profile_dialog_close">बंद करें</string>
+
     <!-- About Dialog strings -->
     <string name="about">हमारे बारे में</string>
     <string name="about_dialog_title">Local Feast के बारे में</string>

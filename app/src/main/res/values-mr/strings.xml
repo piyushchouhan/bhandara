@@ -26,6 +26,18 @@
     <string name="crowd_heatmap_label">गर्दी\nहीटमॅप</string>
     <string name="moving_vendors_label">फिरते\nविक्रेते</string>
     
+    <!-- Profile Dialog strings -->
+    <string name="profile">तुमचे प्रोफाइल</string>
+    <string name="profile_dialog_title">तुमचे प्रोफाइल</string>
+    <string name="profile_dialog_guest_user">अतिथी वापरकर्ता</string>
+    <string name="profile_dialog_guest_session">अनामित सत्र</string>
+    <string name="profile_dialog_account_type">खात्याची स्थिती</string>
+    <string name="profile_dialog_linked_google">गूगल खाते</string>
+    <string name="profile_dialog_guest_mode">अतिथी मोड (तात्पुरता)</string>
+    <string name="profile_dialog_sign_out">साइन आउट</string>
+    <string name="profile_dialog_sign_in">गूगल सह साइन इन करा</string>
+    <string name="profile_dialog_close">बंद करा</string>
+
     <!-- About Dialog strings -->
     <string name="about">आमच्याबद्दल</string>
     <string name="about_dialog_title">Local Feast बद्दल</string>

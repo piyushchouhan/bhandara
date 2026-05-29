@@ -53,9 +53,17 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.filled.AccountBox
+import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.core.os.LocaleListCompat
+import coil.compose.AsyncImage
 import com.example.bhandara.R
 import com.example.bhandara.services.VendorLocationManager
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 import java.util.Locale
 
@@ -67,6 +75,7 @@ private const val KEY_VENDOR_MODE = "vendor_mode_active"
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppDrawerMenu(
+    onProfileClick: () -> Unit = {},
     content: @Composable () -> Unit
 ) {
     val context = LocalContext.current
@@ -78,6 +87,7 @@ fun AppDrawerMenu(
     val vendorOwnerUid = remember { prefs.getString(KEY_OWNER_UID, null) }
     val hasMovingCartShop = vendorShopId > 0 && vendorOwnerUid != null
 
+    val currentUser = FirebaseAuth.getInstance().currentUser
     var currentLanguage by remember { mutableStateOf(Locale.getDefault().language) }
     var vendorModeOn by remember { mutableStateOf(prefs.getBoolean(KEY_VENDOR_MODE, false)) }
     var showAboutDialog by remember { mutableStateOf(false) }
@@ -282,6 +292,48 @@ fun AppDrawerMenu(
                                 color = MaterialTheme.colorScheme.primary
                             )
                         }
+                    }
+
+                    // Your Profile
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                scope.launch { drawerState.close() }
+                                onProfileClick()
+                            }
+                            .height(56.dp)
+                            .padding(horizontal = 24.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        val photoUrl = remember(currentUser) {
+                            (currentUser?.photoUrl ?: currentUser?.providerData?.firstOrNull { it.photoUrl != null }?.photoUrl)
+                                ?.toString()
+                                ?.replace("http://", "https://")
+                        }
+                        if (currentUser != null && !currentUser.isAnonymous && photoUrl != null) {
+                            AsyncImage(
+                                model = photoUrl,
+                                contentDescription = "Profile",
+                                modifier = Modifier
+                                    .size(28.dp)
+                                    .clip(CircleShape),
+                                contentScale = ContentScale.Crop
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Default.AccountCircle,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(28.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Text(
+                            text = stringResource(R.string.profile),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
                     }
 
                     // About
