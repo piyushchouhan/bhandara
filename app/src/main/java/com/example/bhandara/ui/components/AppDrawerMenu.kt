@@ -72,6 +72,8 @@ private const val KEY_SHOP_ID = "vendor_shop_id"
 private const val KEY_OWNER_UID = "vendor_owner_uid"
 private const val KEY_VENDOR_MODE = "vendor_mode_active"
 
+// App drawer code
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppDrawerMenu(
