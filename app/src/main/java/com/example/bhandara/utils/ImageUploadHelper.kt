@@ -97,10 +97,10 @@ class ImageUploadHelper(private val context: Context) {
     }
 
     /**
-     * Decodes a local image URI, resizes it to a maximum dimension to prevent OOM
-     * and compresses it into a WebP byte array.
+     * Decodes a local image URI, resizes it to a maximum dimension to prevent OOM,
+     * respects EXIF orientation, and compresses it into a WebP byte array.
      */
-    private fun decodeAndCompressToWebp(uri: Uri, maxDimension: Int = 1080): ByteArray? {
+    private fun decodeAndCompressToWebp(uri: Uri, maxDimension: Int = 1440): ByteArray? {
         return try {
             // 1. Get image bounds first
             val options = BitmapFactory.Options().apply {
@@ -131,7 +131,7 @@ class ImageUploadHelper(private val context: Context) {
             } ?: return null
 
             // 4. Perform precise scaling to maxDimension if needed
-            val bitmap = if (rawBitmap.width > maxDimension || rawBitmap.height > maxDimension) {
+            var bitmap = if (rawBitmap.width > maxDimension || rawBitmap.height > maxDimension) {
                 val ratio = rawBitmap.width.toFloat() / rawBitmap.height.toFloat()
                 val (newWidth, newHeight) = if (ratio > 1) {
                     maxDimension to (maxDimension / ratio).toInt()
@@ -147,14 +147,55 @@ class ImageUploadHelper(private val context: Context) {
                 rawBitmap
             }
 
-            // 5. Compress to WebP format
+            // 4.5. Rotate bitmap if required by EXIF orientation
+            val rotationDegrees = getRotationDegrees(uri)
+            if (rotationDegrees != 0) {
+                bitmap = rotateBitmap(bitmap, rotationDegrees)
+            }
+
+            // 5. Compress to WebP format with higher quality (90 instead of 80)
             val outputStream = ByteArrayOutputStream()
-            bitmap.compress(Bitmap.CompressFormat.WEBP_LOSSY, 80, outputStream)
+            bitmap.compress(Bitmap.CompressFormat.WEBP_LOSSY, 90, outputStream)
             bitmap.recycle()
             outputStream.toByteArray()
         } catch (e: Exception) {
             Log.e(TAG, "Error compressing image to WebP", e)
             null
+        }
+    }
+
+    private fun getRotationDegrees(uri: Uri): Int {
+        try {
+            context.contentResolver.openInputStream(uri)?.use { stream ->
+                val exifInterface = android.media.ExifInterface(stream)
+                val orientation = exifInterface.getAttributeInt(
+                    android.media.ExifInterface.TAG_ORIENTATION,
+                    android.media.ExifInterface.ORIENTATION_NORMAL
+                )
+                return when (orientation) {
+                    android.media.ExifInterface.ORIENTATION_ROTATE_90 -> 90
+                    android.media.ExifInterface.ORIENTATION_ROTATE_180 -> 180
+                    android.media.ExifInterface.ORIENTATION_ROTATE_270 -> 270
+                    else -> 0
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error checking EXIF orientation", e)
+        }
+        return 0
+    }
+
+    private fun rotateBitmap(bitmap: Bitmap, degrees: Int): Bitmap {
+        return try {
+            val matrix = android.graphics.Matrix().apply { postRotate(degrees.toFloat()) }
+            val rotated = Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
+            if (rotated != bitmap) {
+                bitmap.recycle()
+            }
+            rotated
+        } catch (e: Exception) {
+            Log.e(TAG, "Error rotating bitmap", e)
+            bitmap
         }
     }
 }
