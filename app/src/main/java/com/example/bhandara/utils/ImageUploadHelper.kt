@@ -1,10 +1,14 @@
 package com.example.bhandara.utils
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.util.Log
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.tasks.await
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
 import java.util.UUID
 
 /**
@@ -35,13 +39,14 @@ class ImageUploadHelper(private val context: Context) {
         onProgress: (Int) -> Unit = {}
     ): String? {
         return try {
-            val fileName = "${UUID.randomUUID()}.jpg"
+            val fileName = "${UUID.randomUUID()}.webp"
             val imageRef = storageRef.child("$FEASTS_FOLDER/$fileName")
             
-            // Use openInputStream for robust content:// URI handling
-            val stream = context.contentResolver.openInputStream(uri)
-                ?: throw Exception("Could not open input stream for URI: $uri")
+            // Compress image to WebP format
+            val webpBytes = decodeAndCompressToWebp(uri)
+                ?: throw Exception("Could not compress image to WebP: $uri")
                 
+            val stream = ByteArrayInputStream(webpBytes)
             val uploadTask = imageRef.putStream(stream)
             
             // Monitor upload progress
@@ -89,5 +94,67 @@ class ImageUploadHelper(private val context: Context) {
         }
         
         return urls
+    }
+
+    /**
+     * Decodes a local image URI, resizes it to a maximum dimension to prevent OOM
+     * and compresses it into a WebP byte array.
+     */
+    private fun decodeAndCompressToWebp(uri: Uri, maxDimension: Int = 1080): ByteArray? {
+        return try {
+            // 1. Get image bounds first
+            val options = BitmapFactory.Options().apply {
+                inJustDecodeBounds = true
+            }
+            context.contentResolver.openInputStream(uri).use { stream ->
+                BitmapFactory.decodeStream(stream, null, options)
+            }
+
+            // 2. Compute sample size to scale down image decoding
+            var inSampleSize = 1
+            val height = options.outHeight
+            val width = options.outWidth
+            if (height > maxDimension || width > maxDimension) {
+                val halfHeight = height / 2
+                val halfWidth = width / 2
+                while (halfHeight / inSampleSize >= maxDimension && halfWidth / inSampleSize >= maxDimension) {
+                    inSampleSize *= 2
+                }
+            }
+
+            // 3. Decode Bitmap with sample size
+            val decodeOptions = BitmapFactory.Options().apply {
+                this.inSampleSize = inSampleSize
+            }
+            val rawBitmap = context.contentResolver.openInputStream(uri).use { stream ->
+                BitmapFactory.decodeStream(stream, null, decodeOptions)
+            } ?: return null
+
+            // 4. Perform precise scaling to maxDimension if needed
+            val bitmap = if (rawBitmap.width > maxDimension || rawBitmap.height > maxDimension) {
+                val ratio = rawBitmap.width.toFloat() / rawBitmap.height.toFloat()
+                val (newWidth, newHeight) = if (ratio > 1) {
+                    maxDimension to (maxDimension / ratio).toInt()
+                } else {
+                    (maxDimension * ratio).toInt() to maxDimension
+                }
+                Bitmap.createScaledBitmap(rawBitmap, newWidth, newHeight, true).also {
+                    if (it != rawBitmap) {
+                        rawBitmap.recycle()
+                    }
+                }
+            } else {
+                rawBitmap
+            }
+
+            // 5. Compress to WebP format
+            val outputStream = ByteArrayOutputStream()
+            bitmap.compress(Bitmap.CompressFormat.WEBP_LOSSY, 80, outputStream)
+            bitmap.recycle()
+            outputStream.toByteArray()
+        } catch (e: Exception) {
+            Log.e(TAG, "Error compressing image to WebP", e)
+            null
+        }
     }
 }
