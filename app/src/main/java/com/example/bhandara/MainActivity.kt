@@ -29,12 +29,15 @@ import com.example.bhandara.ui.screens.AddLocalShopScreen
 import com.example.bhandara.ui.screens.LocalShopsMapScreen
 import com.example.bhandara.ui.screens.LocalShopDetailsScreen
 import com.example.bhandara.ui.screens.ProfileScreen
+import com.example.bhandara.ui.components.appDrawer.AboutScreen
+import com.example.bhandara.ui.components.appDrawer.SupportScreen
+import com.example.bhandara.ui.components.appDrawer.TermsScreen
 import com.example.bhandara.ui.theme.BhandaraTheme
 import com.example.bhandara.utils.LocationHelper
 
 // Simple navigation states
 enum class Screen {
-    HOME, HUNGRY, REPORT_BHANDARA, FEAST_DETAILS, ADD_LOCAL_SHOP, LOCAL_SHOPS_MAP, SHOP_DETAILS, PROFILE
+    HOME, HUNGRY, REPORT_BHANDARA, FEAST_DETAILS, ADD_LOCAL_SHOP, LOCAL_SHOPS_MAP, SHOP_DETAILS, PROFILE, ABOUT, SUPPORT, TERMS
 }
 
 // Navigation arguments
@@ -110,7 +113,10 @@ class MainActivity : AppCompatActivity() {
                     when (currentScreen) {
                         Screen.HOME -> {
                             AppDrawerMenu(
-                                onProfileClick = { navigateTo(Screen.PROFILE) }
+                                onProfileClick = { navigateTo(Screen.PROFILE) },
+                                onAboutClick = { navigateTo(Screen.ABOUT) },
+                                onSupportClick = { navigateTo(Screen.SUPPORT) },
+                                onTermsClick = { navigateTo(Screen.TERMS) }
                             ) {
                                 HomeScreen(
                                     modifier = Modifier.padding(innerPadding),
@@ -167,6 +173,21 @@ class MainActivity : AppCompatActivity() {
                         }
                         Screen.PROFILE -> {
                             ProfileScreen(
+                                onBackClick = { navigateBack() }
+                            )
+                        }
+                        Screen.ABOUT -> {
+                            AboutScreen(
+                                onBackClick = { navigateBack() }
+                            )
+                        }
+                        Screen.SUPPORT -> {
+                            SupportScreen(
+                                onBackClick = { navigateBack() }
+                            )
+                        }
+                        Screen.TERMS -> {
+                            TermsScreen(
                                 onBackClick = { navigateBack() }
                             )
                         }

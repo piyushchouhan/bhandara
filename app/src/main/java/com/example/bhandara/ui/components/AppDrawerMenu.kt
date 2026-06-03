@@ -78,6 +78,9 @@ private const val KEY_VENDOR_MODE = "vendor_mode_active"
 @Composable
 fun AppDrawerMenu(
     onProfileClick: () -> Unit = {},
+    onAboutClick: () -> Unit = {},
+    onSupportClick: () -> Unit = {},
+    onTermsClick: () -> Unit = {},
     content: @Composable () -> Unit
 ) {
     val context = LocalContext.current
@@ -92,9 +95,7 @@ fun AppDrawerMenu(
     val currentUser = FirebaseAuth.getInstance().currentUser
     var currentLanguage by remember { mutableStateOf(Locale.getDefault().language) }
     var vendorModeOn by remember { mutableStateOf(prefs.getBoolean(KEY_VENDOR_MODE, false)) }
-    var showAboutDialog by remember { mutableStateOf(false) }
-    var showSupportDialog by remember { mutableStateOf(false) }
-    var showTermsDialog by remember { mutableStateOf(false) }
+
     var showReportIssueDialog by remember { mutableStateOf(false) }
     var showSuggestFeatureDialog by remember { mutableStateOf(false) }
     var showHowToUseDialog by remember { mutableStateOf(false) }
@@ -342,7 +343,10 @@ fun AppDrawerMenu(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { showAboutDialog = true }
+                            .clickable {
+                                scope.launch { drawerState.close() }
+                                onAboutClick()
+                            }
                             .height(56.dp)
                             .padding(horizontal = 24.dp),
                         verticalAlignment = Alignment.CenterVertically
@@ -361,18 +365,14 @@ fun AppDrawerMenu(
                         )
                     }
 
-                    // About Dialog
-                    if (showAboutDialog) {
-                        AboutDialog(
-                            onDismissRequest = { showAboutDialog = false }
-                        )
-                    }
-
                     // Support
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { showSupportDialog = true }
+                            .clickable {
+                                scope.launch { drawerState.close() }
+                                onSupportClick()
+                            }
                             .height(56.dp)
                             .padding(horizontal = 24.dp),
                         verticalAlignment = Alignment.CenterVertically
@@ -391,18 +391,14 @@ fun AppDrawerMenu(
                         )
                     }
 
-                    // Support Dialog
-                    if (showSupportDialog) {
-                        SupportDialog(
-                            onDismissRequest = { showSupportDialog = false }
-                        )
-                    }
-
                     // Terms & Conditions
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { showTermsDialog = true }
+                            .clickable {
+                                scope.launch { drawerState.close() }
+                                onTermsClick()
+                            }
                             .height(56.dp)
                             .padding(horizontal = 24.dp),
                         verticalAlignment = Alignment.CenterVertically
@@ -418,13 +414,6 @@ fun AppDrawerMenu(
                             text = stringResource(R.string.terms),
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-
-                    // Terms & Conditions Dialog
-                    if (showTermsDialog) {
-                        TermsAndConditionsDialog(
-                            onDismissRequest = { showTermsDialog = false }
                         )
                     }
 
