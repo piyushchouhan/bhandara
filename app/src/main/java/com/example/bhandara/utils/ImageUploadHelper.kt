@@ -98,7 +98,7 @@ class ImageUploadHelper(private val context: Context) {
 
     /**
      * Decodes a local image URI, resizes it to a maximum dimension to prevent OOM,
-     * respects EXIF orientation, and compresses it into a WebP byte array.
+     * respects EXIF orientation, and compresses it into a WebP byte array for better compression.
      */
     private fun decodeAndCompressToWebp(uri: Uri, maxDimension: Int = 1440): ByteArray? {
         return try {
