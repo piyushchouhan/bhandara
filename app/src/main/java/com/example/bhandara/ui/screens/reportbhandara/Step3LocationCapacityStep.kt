@@ -16,6 +16,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
+/**
+ * This composable handles the location and capacity step of the add bhandara flow.
+ * It uses the MaterialTheme to style the UI.
+ * It uses the OutlinedTextField composable to display the text fields.
+ */
+
 @Composable
 fun Step3LocationCapacityStep(
     // Address & Landmark
