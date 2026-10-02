@@ -1,0 +1,38 @@
+# Xcode project definition. Generate the .xcodeproj with:  cd iosApp && xcodegen
+# (the generated iosApp.xcodeproj is not committed; this file is the source of truth)
+name: iosApp
+options:
+  bundleIdPrefix: com.example.bhandara
+  deploymentTarget:
+    iOS: "16.0"
+targets:
+  iosApp:
+    type: application
+    platform: iOS
+    sources:
+      - iosApp
+    info:
+      path: iosApp/Info.plist
+      properties:
+        CFBundleDisplayName: Local Feast
+        UILaunchScreen: {}
+        # Lets Compose animate at 120 Hz on ProMotion iPhones
+        CADisableMinimumFrameDurationOnPhone: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.example.bhandara.ios
+        SWIFT_VERSION: "5.0"
+        CODE_SIGN_STYLE: Automatic
+        # The Kotlin "Shared" framework built by Gradle (see the build script below)
+        FRAMEWORK_SEARCH_PATHS: "$(SRCROOT)/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)"
+        OTHER_LDFLAGS: ["$(inherited)", "-framework", "Shared"]
+        # The Gradle build script needs to read the project outside Xcode's sandbox
+        ENABLE_USER_SCRIPT_SANDBOXING: NO
+    preBuildScripts:
+      - name: Compile Kotlin shared code
+        basedOnDependencyAnalysis: false
+        script: |
+          # Xcode doesn't see the terminal's PATH; fall back to the JDK macOS knows about
+          if [ -z "$JAVA_HOME" ]; then export JAVA_HOME="$(/usr/libexec/java_home)"; fi
+          cd "$SRCROOT/.."
+          ./gradlew :shared:embedAndSignAppleFrameworkForXcode

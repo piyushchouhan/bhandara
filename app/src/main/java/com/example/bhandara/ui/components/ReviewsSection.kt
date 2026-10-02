@@ -479,22 +479,24 @@ fun ReviewItem(
                 }
             }
 
-            if (!review.comment.isNullOrBlank()) {
+            val comment = review.comment
+            if (!comment.isNullOrBlank()) {
                 Text(
-                    text = review.comment,
+                    text = comment,
                     style = MaterialTheme.typography.bodyMedium
                 )
             }
             
             // Display Images if available
-            if (!review.imageUrls.isNullOrEmpty()) {
+            val imageUrls = review.imageUrls
+            if (!imageUrls.isNullOrEmpty()) {
                 LazyRow(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    items(review.imageUrls.size) { index ->
+                    items(imageUrls.size) { index ->
                         AsyncImage(
-                            model = review.imageUrls[index],
+                            model = imageUrls[index],
                             contentDescription = "Review Image",
                             modifier = Modifier
                                 .size(80.dp)
@@ -508,9 +510,10 @@ fun ReviewItem(
         }
     }
 
-    if (selectedImageIndex != null && !review.imageUrls.isNullOrEmpty()) {
+    val carouselImageUrls = review.imageUrls
+    if (selectedImageIndex != null && !carouselImageUrls.isNullOrEmpty()) {
         FullScreenImageCarousel(
-            imageUrls = review.imageUrls,
+            imageUrls = carouselImageUrls,
             initialIndex = selectedImageIndex!!,
             onDismissRequest = { selectedImageIndex = null }
         )

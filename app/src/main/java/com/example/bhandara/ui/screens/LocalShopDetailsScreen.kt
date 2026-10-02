@@ -573,8 +573,9 @@ private fun InfoCard(shop: LocalShopResponse) {
                             color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                         )
                     }
-                    if (shop.distance != null) {
-                        val distanceKm = (shop.distance / 1000.0).roundToInt()
+                    val distance = shop.distance
+                    if (distance != null) {
+                        val distanceKm = (distance / 1000.0).roundToInt()
                         Text(
                             text = "$distanceKm km away",
                             style = MaterialTheme.typography.bodySmall,
@@ -689,7 +690,8 @@ private fun AdditionalInfoSection(shop: LocalShopResponse) {
                 }
             }
             
-            if (shop.averageCostForTwo != null && shop.averageCostForTwo > 0) {
+            val averageCostForTwo = shop.averageCostForTwo
+            if (averageCostForTwo != null && averageCostForTwo > 0) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp)

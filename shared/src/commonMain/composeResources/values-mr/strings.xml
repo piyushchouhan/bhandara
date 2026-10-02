@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="button_i_am_hungry">मला भूक लागली आहे</string>
+    <string name="button_find_food_shop">खाद्यपदार्थांचे दुकान शोधा</string>
+    <string name="button_report_feast">भंडाराची माहिती द्या</string>
+    <string name="community_feast">सामुदायिक मेजवानी</string>
+    <string name="local_shops">स्थानिक दुकाने</string>
+    <string name="button_add_food_shop">खाद्य दुकान जोडा</string>
+</resources>

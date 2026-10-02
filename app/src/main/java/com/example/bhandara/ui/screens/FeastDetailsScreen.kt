@@ -417,15 +417,17 @@ private fun InfoCard(feast: FeastResponse) {
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
-                    if (feast.landmark != null && feast.landmark.isNotBlank()) {
+                    val landmark = feast.landmark
+                    if (!landmark.isNullOrBlank()) {
                         Text(
-                            text = "Near: ${feast.landmark}",
+                            text = "Near: $landmark",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                         )
                     }
-                    if (feast.distance != null) {
-                        val distanceKm = (feast.distance / 1000.0).roundToInt()
+                    val distance = feast.distance
+                    if (distance != null) {
+                        val distanceKm = (distance / 1000.0).roundToInt()
                         Text(
                             text = "$distanceKm km away",
                             style = MaterialTheme.typography.bodySmall,

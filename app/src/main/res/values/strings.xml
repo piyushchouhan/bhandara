@@ -1,11 +1,5 @@
 <resources>
     <string name="app_name" translatable="false">Local Feast</string>
-    <string name="button_i_am_hungry" >I am Hungry</string>
-    <string name="button_find_food_shop" >Find Food Shop</string>
-    <string name="button_report_feast" >Post a Feast</string>
-    <string name="community_feast">Community Feast</string>
-    <string name="local_shops">Local Shops</string>
-    <string name="button_add_food_shop">Add Food Shop</string>
     <string name="is_moving_cart_title">Moving Cart?</string>
     <string name="is_moving_cart_message">Is this a moving cart (street food vendor on wheels)?</string>
     <string name="yes">Yes</string>
