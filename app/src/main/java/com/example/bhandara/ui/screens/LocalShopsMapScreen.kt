@@ -124,6 +124,7 @@ fun LocalShopsMapScreen(
     onShopClick: (String) -> Unit = {}
 ) {
     val context = LocalContext.current
+    val locationHelper = remember { com.example.bhandara.utils.LocationHelper(context) }
     val fusedLocationClient = remember { LocationServices.getFusedLocationProviderClient(context) }
     val isDarkTheme = isSystemInDarkTheme()
     val coroutineScope = rememberCoroutineScope()
@@ -681,7 +682,11 @@ fun LocalShopsMapScreen(
                             }
                         }
                         Text(
-                            text = "Have you seen this shop at the marked location?",
+                            text = if (prompt.isMovingCart == true) {
+                                "Is this cart here near you right now?"
+                            } else {
+                                "Have you seen this shop at the marked location?"
+                            },
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f)
                         )
@@ -693,10 +698,19 @@ fun LocalShopsMapScreen(
                                 OutlinedButton(
                                     onClick = {
                                         coroutineScope.launch {
-                                            repository.verifyShop(prompt.id, vote)
-                                            verifyPrefs.edit().putBoolean("verified_${prompt.id}", true).apply()
+                                            // The backend only counts answers from people who are actually there
+                                            val here = locationHelper.getCurrentLocation()
+                                            val result = repository.verifyShop(prompt.id, vote, here?.latitude, here?.longitude)
+                                            if (result.success || result.alreadyVoted) {
+                                                verifyPrefs.edit().putBoolean("verified_${prompt.id}", true).apply()
+                                            }
+                                            // On other refusals (e.g. too far away) the prompt can come back when the user is closer
                                             verificationPrompt = null
-                                            android.widget.Toast.makeText(context, "Thanks for verifying!", android.widget.Toast.LENGTH_SHORT).show()
+                                            android.widget.Toast.makeText(
+                                                context,
+                                                if (result.success) "Thanks for verifying!" else result.message,
+                                                android.widget.Toast.LENGTH_LONG
+                                            ).show()
                                         }
                                     },
                                     modifier = Modifier.weight(1f)

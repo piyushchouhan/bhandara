@@ -11,6 +11,10 @@
     
     <!-- Notification permission (Android 13+) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- Vendor mode: keep sharing the cart's location while the screen is off -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
     
     <!-- Camera permission -->
     <uses-permission android:name="android.permission.CAMERA" />
@@ -49,6 +53,12 @@
             </intent-filter>
         </service>
         
+        <!-- Vendor mode: shares the cart's live location in the foreground -->
+        <service
+            android:name=".services.VendorTrackingService"
+            android:exported="false"
+            android:foregroundServiceType="location" />
+
         <!-- FileProvider for Camera -->
         <provider
             android:name="androidx.core.content.FileProvider"

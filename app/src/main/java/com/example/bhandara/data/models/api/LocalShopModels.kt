@@ -44,6 +44,7 @@ data class LocalShopResponse(
     val ownerUid: String? = null,
     val ownerPhone: String? = null,
     val ownerEmail: String? = null,
+    val ownerClaimed: Boolean? = null, // false = listed by the platform, the real owner can still claim it
     val shopName: String,
     val shopType: String? = null,
     val cuisineType: String? = null,
@@ -151,5 +152,15 @@ data class FeedResponse(
 )
 
 data class VerifyShopRequest(
-    val vote: String
+    val vote: String,
+    // Where the voter is right now; YES/NO votes only count from people near the shop or live cart
+    val latitude: Double? = null,
+    val longitude: Double? = null
+)
+
+/** Outcome of a verification vote */
+data class VerifyShopResult(
+    val success: Boolean,
+    val alreadyVoted: Boolean = false,
+    val message: String? = null
 )

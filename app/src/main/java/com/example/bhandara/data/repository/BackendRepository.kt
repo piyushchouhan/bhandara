@@ -380,19 +380,53 @@ class BackendRepository {
         }
     }
 
-    suspend fun verifyShop(shopId: String, vote: String): com.example.bhandara.data.models.api.LocalShopResponse? {
+    suspend fun verifyShop(
+        shopId: String,
+        vote: String,
+        latitude: Double?,
+        longitude: Double?
+    ): com.example.bhandara.data.models.api.VerifyShopResult {
         return try {
-            val request = com.example.bhandara.data.models.api.VerifyShopRequest(vote = vote)
+            val request = com.example.bhandara.data.models.api.VerifyShopRequest(vote, latitude, longitude)
             val response = apiService.verifyShop(shopId, request)
             if (response.isSuccessful) {
-                response.body()
+                com.example.bhandara.data.models.api.VerifyShopResult(success = true)
             } else {
-                Log.e(TAG, "Failed to verify shop: ${response.code()}")
-                null
+                // Backend explains refusals (too far away, cart not live, already voted) in {"message": "..."}
+                val message = response.errorBody()?.string()?.let {
+                    runCatching { org.json.JSONObject(it).optString("message") }.getOrNull()
+                }?.takeIf { it.isNotBlank() }
+                Log.e(TAG, "Failed to verify shop: ${response.code()} $message")
+                com.example.bhandara.data.models.api.VerifyShopResult(
+                    success = false,
+                    alreadyVoted = message?.contains("already voted", ignoreCase = true) == true,
+                    message = message ?: "Could not submit your answer (error ${response.code()})"
+                )
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error verifying shop", e)
-            null
+            com.example.bhandara.data.models.api.VerifyShopResult(success = false, message = "Network error. Please try again.")
+        }
+    }
+
+    suspend fun submitShopClaim(request: com.example.bhandara.data.models.api.ShopClaimRequest): com.example.bhandara.data.models.api.ShopClaimResult {
+        return try {
+            val response = apiService.submitShopClaim(request)
+            if (response.isSuccessful) {
+                com.example.bhandara.data.models.api.ShopClaimResult(claim = response.body())
+            } else {
+                // Backend explains 400/409 refusals in {"message": "..."}
+                val message = response.errorBody()?.string()?.let {
+                    runCatching { org.json.JSONObject(it).optString("message") }.getOrNull()
+                }
+                Log.e(TAG, "Failed to submit shop claim: ${response.code()} $message")
+                com.example.bhandara.data.models.api.ShopClaimResult(
+                    errorMessage = message?.takeIf { it.isNotBlank() } ?: "Could not submit your claim (error ${response.code()})"
+                )
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error submitting shop claim", e)
+            com.example.bhandara.data.models.api.ShopClaimResult(errorMessage = "Network error. Please try again.")
         }
     }
 

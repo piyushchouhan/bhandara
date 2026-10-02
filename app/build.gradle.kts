@@ -35,7 +35,9 @@ android {
         // API Configuration
         // Using computer's local IP for physical device testing
         // Phone must be on same WiFi network OR use USB with ADB reverse port forwarding
-        buildConfigField("String", "API_BASE_URL", "\"https://tobago-sphere-photo-magnetic.trycloudflare.com/\"")
+//        buildConfigField("String", "API_BASE_URL", "\"https://tobago-sphere-photo-magnetic.trycloudflare.com/\"")
+//         buildConfigField("String", "API_BASE_URL", "\"http://192.168.1.14:8080/\"")
+        buildConfigField("String", "API_BASE_URL", "\"https://9814-2402-e280-3e17-820-592c-1ff3-b22b-e05.ngrok-free.app/\"")
         
         // Google Maps API Key from local.properties
         manifestPlaceholders["MAPS_API_KEY"] = localProperties.getProperty("MAPS_API_KEY", "")

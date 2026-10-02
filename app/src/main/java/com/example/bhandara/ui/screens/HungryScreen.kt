@@ -340,9 +340,9 @@ fun HungryScreen(
                 nearbyFeasts.forEach { feast ->
                     Marker(
                         state = MarkerState(position = LatLng(feast.latitude, feast.longitude)),
-                        title = feast.organizerName,
+                        title = feast.organizerName ?: "Community Feast",
                         snippet = buildString {
-                            append(feast.address)
+                            append(feast.address ?: "")
                             feast.distance?.let {
                                 val distanceKm = it / 1000.0
                                 append(" • ${String.format("%.1f", distanceKm)} km away")

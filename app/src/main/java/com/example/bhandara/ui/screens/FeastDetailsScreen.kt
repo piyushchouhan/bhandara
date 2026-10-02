@@ -166,7 +166,7 @@ fun FeastDetailsScreen(
                     ) {
                         Column {
                             Text(
-                                text = feast!!.organizerName,
+                                text = feast!!.organizerName ?: "Community Feast",
                                 style = MaterialTheme.typography.headlineSmall,
                                 fontWeight = FontWeight.Bold
                             )
@@ -216,8 +216,8 @@ fun FeastDetailsScreen(
                     MenuItemsSection(feast!!.menuItems)
                     
                     // Description
-                    if (feast!!.description.isNotBlank()) {
-                        DescriptionSection(feast!!.description)
+                    if (!feast!!.description.isNullOrBlank()) {
+                        DescriptionSection(feast!!.description!!)
                     }
                     
                     // Additional Info
@@ -227,12 +227,12 @@ fun FeastDetailsScreen(
                     ActionButtons(
                         feast = feast!!,
                         onGetDirections = {
-                            val uri = Uri.parse("geo:${feast!!.latitude},${feast!!.longitude}?q=${feast!!.latitude},${feast!!.longitude}(${feast!!.organizerName})")
+                            val uri = Uri.parse("geo:${feast!!.latitude},${feast!!.longitude}?q=${feast!!.latitude},${feast!!.longitude}(${feast!!.organizerName ?: "Community Feast"})")
                             val intent = Intent(Intent.ACTION_VIEW, uri)
                             context.startActivity(intent)
                         },
                         onCall = {
-                            if (feast!!.contactPhone.isNotBlank()) {
+                            if (!feast!!.contactPhone.isNullOrBlank()) {
                                 val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:${feast!!.contactPhone}"))
                                 context.startActivity(intent)
                             }
@@ -413,7 +413,7 @@ private fun InfoCard(feast: FeastResponse) {
                 )
                 Column {
                     Text(
-                        text = feast.address,
+                        text = feast.address ?: "Address not provided",
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
@@ -514,7 +514,7 @@ private fun AdditionalInfoSection(feast: FeastResponse) {
                 fontWeight = FontWeight.SemiBold
             )
             
-            if (feast.foodType.isNotBlank()) {
+            if (!feast.foodType.isNullOrBlank()) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -531,7 +531,7 @@ private fun AdditionalInfoSection(feast: FeastResponse) {
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
-                            text = feast.foodType,
+                            text = feast.foodType!!,
                             style = MaterialTheme.typography.bodyMedium
                         )
                     }
@@ -589,7 +589,7 @@ private fun ActionButtons(
             Text("Directions")
         }
         
-        if (feast.contactPhone.isNotBlank()) {
+        if (!feast.contactPhone.isNullOrBlank()) {
             OutlinedButton(
                 onClick = onCall,
                 modifier = Modifier.weight(1f),

@@ -14,19 +14,19 @@ data class FeastResponse(
     val firebaseUid: String? = null,
     
     @SerializedName("organizerName")
-    val organizerName: String,
+    val organizerName: String? = null,
     
     @SerializedName("contactPhone")
-    val contactPhone: String,
+    val contactPhone: String? = null,
     
     @SerializedName("menuItems")
     val menuItems: List<String>,
     
     @SerializedName("foodType")
-    val foodType: String,
+    val foodType: String? = null,
     
     @SerializedName("description")
-    val description: String,
+    val description: String? = null,
     
     @SerializedName("imageUrls")
     val imageUrls: List<String> = emptyList(),
@@ -47,7 +47,7 @@ data class FeastResponse(
     val longitude: Double,
     
     @SerializedName("address")
-    val address: String,
+    val address: String? = null,
     
     @SerializedName("landmark")
     val landmark: String? = null,

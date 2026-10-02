@@ -27,6 +27,7 @@ import com.example.bhandara.ui.screens.HungryScreen
 import com.example.bhandara.ui.screens.ReportBhandaraScreen
 import com.example.bhandara.ui.screens.AddLocalShopScreen
 import com.example.bhandara.ui.screens.LocalShopsMapScreen
+import com.example.bhandara.ui.screens.ClaimShopScreen
 import com.example.bhandara.ui.screens.LocalShopDetailsScreen
 import com.example.bhandara.ui.screens.ProfileScreen
 import com.example.bhandara.ui.components.appDrawer.AboutScreen
@@ -37,13 +38,14 @@ import com.example.bhandara.utils.LocationHelper
 
 // Simple navigation states
 enum class Screen {
-    HOME, HUNGRY, REPORT_BHANDARA, FEAST_DETAILS, ADD_LOCAL_SHOP, LOCAL_SHOPS_MAP, SHOP_DETAILS, PROFILE, ABOUT, SUPPORT, TERMS
+    HOME, HUNGRY, REPORT_BHANDARA, FEAST_DETAILS, ADD_LOCAL_SHOP, LOCAL_SHOPS_MAP, SHOP_DETAILS, CLAIM_SHOP, PROFILE, ABOUT, SUPPORT, TERMS
 }
 
 // Navigation arguments
 data class NavArgs(
     val feastId: String? = null,
-    val shopId: String? = null
+    val shopId: String? = null,
+    val shopName: String? = null
 )
 
 class MainActivity : AppCompatActivity() {
@@ -167,6 +169,18 @@ class MainActivity : AppCompatActivity() {
                             currentArgs.shopId?.let { shopId ->
                                 LocalShopDetailsScreen(
                                     shopId = shopId,
+                                    onBackClick = { navigateBack() },
+                                    onClaimClick = { shopName ->
+                                        navigateTo(Screen.CLAIM_SHOP, NavArgs(shopId = shopId, shopName = shopName))
+                                    }
+                                )
+                            }
+                        }
+                        Screen.CLAIM_SHOP -> {
+                            currentArgs.shopId?.let { shopId ->
+                                ClaimShopScreen(
+                                    shopId = shopId,
+                                    shopName = currentArgs.shopName ?: "",
                                     onBackClick = { navigateBack() }
                                 )
                             }

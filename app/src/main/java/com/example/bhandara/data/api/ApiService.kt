@@ -211,11 +211,16 @@ interface ApiService {
         @Query("radius") radius: Double = 5000.0
     ): Response<com.example.bhandara.data.models.api.FeedResponse>
 
+    @POST("api/shop-claims")
+    suspend fun submitShopClaim(
+        @Body request: com.example.bhandara.data.models.api.ShopClaimRequest
+    ): Response<com.example.bhandara.data.models.api.ShopClaimResponse>
+
     @POST("api/localshops/{id}/verify")
     suspend fun verifyShop(
         @retrofit2.http.Path("id") id: String,
         @Body request: com.example.bhandara.data.models.api.VerifyShopRequest
-    ): Response<com.example.bhandara.data.models.api.LocalShopResponse>
+    ): Response<Unit>
 
     @POST("api/support/features")
     suspend fun suggestFeature(

@@ -40,6 +40,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -63,6 +64,7 @@ import androidx.core.os.LocaleListCompat
 import coil.compose.AsyncImage
 import com.example.bhandara.R
 import com.example.bhandara.services.VendorLocationManager
+import com.example.bhandara.services.VendorTrackingService
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 import java.util.Locale
@@ -101,11 +103,14 @@ fun AppDrawerMenu(
     var showHowToUseDialog by remember { mutableStateOf(false) }
     var showShareAppDialog by remember { mutableStateOf(false) }
 
-    val vendorLocationManager = remember { VendorLocationManager(context) }
+    // Shared across the whole app, so returning to Home reuses the running stream instead of starting another
+    val vendorLocationManager = remember { VendorLocationManager.getInstance(context) }
 
-    // Restore vendor mode if it was on
-    if (vendorModeOn && hasMovingCartShop && !vendorLocationManager.isActive()) {
-        vendorLocationManager.start(vendorShopId, vendorOwnerUid!!)
+    // Restore vendor mode if it was on (e.g. after the app was restarted)
+    LaunchedEffect(vendorModeOn, hasMovingCartShop) {
+        if (vendorModeOn && hasMovingCartShop && !vendorLocationManager.isActive()) {
+            VendorTrackingService.start(context, vendorShopId, vendorOwnerUid!!)
+        }
     }
 
     ModalNavigationDrawer(
@@ -267,9 +272,9 @@ fun AppDrawerMenu(
                                 vendorModeOn = enabled
                                 prefs.edit().putBoolean(KEY_VENDOR_MODE, enabled).apply()
                                 if (enabled) {
-                                    vendorLocationManager.start(vendorShopId, vendorOwnerUid!!)
+                                    VendorTrackingService.start(context, vendorShopId, vendorOwnerUid!!)
                                 } else {
-                                    vendorLocationManager.stop()
+                                    VendorTrackingService.stop(context)
                                 }
                             },
                             enabled = hasMovingCartShop,

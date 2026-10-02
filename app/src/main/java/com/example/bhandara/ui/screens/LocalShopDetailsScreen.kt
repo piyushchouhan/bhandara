@@ -38,7 +38,8 @@ import kotlin.math.roundToInt
 @Composable
 fun LocalShopDetailsScreen(
     shopId: String,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    onClaimClick: (shopName: String) -> Unit = {}
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -288,6 +289,11 @@ fun LocalShopDetailsScreen(
                     
                     // Additional Info
                     AdditionalInfoSection(shop!!)
+
+                    // Claim prompt for shops listed by the platform that the real owner hasn't claimed yet
+                    if (shop!!.ownerClaimed == false && shop!!.isActive != false && shop!!.ownerUid != currentUserUid) {
+                        ClaimShopCard(onClaimClick = { onClaimClick(shop!!.shopName) })
+                    }
                     
                     // Report Button
                     Box(
@@ -770,6 +776,39 @@ private fun ActionButtons(
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("Call")
             }
+        }
+    }
+}
+
+@Composable
+private fun ClaimShopCard(onClaimClick: () -> Unit) {
+    OutlinedCard(
+        onClick = onClaimClick,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Icon(
+                Icons.Default.Storefront,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary
+            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "Is this your shop?",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "Claim it to manage its details, menu and timings.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Icon(Icons.Default.ChevronRight, contentDescription = "Claim this shop")
         }
     }
 }

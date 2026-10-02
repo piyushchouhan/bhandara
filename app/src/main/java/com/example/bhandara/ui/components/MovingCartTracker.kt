@@ -50,6 +50,8 @@ import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 private const val TAG = "MovingCartTracker"
@@ -76,21 +78,25 @@ fun MovingCartTracker(
         position = CameraPosition.fromLatLngZoom(LatLng(initialLat, initialLng), 16f)
     }
 
-    // Subscribe to live cart updates
+    // Subscribe to live cart updates on this sheet's own connection (closing it never affects vendor mode)
     DisposableEffect(shopId) {
+        val client = CartStompClient.forViewer()
         val job = scope.launch {
             try {
-                CartStompClient.connect()
-                isConnected = true
-                CartStompClient.subscribeToCart(shopId).collect { update ->
+                client.subscribeToCart(shopId) { connected -> isConnected = connected }.collect { update ->
                     cartLat = update.lat
                     cartLng = update.lng
                     cartSpeed = update.speed
                     // Animate camera to new position
-                    cameraPositionState.animate(
-                        CameraUpdateFactory.newLatLng(LatLng(update.lat, update.lng)),
-                        durationMs = 800
-                    )
+                    try {
+                        cameraPositionState.animate(
+                            CameraUpdateFactory.newLatLng(LatLng(update.lat, update.lng)),
+                            durationMs = 800
+                        )
+                    } catch (e: CancellationException) {
+                        // A user gesture interrupted the animation; keep tracking unless the sheet itself closed
+                        if (!isActive) throw e
+                    }
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Cart tracking error for shop $shopId", e)
@@ -98,9 +104,7 @@ fun MovingCartTracker(
         }
         onDispose {
             job.cancel()
-            scope.launch {
-                try { CartStompClient.disconnect() } catch (_: Exception) {}
-            }
+            client.close()
         }
     }
 
