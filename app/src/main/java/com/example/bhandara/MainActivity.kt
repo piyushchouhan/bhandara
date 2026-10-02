@@ -17,7 +17,11 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import com.example.bhandara.services.CrowdPingManager
+import kotlinx.coroutines.launch
 import com.example.bhandara.managers.UserManager
 import com.example.bhandara.ui.components.AppDrawerMenu
 import com.example.bhandara.ui.components.OwnerConfirmationDialog
@@ -76,6 +80,15 @@ class MainActivity : AppCompatActivity() {
         
         // Initialize anonymous user on app start
         userManager.initializeUser()
+
+        // "How busy is it" badges: while the app is visible (any screen), report when the user is at a shop.
+        // Stops automatically when the app goes to the background.
+        val crowdPingManager = CrowdPingManager(this)
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                crowdPingManager.runWhileForeground()
+            }
+        }
         
         setContent {
             BhandaraTheme {

@@ -1,5 +1,10 @@
 package com.example.bhandara.ui.screens
 
+import androidx.compose.ui.graphics.Color
+import com.google.maps.android.compose.MarkerInfoWindow
+import com.example.bhandara.ui.components.labeledPin
+import com.example.bhandara.ui.components.formatMapDistance
+import com.example.bhandara.ui.components.MapPreviewCard
 import android.Manifest
 import android.annotation.SuppressLint
 import android.util.Log
@@ -35,7 +40,6 @@ import com.example.bhandara.data.api.NetworkModule
 import com.example.bhandara.data.models.api.FeastResponse
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
-import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MapStyleOptions
@@ -43,7 +47,6 @@ import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapType
 import com.google.maps.android.compose.MapUiSettings
-import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 import kotlinx.coroutines.launch
@@ -336,27 +339,60 @@ fun HungryScreen(
                 properties = mapProperties,
                 uiSettings = uiSettings
             ) {
-                // Add markers for nearby feasts
+                // Feast markers: same labelled pins and preview card as the shops map.
+                // Tap the pin or its name -> small card; tap the card -> feast details
                 nearbyFeasts.forEach { feast ->
-                    Marker(
+                    val name = feast.organizerName ?: "Community Feast"
+                    val pin = remember(feast.id, name, isDarkTheme) {
+                        labeledPin(FEAST_EMOJI, name, isLiveCart = false, darkMap = isDarkTheme)
+                    }
+                    MarkerInfoWindow(
                         state = MarkerState(position = LatLng(feast.latitude, feast.longitude)),
-                        title = feast.organizerName ?: "Community Feast",
-                        snippet = buildString {
-                            append(feast.address ?: "")
-                            feast.distance?.let {
-                                val distanceKm = it / 1000.0
-                                append(" • ${String.format("%.1f", distanceKm)} km away")
-                            }
-                        },
-                        icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED),
-                        onClick = {
-                            // Navigate to feast details
-                            onFeastClick(feast.id)
-                            true // Return true to indicate the event was consumed
-                        }
-                    )
+                        icon = pin.icon,
+                        anchor = pin.anchor,
+                        onInfoWindowClick = { onFeastClick(feast.id) }
+                    ) {
+                        val (statusText, statusColor) = feastTiming(feast)
+                        MapPreviewCard(
+                            emoji = FEAST_EMOJI,
+                            title = name,
+                            subtitle = feast.menuItems.joinToString(", ").ifBlank { feast.address ?: "Community feast" },
+                            statusText = statusText,
+                            statusColor = statusColor,
+                            trailingText = formatMapDistance(feast.distance)
+                        )
+                    }
                 }
             }
         }
+    }
+}
+
+private const val FEAST_EMOJI = "🍲"
+
+/**
+ * When a feast is, for its map card: "Now till 9 PM" (green) while it's on, otherwise when it starts,
+ * e.g. "Today, 6 PM", "Tomorrow, 11 AM" or "Sat 5 Oct, 6 PM" (orange).
+ */
+private fun feastTiming(feast: com.example.bhandara.data.models.api.FeastResponse): Pair<String, Color> {
+    val live = Color(0xFF4CAF50)
+    val upcoming = Color(0xFFFB8C00)
+    return try {
+        val date = java.time.LocalDate.parse(feast.feastDate)
+        val start = java.time.LocalTime.parse(feast.startTime)
+        val end = java.time.LocalTime.parse(feast.endTime)
+        val today = java.time.LocalDate.now()
+        val now = java.time.LocalTime.now()
+        fun time(t: java.time.LocalTime) = t.format(
+            java.time.format.DateTimeFormatter.ofPattern(if (t.minute == 0) "h a" else "h:mm a", java.util.Locale.ENGLISH)
+        )
+        when {
+            date == today && !now.isBefore(start) && !now.isAfter(end) -> "Now till ${time(end)}" to live
+            date == today -> "Today, ${time(start)}" to upcoming
+            date == today.plusDays(1) -> "Tomorrow, ${time(start)}" to upcoming
+            else -> "${date.format(java.time.format.DateTimeFormatter.ofPattern("EEE d MMM", java.util.Locale.ENGLISH))}, ${time(start)}" to upcoming
+        }
+    } catch (e: Exception) {
+        "Upcoming" to upcoming
     }
 }

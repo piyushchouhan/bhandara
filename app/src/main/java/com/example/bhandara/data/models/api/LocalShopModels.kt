@@ -65,6 +65,7 @@ data class LocalShopResponse(
     val closingTime: String? = null,
     val operatingDays: String? = null,
     val isCurrentlyOpen: Boolean? = null,
+    val crowdLevel: String? = null, // QUIET, MODERATE or BUSY right now; null for moving carts
     val homeDelivery: Boolean? = null,
     val takeaway: Boolean? = null,
     val hasSeating: Boolean? = null,

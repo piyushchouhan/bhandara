@@ -52,11 +52,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.bhandara.R
 import com.example.bhandara.data.api.NetworkModule
-import com.example.bhandara.data.models.api.CrowdPingRequest
-import com.example.bhandara.data.models.api.HeatmapPoint
 import com.example.bhandara.data.models.api.LocalShopResponse
 import com.example.bhandara.ui.components.MovingCartTracker
-import com.example.bhandara.ui.components.CrowdHeatmapToggle
+import com.example.bhandara.ui.components.MapPreviewCard
+import com.example.bhandara.ui.components.crowdLabelRes
+import com.example.bhandara.ui.components.formatMapDistance
+import com.example.bhandara.ui.components.labeledPin
 import com.example.bhandara.ui.components.MapSearchBar
 import com.example.bhandara.ui.components.MovingVendorsToggle
 import com.google.android.gms.location.LocationServices
@@ -72,11 +73,7 @@ import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.MarkerInfoWindow
-import com.google.maps.android.compose.TileOverlay
 import com.google.maps.android.compose.rememberCameraPositionState
-import com.google.maps.android.heatmaps.Gradient
-import com.google.maps.android.heatmaps.HeatmapTileProvider
-import com.google.maps.android.heatmaps.WeightedLatLng
 import androidx.compose.foundation.background
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Spacer
@@ -91,31 +88,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-// ─── Crowd heatmap constants ──────────────────────────────────────────────────
-
-/** How often we refresh the heatmap data from the server (ms) */
-private const val HEATMAP_REFRESH_INTERVAL_MS = 60_000L
-
-/** How often we send our own location ping to the server (ms) */
-private const val CROWD_PING_INTERVAL_MS = 45_000L
-
-/**
- * Snapchat-style heatmap gradient: green (sparse) → yellow → red (dense).
- * Colors and starting points mirror what Snapchat uses for their Snap Map heat layer.
- */
-private val HEATMAP_GRADIENT = Gradient(
-    intArrayOf(
-        android.graphics.Color.argb(0, 0, 255, 0),   // transparent green  (0 %)
-        android.graphics.Color.rgb(0, 255, 0),        // green              (10%)
-        android.graphics.Color.rgb(255, 255, 0),      // yellow             (50%)
-        android.graphics.Color.rgb(255, 128, 0),      // orange             (75%)
-        android.graphics.Color.rgb(255, 0, 0),        // red                (100%)
-    ),
-    floatArrayOf(0f, 0.1f, 0.5f, 0.75f, 1f)
-)
-
 // ─────────────────────────────────────────────────────────────────────────────
-// this screen is for local shops map to show shops and heatmap
+// this screen is for local shops map to show shops and moving carts
 @SuppressLint("MissingPermission")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -135,9 +109,6 @@ fun LocalShopsMapScreen(
     var nearbyShops by remember { mutableStateOf<List<LocalShopResponse>>(emptyList()) }
     var searchQuery by remember { mutableStateOf("") }
 
-    // ── Crowd heatmap state ───────────────────────────────────────────────────
-    var heatmapProvider by remember { mutableStateOf<HeatmapTileProvider?>(null) }
-    var showCrowdHeatmap by remember { mutableStateOf(true) }
 
     // ── Moving vendor state ───────────────────────────────────────────────────
     var showMovingVendors by remember { mutableStateOf(false) }
@@ -203,68 +174,6 @@ fun LocalShopsMapScreen(
                     }
                 }
             }
-        }
-    }
-
-    // ── Crowd heatmap: fetch around each shop, refresh every 60 s ─────────────
-    // Keys on nearbyShops and showCrowdHeatmap so it (re)starts once shops are loaded,
-    // and toggles off/on based on user preference.
-    LaunchedEffect(nearbyShops, showCrowdHeatmap) {
-        if (!showCrowdHeatmap || nearbyShops.isEmpty()) {
-            heatmapProvider = null
-            return@LaunchedEffect
-        }
-
-        while (true) {
-            val allPoints = mutableListOf<HeatmapPoint>()
-
-            nearbyShops.forEach { shop ->
-                runCatching {
-                    val response = apiService.getCrowdHeatmap(
-                        lat = shop.latitude,
-                        lng = shop.longitude,
-                        radius = 20   // crowd within 20 m of this specific shop
-                    )
-                    if (response.isSuccessful) {
-                        allPoints.addAll(response.body() ?: emptyList())
-                    }
-                }
-            }
-
-            // Setting a new provider causes Compose to re-render TileOverlay,
-            // which resets the tile cache automatically. No manual call needed.
-            heatmapProvider = buildHeatmapProvider(allPoints)
-
-            delay(HEATMAP_REFRESH_INTERVAL_MS)
-        }
-    }
-
-    // ── Crowd ping: send our own location every 45 s if near any shop ──────────
-    LaunchedEffect(currentLocation) {
-        val loc = currentLocation ?: return@LaunchedEffect
-
-        while (true) {
-            val isNearAnyShop = nearbyShops.any { shop ->
-                val results = FloatArray(1)
-                android.location.Location.distanceBetween(
-                    loc.latitude, loc.longitude,
-                    shop.latitude, shop.longitude,
-                    results
-                )
-                results[0] <= 20f
-            }
-
-            if (isNearAnyShop) {
-                runCatching {
-                    apiService.crowdPing(
-                        CrowdPingRequest(
-                            latitude = loc.latitude,
-                            longitude = loc.longitude
-                        )
-                    )
-                }
-            }
-            delay(CROWD_PING_INTERVAL_MS)
         }
     }
 
@@ -408,138 +317,33 @@ fun LocalShopsMapScreen(
                 properties = mapProperties,
                 uiSettings = uiSettings
             ) {
-                // ── Crowd heatmap layer ───────────────────────────────────────
-                // Only rendered when we have actual data from the server and enabled.
-                if (showCrowdHeatmap) {
-                    heatmapProvider?.let { provider ->
-                        TileOverlay(
-                            tileProvider = provider,
-                            transparency = 0.2f  // 80% opaque — visible but not blocking the map
-                        )
-                    }
-                }
-
                 // ── Shop markers (hidden when moving vendor mode is on) ───────
                 if (!showMovingVendors) {
                     visibleShops.forEach { shop ->
-                        val icon = remember(shop.id) {
-                            emojiToBitmapDescriptor(mapIconToEmoji(shop.isMovingCart), sizeDp = 72)
+                        val pin = remember(shop.id, shop.shopName, isDarkTheme) {
+                            labeledPin(mapIconToEmoji(shop.isMovingCart), shop.shopName, isLiveCart = false, darkMap = isDarkTheme)
                         }
+                        // Tap the pin or its name -> small card; tap the card -> shop details
                         MarkerInfoWindow(
                             state = MarkerState(position = LatLng(shop.latitude, shop.longitude)),
-                            icon = icon,
+                            icon = pin.icon,
+                            anchor = pin.anchor,
                             onInfoWindowClick = {
                                 onShopClick(shop.id)
                             }
                         ) {
-                            Card(
-                                modifier = Modifier
-                                    .width(220.dp)
-                                    .padding(4.dp),
-                                shape = RoundedCornerShape(12.dp),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = Color.White
-                                ),
-                                elevation = CardDefaults.cardElevation(
-                                    defaultElevation = 6.dp
-                                )
-                            ) {
-                                Row(
-                                    modifier = Modifier
-                                        .padding(12.dp)
-                                        .fillMaxWidth(),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    // Circular light-pink background with food emoji
-                                    Box(
-                                        modifier = Modifier
-                                            .size(40.dp)
-                                            .background(
-                                                color = Color(0xFFFFE3E8),
-                                                shape = CircleShape
-                                            ),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        val foodEmoji = remember(shop.id) { getFoodEmojiForShop(shop.id) }
-                                        Text(
-                                            text = foodEmoji,
-                                            style = MaterialTheme.typography.titleMedium
-                                        )
-                                    }
-
-                                    Spacer(modifier = Modifier.width(10.dp))
-
-                                    Column(
-                                        modifier = Modifier.weight(1f)
-                                    ) {
-                                        Text(
-                                            text = shop.shopName,
-                                            style = MaterialTheme.typography.bodyLarge.copy(
-                                                fontWeight = FontWeight.Bold,
-                                                color = Color(0xFF212121)
-                                            ),
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis
-                                        )
-
-                                        Text(
-                                            text = shop.cuisineType ?: "Local Shop",
-                                            style = MaterialTheme.typography.bodySmall.copy(
-                                                color = Color(0xFF757575)
-                                            ),
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis
-                                        )
-
-                                        Spacer(modifier = Modifier.height(4.dp))
-
-                                        Row(
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            val isOpen = shop.isCurrentlyOpen ?: true
-                                            val statusColor = if (isOpen) Color(0xFF4CAF50) else Color(0xFFE57373)
-                                            val statusText = if (isOpen) "Open" else "Closed"
-
-                                            // Tiny colored circle dot
-                                            Box(
-                                                modifier = Modifier
-                                                    .size(6.dp)
-                                                    .background(
-                                                        color = statusColor,
-                                                        shape = CircleShape
-                                                    )
-                                            )
-
-                                            Spacer(modifier = Modifier.width(4.dp))
-
-                                            Text(
-                                                text = statusText,
-                                                style = MaterialTheme.typography.labelSmall.copy(
-                                                    color = statusColor,
-                                                    fontWeight = FontWeight.SemiBold
-                                                )
-                                            )
-
-                                            Text(
-                                                text = " • ",
-                                                style = MaterialTheme.typography.labelSmall.copy(
-                                                    color = Color(0xFF757575)
-                                                )
-                                            )
-
-                                            val distanceKm = (shop.distance ?: 0.0) / 1000.0
-                                            val distanceStr = if (distanceKm < 0.1) "nearby" else String.format("%.1f km", distanceKm)
-
-                                            Text(
-                                                text = distanceStr,
-                                                style = MaterialTheme.typography.labelSmall.copy(
-                                                    color = Color(0xFF757575)
-                                                )
-                                            )
-                                        }
-                                    }
-                                }
-                            }
+                            val isOpen = shop.isCurrentlyOpen ?: true
+                            MapPreviewCard(
+                                emoji = remember(shop.id) { getFoodEmojiForShop(shop.id) },
+                                title = shop.shopName,
+                                subtitle = shop.cuisineType ?: "Local Shop",
+                                statusText = if (isOpen) "Open" else "Closed",
+                                statusColor = if (isOpen) Color(0xFF4CAF50) else Color(0xFFE57373),
+                                trailingText = listOfNotNull(
+                                    crowdLabelRes(shop.crowdLevel)?.takeIf { isOpen }?.let { stringResource(it) },
+                                    formatMapDistance(shop.distance)
+                                ).joinToString(" • ")
+                            )
                         }
                     }
                 }
@@ -547,14 +351,15 @@ fun LocalShopsMapScreen(
                 // ── Moving cart markers ───────────────────────────────────────
                 if (showMovingVendors) {
                     filteredMovingCarts.forEach { cart ->
-                        val icon = remember(cart.id) {
-                            emojiToBitmapDescriptor(mapIconToEmoji(cart.isMovingCart), sizeDp = 72)
+                        val pin = remember(cart.id, cart.shopName, isDarkTheme) {
+                            labeledPin(mapIconToEmoji(cart.isMovingCart), cart.shopName, isLiveCart = true, darkMap = isDarkTheme)
                         }
                         Marker(
                             state = MarkerState(position = LatLng(cart.latitude, cart.longitude)),
                             title = cart.shopName,
                             snippet = "Moving Vendor",
-                            icon = icon,
+                            icon = pin.icon,
+                            anchor = pin.anchor,
                             onClick = {
                                 trackedCartShopId = cart.id.toLongOrNull() ?: -1L
                                 trackedCartName = cart.shopName
@@ -735,11 +540,6 @@ fun LocalShopsMapScreen(
                     isSelected = showMovingVendors,
                     onToggle = { showMovingVendors = !showMovingVendors }
                 )
-
-                CrowdHeatmapToggle(
-                    isSelected = showCrowdHeatmap,
-                    onToggle = { showCrowdHeatmap = !showCrowdHeatmap }
-                )
             }
         }
     }
@@ -765,47 +565,6 @@ fun LocalShopsMapScreen(
 /** Maps a shop to its display emoji based on whether it is moving or static. */
 private fun mapIconToEmoji(isMovingCart: Boolean?): String = 
     if (isMovingCart == true) "🚚" else "📍"
-
-/** Renders an emoji string into a [BitmapDescriptor] for use as a map marker icon. */
-private fun emojiToBitmapDescriptor(emoji: String, sizeDp: Int): com.google.android.gms.maps.model.BitmapDescriptor {
-    val size = sizeDp.coerceAtLeast(24)
-    val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
-    val canvas = Canvas(bitmap)
-    val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        textSize = size * 0.75f
-        textAlign = Paint.Align.CENTER
-        typeface = Typeface.DEFAULT
-    }
-    val x = size / 2f
-    val y = size / 2f - (paint.ascent() + paint.descent()) / 2f
-    canvas.drawText(emoji, x, y, paint)
-    return BitmapDescriptorFactory.fromBitmap(bitmap)
-}
-
-/**
- * Builds a [HeatmapTileProvider] from the list of points returned by the API.
- * Returns null when the list is empty so the TileOverlay is simply not rendered.
- *
- * We need at least 1 point for the provider not to crash. The server already
- * handles the "owner continuously present" exclusion, so we trust the weights.
- */
-private fun buildHeatmapProvider(points: List<HeatmapPoint>): HeatmapTileProvider? {
-    if (points.isEmpty()) return null
-
-    val weightedPoints = points.map { point ->
-        WeightedLatLng(
-            com.google.android.gms.maps.model.LatLng(point.lat, point.lng),
-            point.weight
-        )
-    }
-
-    return HeatmapTileProvider.Builder()
-        .weightedData(weightedPoints)
-        .gradient(HEATMAP_GRADIENT)
-        .radius(50)       // pixel radius per point — matches Snapchat's blob size
-        .opacity(0.8)
-        .build()
-}
 
 /** Gets a random, deterministic food emoji for a shop based on its ID. */
 private fun getFoodEmojiForShop(shopId: String): String {

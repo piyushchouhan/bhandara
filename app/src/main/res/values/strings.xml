@@ -23,7 +23,9 @@
     
     <!-- Map search & layer labels -->
     <string name="search_local_feast">Search Local Feast</string>
-    <string name="crowd_heatmap_label">Crowd\nHeatmap</string>
+    <string name="crowd_quiet">Quiet</string>
+    <string name="crowd_moderate">Moderately busy</string>
+    <string name="crowd_busy">Busy now</string>
     <string name="moving_vendors_label">Moving\nVendors</string>
     
     <!-- Profile Dialog strings -->

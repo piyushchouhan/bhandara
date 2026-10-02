@@ -23,7 +23,9 @@
     
     <!-- Map search & layer labels -->
     <string name="search_local_feast">Local Feast शोधा</string>
-    <string name="crowd_heatmap_label">गर्दी\nहीटमॅप</string>
+    <string name="crowd_quiet">शांत</string>
+    <string name="crowd_moderate">थोडी गर्दी</string>
+    <string name="crowd_busy">आता गर्दी आहे</string>
     <string name="moving_vendors_label">फिरते\nविक्रेते</string>
     
     <!-- Profile Dialog strings -->

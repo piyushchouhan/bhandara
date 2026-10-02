@@ -136,8 +136,6 @@ dependencies {
     implementation("com.google.android.gms:play-services-maps:19.0.0")
     // Google Maps Compose
     implementation("com.google.maps.android:maps-compose:4.3.3")
-    // Google Maps Android Utilities (HeatmapTileProvider, etc.)
-    implementation("com.google.maps.android:android-maps-utils:3.8.2")
 
     // STOMP over WebSocket (Krossbow)
     implementation("org.hildan.krossbow:krossbow-stomp-core:7.0.0")

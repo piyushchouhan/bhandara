@@ -13,9 +13,3 @@ data class CrowdPingResponse(
     val token: String
 )
 
-/** One density point returned by GET /api/crowd/heatmap */
-data class HeatmapPoint(
-    val lat: Double,
-    val lng: Double,
-    val weight: Double
-)

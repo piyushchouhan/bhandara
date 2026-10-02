@@ -1,5 +1,6 @@
 package com.example.bhandara.ui.screens
 
+import com.example.bhandara.ui.components.CrowdBadge
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
@@ -270,6 +271,11 @@ fun LocalShopDetailsScreen(
                                         labelColor = MaterialTheme.colorScheme.onPrimaryContainer
                                     )
                                 )
+                            }
+
+                            // How busy it is right now (not shown for closed or inactive shops)
+                            if (shop!!.isActive != false && shop!!.isCurrentlyOpen != false) {
+                                CrowdBadge(level = shop!!.crowdLevel)
                             }
                         }
                     }
