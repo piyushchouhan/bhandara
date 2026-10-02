@@ -33,6 +33,7 @@ import com.example.bhandara.ui.screens.ProfileScreen
 import com.example.bhandara.ui.components.appDrawer.AboutScreen
 import com.example.bhandara.ui.components.appDrawer.SupportScreen
 import com.example.bhandara.ui.components.appDrawer.TermsScreen
+import com.example.bhandara.BuildConfig
 import com.example.bhandara.ui.theme.BhandaraTheme
 import com.example.bhandara.utils.LocationHelper
 
@@ -127,7 +128,10 @@ class MainActivity : AppCompatActivity() {
                                     onHungryClick = { navigateTo(Screen.HUNGRY) },
                                     onReportFeastClick = { navigateTo(Screen.REPORT_BHANDARA) },
                                     onFindShopsClick = { navigateTo(Screen.LOCAL_SHOPS_MAP) },
-                                    onAddShopClick = { showOwnerConfirmDialog = true }
+                                    onAddShopClick = {
+                                        // Admins list shops on behalf of their owners, so the "only add your own shop" warning doesn't apply
+                                        if (isAdminUser()) navigateTo(Screen.ADD_LOCAL_SHOP) else showOwnerConfirmDialog = true
+                                    }
                                 )
                             }
                         }
@@ -223,6 +227,11 @@ class MainActivity : AppCompatActivity() {
         }
     }
     
+    private fun isAdminUser(): Boolean {
+        val email = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.email ?: return false
+        return BuildConfig.ADMIN_EMAILS.split(",").any { it.trim().equals(email, ignoreCase = true) }
+    }
+
     /**
      * Request required permissions
      */

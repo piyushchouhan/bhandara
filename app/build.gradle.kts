@@ -38,6 +38,10 @@ android {
 //        buildConfigField("String", "API_BASE_URL", "\"https://tobago-sphere-photo-magnetic.trycloudflare.com/\"")
 //         buildConfigField("String", "API_BASE_URL", "\"http://192.168.1.14:8080/\"")
         buildConfigField("String", "API_BASE_URL", "\"https://9814-2402-e280-3e17-820-592c-1ff3-b22b-e05.ngrok-free.app/\"")
+
+        // Platform admins (comma-separated). Keep in sync with the backend's app.admin-emails.
+        // Only used to skip owner-only prompts in the UI; the backend does the real check from the login token.
+        buildConfigField("String", "ADMIN_EMAILS", "\"piyush9695@gmail.com\"")
         
         // Google Maps API Key from local.properties
         manifestPlaceholders["MAPS_API_KEY"] = localProperties.getProperty("MAPS_API_KEY", "")
