@@ -1,5 +1,6 @@
 package com.example.bhandara
 
+import com.example.bhandara.platform.ProvideAppEnvironment
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -44,22 +45,24 @@ fun MainViewController(auth: PlatformAuth) = ComposeUIViewController {
             .onFailure { println("Sign-in failed: ${it.message}") }
     }
 
-    BhandaraTheme {
-        val navigator = rememberAppNavigator()
-        var homeTabIndex by remember { mutableIntStateOf(0) }
+    ProvideAppEnvironment {
+        BhandaraTheme {
+            val navigator = rememberAppNavigator()
+            var homeTabIndex by remember { mutableIntStateOf(0) }
 
-        when (val route = navigator.current) {
-            Route.Home -> HomeScreen(
-                modifier = Modifier.safeDrawingPadding(),
-                selectedTabIndex = homeTabIndex,
-                onTabSelected = { homeTabIndex = it },
-                onHungryClick = { navigator.navigate(Route.Hungry) },
-                onReportFeastClick = { navigator.navigate(Route.ReportFeast) },
-                onFindShopsClick = { navigator.navigate(Route.ShopsMap) },
-                onAddShopClick = { navigator.navigate(Route.AddShop) },
-            )
-            // Screens move to the shared module one by one; until then iOS says so
-            else -> NotOnIphoneYet(route, onBack = { navigator.back() })
+            when (val route = navigator.current) {
+                Route.Home -> HomeScreen(
+                    modifier = Modifier.safeDrawingPadding(),
+                    selectedTabIndex = homeTabIndex,
+                    onTabSelected = { homeTabIndex = it },
+                    onHungryClick = { navigator.navigate(Route.Hungry) },
+                    onReportFeastClick = { navigator.navigate(Route.ReportFeast) },
+                    onFindShopsClick = { navigator.navigate(Route.ShopsMap) },
+                    onAddShopClick = { navigator.navigate(Route.AddShop) },
+                )
+                // Screens move to the shared module one by one; until then iOS says so
+                else -> NotOnIphoneYet(route, onBack = { navigator.back() })
+            }
         }
     }
 }

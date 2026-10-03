@@ -1,5 +1,6 @@
 package com.example.bhandara
 
+import com.example.bhandara.platform.ProvideAppEnvironment
 import com.example.bhandara.navigation.Route
 import com.example.bhandara.navigation.rememberAppNavigator
 import android.os.Bundle
@@ -85,137 +86,139 @@ class MainActivity : AppCompatActivity() {
         }
         
         setContent {
-            BhandaraTheme {
-                // Which screens are open (shared with iOS); kept across rotation
-                val navigator = rememberAppNavigator()
+            ProvideAppEnvironment {
+                BhandaraTheme {
+                    // Which screens are open (shared with iOS); kept across rotation
+                    val navigator = rememberAppNavigator()
                 
-                // Lifted home tab state
-                var homeTabIndex by rememberSaveable { mutableIntStateOf(0) }
+                    // Lifted home tab state
+                    var homeTabIndex by rememberSaveable { mutableIntStateOf(0) }
                 
-                var showOwnerConfirmDialog by remember { mutableStateOf(false) }
+                    var showOwnerConfirmDialog by remember { mutableStateOf(false) }
                 
-                // Request permissions on first composition
-                LaunchedEffect(Unit) {
-                    requestPermissions()
-                }
+                    // Request permissions on first composition
+                    LaunchedEffect(Unit) {
+                        requestPermissions()
+                    }
                 
-                fun navigateTo(route: Route) = navigator.navigate(route)
+                    fun navigateTo(route: Route) = navigator.navigate(route)
 
-                fun navigateBack() {
-                    navigator.back()
-                }
+                    fun navigateBack() {
+                        navigator.back()
+                    }
 
-                // Back from the first screen is left to the system (closes the app)
-                BackHandler(enabled = navigator.canGoBack) {
-                    navigator.back()
-                }
+                    // Back from the first screen is left to the system (closes the app)
+                    BackHandler(enabled = navigator.canGoBack) {
+                        navigator.back()
+                    }
                 
-                Scaffold(
-                    modifier = Modifier.fillMaxSize()
-                ) { innerPadding ->
-                    when (val route = navigator.current) {
-                        Route.Home -> {
-                            AppDrawerMenu(
-                                onProfileClick = { navigateTo(Route.Profile) },
-                                onAboutClick = { navigateTo(Route.About) },
-                                onSupportClick = { navigateTo(Route.Support) },
-                                onTermsClick = { navigateTo(Route.Terms) }
-                            ) {
-                                HomeScreen(
-                                    modifier = Modifier.padding(innerPadding),
-                                    selectedTabIndex = homeTabIndex,
-                                    onTabSelected = { homeTabIndex = it },
-                                    onHungryClick = { navigateTo(Route.Hungry) },
-                                    onReportFeastClick = { navigateTo(Route.ReportFeast) },
-                                    onFindShopsClick = { navigateTo(Route.ShopsMap) },
-                                    onAddShopClick = {
-                                        // Admins list shops on behalf of their owners, so the "only add your own shop" warning doesn't apply
-                                        if (isAdminUser()) navigateTo(Route.AddShop) else showOwnerConfirmDialog = true
+                    Scaffold(
+                        modifier = Modifier.fillMaxSize()
+                    ) { innerPadding ->
+                        when (val route = navigator.current) {
+                            Route.Home -> {
+                                AppDrawerMenu(
+                                    onProfileClick = { navigateTo(Route.Profile) },
+                                    onAboutClick = { navigateTo(Route.About) },
+                                    onSupportClick = { navigateTo(Route.Support) },
+                                    onTermsClick = { navigateTo(Route.Terms) }
+                                ) {
+                                    HomeScreen(
+                                        modifier = Modifier.padding(innerPadding),
+                                        selectedTabIndex = homeTabIndex,
+                                        onTabSelected = { homeTabIndex = it },
+                                        onHungryClick = { navigateTo(Route.Hungry) },
+                                        onReportFeastClick = { navigateTo(Route.ReportFeast) },
+                                        onFindShopsClick = { navigateTo(Route.ShopsMap) },
+                                        onAddShopClick = {
+                                            // Admins list shops on behalf of their owners, so the "only add your own shop" warning doesn't apply
+                                            if (isAdminUser()) navigateTo(Route.AddShop) else showOwnerConfirmDialog = true
+                                        }
+                                    )
+                                }
+                            }
+                            Route.Hungry -> {
+                                HungryScreen(
+                                    onBackClick = { navigateBack() },
+                                    onFeastClick = { feastId ->
+                                        navigateTo(Route.FeastDetails(feastId))
                                     }
                                 )
                             }
-                        }
-                        Route.Hungry -> {
-                            HungryScreen(
-                                onBackClick = { navigateBack() },
-                                onFeastClick = { feastId ->
-                                    navigateTo(Route.FeastDetails(feastId))
-                                }
-                            )
-                        }
-                        Route.ReportFeast -> {
-                            ReportBhandaraScreen(
-                                onNavigateBack = { navigateBack() }
-                            )
-                        }
-                        is Route.FeastDetails -> {
-                            FeastDetailsScreen(
-                                feastId = route.feastId,
-                                onBackClick = { navigateBack() }
-                            )
-                        }
-                        Route.AddShop -> {
-                            AddLocalShopScreen(
-                                onNavigateBack = { navigateBack() }
-                            )
-                        }
-                        Route.ShopsMap -> {
-                            LocalShopsMapScreen(
-                                onBackClick = { navigateBack() },
-                                onShopClick = { shopId ->
-                                    navigateTo(Route.ShopDetails(shopId))
-                                }
-                            )
-                        }
-                        is Route.ShopDetails -> {
-                            LocalShopDetailsScreen(
-                                shopId = route.shopId,
-                                onBackClick = { navigateBack() },
-                                onClaimClick = { shopName ->
-                                    navigateTo(Route.ClaimShop(route.shopId, shopName))
-                                }
-                            )
-                        }
-                        is Route.ClaimShop -> {
-                            ClaimShopScreen(
-                                shopId = route.shopId,
-                                shopName = route.shopName,
-                                onBackClick = { navigateBack() }
-                            )
-                        }
-                        Route.Profile -> {
-                            ProfileScreen(
-                                onBackClick = { navigateBack() }
-                            )
-                        }
-                        Route.About -> {
-                            AboutScreen(
-                                onBackClick = { navigateBack() }
-                            )
-                        }
-                        Route.Support -> {
-                            SupportScreen(
-                                onBackClick = { navigateBack() }
-                            )
-                        }
-                        Route.Terms -> {
-                            TermsScreen(
-                                onBackClick = { navigateBack() }
-                            )
+                            Route.ReportFeast -> {
+                                ReportBhandaraScreen(
+                                    onNavigateBack = { navigateBack() }
+                                )
+                            }
+                            is Route.FeastDetails -> {
+                                FeastDetailsScreen(
+                                    feastId = route.feastId,
+                                    onBackClick = { navigateBack() }
+                                )
+                            }
+                            Route.AddShop -> {
+                                AddLocalShopScreen(
+                                    onNavigateBack = { navigateBack() }
+                                )
+                            }
+                            Route.ShopsMap -> {
+                                LocalShopsMapScreen(
+                                    onBackClick = { navigateBack() },
+                                    onShopClick = { shopId ->
+                                        navigateTo(Route.ShopDetails(shopId))
+                                    }
+                                )
+                            }
+                            is Route.ShopDetails -> {
+                                LocalShopDetailsScreen(
+                                    shopId = route.shopId,
+                                    onBackClick = { navigateBack() },
+                                    onClaimClick = { shopName ->
+                                        navigateTo(Route.ClaimShop(route.shopId, shopName))
+                                    }
+                                )
+                            }
+                            is Route.ClaimShop -> {
+                                ClaimShopScreen(
+                                    shopId = route.shopId,
+                                    shopName = route.shopName,
+                                    onBackClick = { navigateBack() }
+                                )
+                            }
+                            Route.Profile -> {
+                                ProfileScreen(
+                                    onBackClick = { navigateBack() }
+                                )
+                            }
+                            Route.About -> {
+                                AboutScreen(
+                                    onBackClick = { navigateBack() }
+                                )
+                            }
+                            Route.Support -> {
+                                SupportScreen(
+                                    onBackClick = { navigateBack() }
+                                )
+                            }
+                            Route.Terms -> {
+                                TermsScreen(
+                                    onBackClick = { navigateBack() }
+                                )
+                            }
                         }
                     }
-                }
 
-                if (showOwnerConfirmDialog) {
-                    OwnerConfirmationDialog(
-                        onConfirm = {
-                            showOwnerConfirmDialog = false
-                            navigateTo(Route.AddShop)
-                        },
-                        onDismissRequest = {
-                            showOwnerConfirmDialog = false
-                        }
-                    )
+                    if (showOwnerConfirmDialog) {
+                        OwnerConfirmationDialog(
+                            onConfirm = {
+                                showOwnerConfirmDialog = false
+                                navigateTo(Route.AddShop)
+                            },
+                            onDismissRequest = {
+                                showOwnerConfirmDialog = false
+                            }
+                        )
+                    }
                 }
             }
         }

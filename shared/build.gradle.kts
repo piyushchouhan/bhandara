@@ -38,6 +38,10 @@ kotlin {
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.ktor.serialization.kotlinx.json)
             implementation(libs.multiplatform.settings)
+            // Screens: ViewModels that survive rotation, and photos loaded from the internet
+            implementation(libs.jetbrains.lifecycle.viewmodel.compose)
+            implementation(libs.coil3.compose)
+            implementation(libs.coil3.network.ktor)
             implementation(compose.runtime)
             implementation(compose.foundation)
             implementation(compose.material3)
