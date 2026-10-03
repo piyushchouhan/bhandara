@@ -81,6 +81,37 @@ class AppSettingsTest {
     }
 
     @Test
+    fun aHalfFilledShopFormIsKeptUntilItIsCleared() {
+        assertNull(settings.addShopDraft)
+
+        val draft = AddShopDraft(
+            isMovingCart = false, shopName = "Sharma Chaat", shopType = "Street Food",
+            menuItemNames = listOf("Pani Puri"), photoUris = listOf("content://photos/1"),
+            ownerPhone = "+919876543210", fullAddress = "Vishrantwadi, Pune", homeDelivery = true,
+        )
+        settings.addShopDraft = draft
+        assertEquals(draft, settings.addShopDraft)
+
+        settings.addShopDraft = null
+        assertNull(settings.addShopDraft)
+    }
+
+    @Test
+    fun anUntouchedFormIsNotADraft() {
+        settings.addShopDraft = AddShopDraft(shopName = "Sharma Chaat")
+        settings.addShopDraft = AddShopDraft() // e.g. after "Clear All"
+
+        assertNull(settings.addShopDraft)
+    }
+
+    @Test
+    fun anUnreadableShopDraftIsTreatedAsNone() {
+        stores.create(AppSettings.DRAFT_MENU).putString(AppSettings.KEY_DRAFT_SHOP, "{broken")
+
+        assertNull(settings.addShopDraft)
+    }
+
+    @Test
     fun whatTheUserAlreadyReportedIsRememberedPerItem() {
         settings.markReportedShop("5")
         settings.markSuggestedDeletingShop("6")
@@ -103,6 +134,7 @@ class AppSettingsTest {
         settings.rememberVendorCart(42, "vendor-uid")
         settings.isVendorModeOn = true
         settings.draftMenuItems = listOf(MenuItemRequest("Chai", "VEG", 10.0))
+        settings.addShopDraft = AddShopDraft(shopName = "Chai Point")
         settings.markReportedShop("5")
         settings.markSuggestedDeletingShop("5")
         settings.markReportedReview("7")
@@ -113,7 +145,7 @@ class AppSettingsTest {
             mapOf(
                 "user_sync_prefs" to setOf("backend_synced_u1"),
                 "VendorPrefs" to setOf("vendor_shop_id", "vendor_owner_uid", "vendor_mode_active"),
-                "DraftMenuItems" to setOf("draft_items"),
+                "DraftMenuItems" to setOf("draft_items", "draft_shop"),
                 "ShopActionsPrefs" to setOf("reported_shop_5", "suggested_delete_shop_5"),
                 "ReviewActionsPrefs" to setOf("reported_review_7"),
                 "VerificationPrefs" to setOf("verified_8"),

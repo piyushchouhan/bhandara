@@ -49,7 +49,7 @@ class AppSettings(factory: Settings.Factory) {
         get() = vendor.getBoolean(KEY_VENDOR_MODE, false)
         set(value) = vendor.putBoolean(KEY_VENDOR_MODE, value)
 
-    // ==================== Draft menu while adding a shop ====================
+    // ==================== Drafts while adding a shop ====================
 
     /** Menu items entered while adding a shop, kept until the shop is saved; unreadable drafts are dropped */
     var draftMenuItems: List<MenuItemRequest>
@@ -61,6 +61,22 @@ class AppSettings(factory: Settings.Factory) {
                 drafts.remove(KEY_DRAFT_ITEMS)
             } else {
                 drafts.putString(KEY_DRAFT_ITEMS, json.encodeToString(ListSerializer(MenuItemRequest.serializer()), items))
+            }
+        }
+
+    /**
+     * The "add a shop" form as the user left it, or null if there is none. Setting an empty draft (or null)
+     * removes it; an unreadable draft is treated as none.
+     */
+    var addShopDraft: AddShopDraft?
+        get() = drafts.getStringOrNull(KEY_DRAFT_SHOP)
+            ?.let { runCatching { json.decodeFromString(AddShopDraft.serializer(), it) }.getOrNull() }
+            ?.takeUnless { it.isEmpty }
+        set(draft) {
+            if (draft == null || draft.isEmpty) {
+                drafts.remove(KEY_DRAFT_SHOP)
+            } else {
+                drafts.putString(KEY_DRAFT_SHOP, json.encodeToString(AddShopDraft.serializer(), draft))
             }
         }
 
@@ -98,6 +114,7 @@ class AppSettings(factory: Settings.Factory) {
         const val KEY_VENDOR_OWNER_UID = "vendor_owner_uid"
         const val KEY_VENDOR_MODE = "vendor_mode_active"
         const val KEY_DRAFT_ITEMS = "draft_items"
+        const val KEY_DRAFT_SHOP = "draft_shop"
         const val KEY_REPORTED_SHOP = "reported_shop_"
         const val KEY_SUGGESTED_DELETE_SHOP = "suggested_delete_shop_"
         const val KEY_REPORTED_REVIEW = "reported_review_"

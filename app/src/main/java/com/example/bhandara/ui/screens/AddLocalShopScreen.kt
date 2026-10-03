@@ -1,5 +1,9 @@
 package com.example.bhandara.ui.screens
 
+import com.example.bhandara.data.settings.AddShopDraft
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.Lifecycle
 import com.example.bhandara.data.settings.AppSettings
 import android.Manifest
 import android.content.pm.PackageManager
@@ -132,34 +136,40 @@ fun AddLocalShopScreen(
         }
     }
 
+    // The form as the user left it last time (kept until the shop is submitted or "Clear All")
+    val settings = remember { AppSettings(context) }
+    val savedDraft = remember { settings.addShopDraft }
+
     // Step 1 - Shop Type
-    var isMovingCart by remember { mutableStateOf<Boolean?>(null) }
+    var isMovingCart by remember { mutableStateOf(savedDraft?.isMovingCart) }
 
     // Step 2 - Basic Details
-    var shopName by remember { mutableStateOf("") }
-    var shopType by remember { mutableStateOf("") }
-    var menuItems by remember { mutableStateOf(listOf<String>()) }
+    var shopName by remember { mutableStateOf(savedDraft?.shopName ?: "") }
+    var shopType by remember { mutableStateOf(savedDraft?.shopType ?: "") }
+    var menuItems by remember { mutableStateOf(savedDraft?.menuItemNames ?: listOf()) }
     var currentMenuItem by remember { mutableStateOf("") }
-    var selectedImages by remember { mutableStateOf<List<Uri>>(emptyList()) }
+    // Gallery photos can't be read again after the app restarts; camera photos can
+    var selectedImages by remember {
+        mutableStateOf(savedDraft?.photoUris.orEmpty().map(Uri::parse).filter { context.canStillRead(it) })
+    }
 
     // Step 3 - Detailed Menu
-    val settings = remember { AppSettings(context) }
     var draftDetailedMenuItems by remember { mutableStateOf(settings.draftMenuItems) }
     var showDetailedMenuScreen by remember { mutableStateOf(false) }
 
     // Step 4 - Optional Details
-    var ownerPhone by remember { mutableStateOf("") }
-    var ownerEmail by remember { mutableStateOf("") }
-    var cuisineType by remember { mutableStateOf("") }
-    var description by remember { mutableStateOf("") }
-    var averageCostForTwo by remember { mutableStateOf("") }
-    var priceRange by remember { mutableStateOf("") }
-    var fullAddress by remember { mutableStateOf("") }
-    var landmark by remember { mutableStateOf("") }
-    var homeDelivery by remember { mutableStateOf(false) }
-    var takeaway by remember { mutableStateOf(true) }
-    var hasSeating by remember { mutableStateOf(true) }
-    var wifiAvailable by remember { mutableStateOf(false) }
+    var ownerPhone by remember { mutableStateOf(savedDraft?.ownerPhone ?: "") }
+    var ownerEmail by remember { mutableStateOf(savedDraft?.ownerEmail ?: "") }
+    var cuisineType by remember { mutableStateOf(savedDraft?.cuisineType ?: "") }
+    var description by remember { mutableStateOf(savedDraft?.description ?: "") }
+    var averageCostForTwo by remember { mutableStateOf(savedDraft?.averageCostForTwo ?: "") }
+    var priceRange by remember { mutableStateOf(savedDraft?.priceRange ?: "") }
+    var fullAddress by remember { mutableStateOf(savedDraft?.fullAddress ?: "") }
+    var landmark by remember { mutableStateOf(savedDraft?.landmark ?: "") }
+    var homeDelivery by remember { mutableStateOf(savedDraft?.homeDelivery ?: false) }
+    var takeaway by remember { mutableStateOf(savedDraft?.takeaway ?: true) }
+    var hasSeating by remember { mutableStateOf(savedDraft?.hasSeating ?: true) }
+    var wifiAvailable by remember { mutableStateOf(savedDraft?.wifiAvailable ?: false) }
 
     // UI state
     var isLoading by remember { mutableStateOf(false) }
@@ -205,6 +215,43 @@ fun AddLocalShopScreen(
         showImageSourceSheet = false
     }
 
+    // Save the form whenever the app goes to the background (it may be closed from there) and when leaving
+    // the screen. After the shop is submitted there's nothing to keep.
+    var formSubmitted by remember { mutableStateOf(false) }
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        fun saveDraft() {
+            if (formSubmitted) return
+            settings.addShopDraft = AddShopDraft(
+                isMovingCart = isMovingCart,
+                shopName = shopName,
+                shopType = shopType,
+                menuItemNames = menuItems,
+                photoUris = selectedImages.map(Uri::toString),
+                ownerPhone = ownerPhone,
+                ownerEmail = ownerEmail,
+                cuisineType = cuisineType,
+                description = description,
+                averageCostForTwo = averageCostForTwo,
+                priceRange = priceRange,
+                fullAddress = fullAddress,
+                landmark = landmark,
+                homeDelivery = homeDelivery,
+                takeaway = takeaway,
+                hasSeating = hasSeating,
+                wifiAvailable = wifiAvailable,
+            )
+        }
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_STOP) saveDraft()
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+            saveDraft()
+        }
+    }
+
     // Clear All logic
     var showClearAllDialog by remember { mutableStateOf(false) }
 
@@ -229,6 +276,7 @@ fun AddLocalShopScreen(
         isMovingCart = null
         draftDetailedMenuItems = emptyList()
         settings.draftMenuItems = emptyList()
+        settings.addShopDraft = null
         errorMessage = null
         currentStep = 1
     }
@@ -323,8 +371,10 @@ fun AddLocalShopScreen(
                     if (isMovingCart == true) {
                         response.id.toLongOrNull()?.let { cartId -> settings.rememberVendorCart(cartId, firebaseUid) }
                     }
-                    // Clear local draft
+                    // The shop is saved: forget the drafts
+                    formSubmitted = true
                     settings.draftMenuItems = emptyList()
+                    settings.addShopDraft = null
                     onNavigateBack()
                 } else {
                     errorMessage = "Failed to add shop. Please try again."
@@ -659,3 +709,7 @@ fun AddLocalShopScreen(
         }
     }
 }
+
+/** Whether a photo chosen earlier can still be opened (gallery access ends when the app restarts) */
+private fun android.content.Context.canStillRead(uri: Uri): Boolean =
+    runCatching { contentResolver.openInputStream(uri)?.use { true } ?: false }.getOrDefault(false)
