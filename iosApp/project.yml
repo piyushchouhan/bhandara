@@ -10,6 +10,10 @@ packages:
   Firebase:
     url: https://github.com/firebase/firebase-ios-sdk
     from: "12.0.0"
+# Local secrets (e.g. the Google Maps key) come from Config/Secrets.xcconfig, which is not in git
+configFiles:
+  Debug: Config/Secrets.xcconfig
+  Release: Config/Secrets.xcconfig
 targets:
   iosApp:
     type: application
@@ -23,6 +27,8 @@ targets:
       path: iosApp/Info.plist
       properties:
         CFBundleDisplayName: Local Feast
+        # From Config/Secrets.xcconfig; read at launch to start Google Maps
+        GoogleMapsApiKey: $(MAPS_API_KEY)
         # Shown when the app asks for location access
         NSLocationWhenInUseUsageDescription: Local Feast uses your location to show food shops, carts and community feasts near you.
         UILaunchScreen: {}
