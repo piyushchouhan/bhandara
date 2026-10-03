@@ -1,5 +1,6 @@
 package com.example.bhandara
 
+import com.example.bhandara.data.location.AndroidDeviceLocation
 import com.example.bhandara.platform.ProvideAppEnvironment
 import com.example.bhandara.navigation.Route
 import com.example.bhandara.navigation.rememberAppNavigator
@@ -56,8 +57,9 @@ class MainActivity : AppCompatActivity() {
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
-        val granted = permissions.entries.all { it.value }
-        if (granted) {
+        // Location works with precise or approximate access; the notification permission doesn't matter here
+        val locationAllowed = AndroidDeviceLocation.PERMISSIONS.any { permissions[it] == true }
+        if (locationAllowed) {
             // Update location immediately
             userManager.updateUserLocation()
             

@@ -23,6 +23,8 @@ targets:
       path: iosApp/Info.plist
       properties:
         CFBundleDisplayName: Local Feast
+        # Shown when the app asks for location access
+        NSLocationWhenInUseUsageDescription: Local Feast uses your location to show food shops, carts and community feasts near you.
         UILaunchScreen: {}
         # Lets Compose animate at 120 Hz on ProMotion iPhones
         CADisableMinimumFrameDurationOnPhone: true

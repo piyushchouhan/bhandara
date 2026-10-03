@@ -51,6 +51,8 @@ kotlin {
         // Each platform sends requests with its own networking stack
         androidMain.dependencies {
             implementation(libs.ktor.client.okhttp)
+            implementation(libs.play.services.location)
+            implementation(libs.androidx.activity.compose) // asking for permissions from shared screens
         }
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)
