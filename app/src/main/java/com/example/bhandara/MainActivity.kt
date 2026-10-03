@@ -1,5 +1,7 @@
 package com.example.bhandara
 
+import com.example.bhandara.navigation.Route
+import com.example.bhandara.navigation.rememberAppNavigator
 import android.os.Bundle
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
@@ -42,16 +44,8 @@ import com.example.bhandara.ui.theme.BhandaraTheme
 import com.example.bhandara.utils.LocationHelper
 
 // Simple navigation states
-enum class Screen {
-    HOME, HUNGRY, REPORT_BHANDARA, FEAST_DETAILS, ADD_LOCAL_SHOP, LOCAL_SHOPS_MAP, SHOP_DETAILS, CLAIM_SHOP, PROFILE, ABOUT, SUPPORT, TERMS
-}
 
 // Navigation arguments
-data class NavArgs(
-    val feastId: String? = null,
-    val shopId: String? = null,
-    val shopName: String? = null
-)
 
 class MainActivity : AppCompatActivity() {
     
@@ -92,9 +86,8 @@ class MainActivity : AppCompatActivity() {
         
         setContent {
             BhandaraTheme {
-                // Navigation back stack with arguments
-                var backStack by remember { mutableStateOf(listOf(Pair(Screen.HOME, NavArgs()))) }
-                val (currentScreen, currentArgs) = backStack.last()
+                // Which screens are open (shared with iOS); kept across rotation
+                val navigator = rememberAppNavigator()
                 
                 // Lifted home tab state
                 var homeTabIndex by rememberSaveable { mutableIntStateOf(0) }
@@ -106,118 +99,106 @@ class MainActivity : AppCompatActivity() {
                     requestPermissions()
                 }
                 
-                // Navigate to a new screen with optional arguments
-                fun navigateTo(screen: Screen, args: NavArgs = NavArgs()) {
-                    backStack = backStack + Pair(screen, args)
-                }
-                
-                // Navigate back
+                fun navigateTo(route: Route) = navigator.navigate(route)
+
                 fun navigateBack() {
-                    if (backStack.size > 1) {
-                        backStack = backStack.dropLast(1)
-                    }
+                    navigator.back()
                 }
-                
-                // Handle back press
-                BackHandler(enabled = backStack.size > 1) {
-                    navigateBack()
+
+                // Back from the first screen is left to the system (closes the app)
+                BackHandler(enabled = navigator.canGoBack) {
+                    navigator.back()
                 }
                 
                 Scaffold(
                     modifier = Modifier.fillMaxSize()
                 ) { innerPadding ->
-                    when (currentScreen) {
-                        Screen.HOME -> {
+                    when (val route = navigator.current) {
+                        Route.Home -> {
                             AppDrawerMenu(
-                                onProfileClick = { navigateTo(Screen.PROFILE) },
-                                onAboutClick = { navigateTo(Screen.ABOUT) },
-                                onSupportClick = { navigateTo(Screen.SUPPORT) },
-                                onTermsClick = { navigateTo(Screen.TERMS) }
+                                onProfileClick = { navigateTo(Route.Profile) },
+                                onAboutClick = { navigateTo(Route.About) },
+                                onSupportClick = { navigateTo(Route.Support) },
+                                onTermsClick = { navigateTo(Route.Terms) }
                             ) {
                                 HomeScreen(
                                     modifier = Modifier.padding(innerPadding),
                                     selectedTabIndex = homeTabIndex,
                                     onTabSelected = { homeTabIndex = it },
-                                    onHungryClick = { navigateTo(Screen.HUNGRY) },
-                                    onReportFeastClick = { navigateTo(Screen.REPORT_BHANDARA) },
-                                    onFindShopsClick = { navigateTo(Screen.LOCAL_SHOPS_MAP) },
+                                    onHungryClick = { navigateTo(Route.Hungry) },
+                                    onReportFeastClick = { navigateTo(Route.ReportFeast) },
+                                    onFindShopsClick = { navigateTo(Route.ShopsMap) },
                                     onAddShopClick = {
                                         // Admins list shops on behalf of their owners, so the "only add your own shop" warning doesn't apply
-                                        if (isAdminUser()) navigateTo(Screen.ADD_LOCAL_SHOP) else showOwnerConfirmDialog = true
+                                        if (isAdminUser()) navigateTo(Route.AddShop) else showOwnerConfirmDialog = true
                                     }
                                 )
                             }
                         }
-                        Screen.HUNGRY -> {
+                        Route.Hungry -> {
                             HungryScreen(
                                 onBackClick = { navigateBack() },
                                 onFeastClick = { feastId ->
-                                    navigateTo(Screen.FEAST_DETAILS, NavArgs(feastId = feastId))
+                                    navigateTo(Route.FeastDetails(feastId))
                                 }
                             )
                         }
-                        Screen.REPORT_BHANDARA -> {
+                        Route.ReportFeast -> {
                             ReportBhandaraScreen(
                                 onNavigateBack = { navigateBack() }
                             )
                         }
-                        Screen.FEAST_DETAILS -> {
-                            currentArgs.feastId?.let { feastId ->
-                                FeastDetailsScreen(
-                                    feastId = feastId,
-                                    onBackClick = { navigateBack() }
-                                )
-                            }
+                        is Route.FeastDetails -> {
+                            FeastDetailsScreen(
+                                feastId = route.feastId,
+                                onBackClick = { navigateBack() }
+                            )
                         }
-                        Screen.ADD_LOCAL_SHOP -> {
+                        Route.AddShop -> {
                             AddLocalShopScreen(
                                 onNavigateBack = { navigateBack() }
                             )
                         }
-                        Screen.LOCAL_SHOPS_MAP -> {
+                        Route.ShopsMap -> {
                             LocalShopsMapScreen(
                                 onBackClick = { navigateBack() },
                                 onShopClick = { shopId ->
-                                    navigateTo(Screen.SHOP_DETAILS, NavArgs(shopId = shopId))
+                                    navigateTo(Route.ShopDetails(shopId))
                                 }
                             )
                         }
-                        Screen.SHOP_DETAILS -> {
-                            currentArgs.shopId?.let { shopId ->
-                                LocalShopDetailsScreen(
-                                    shopId = shopId,
-                                    onBackClick = { navigateBack() },
-                                    onClaimClick = { shopName ->
-                                        navigateTo(Screen.CLAIM_SHOP, NavArgs(shopId = shopId, shopName = shopName))
-                                    }
-                                )
-                            }
+                        is Route.ShopDetails -> {
+                            LocalShopDetailsScreen(
+                                shopId = route.shopId,
+                                onBackClick = { navigateBack() },
+                                onClaimClick = { shopName ->
+                                    navigateTo(Route.ClaimShop(route.shopId, shopName))
+                                }
+                            )
                         }
-                        Screen.CLAIM_SHOP -> {
-                            currentArgs.shopId?.let { shopId ->
-                                ClaimShopScreen(
-                                    shopId = shopId,
-                                    shopName = currentArgs.shopName ?: "",
-                                    onBackClick = { navigateBack() }
-                                )
-                            }
+                        is Route.ClaimShop -> {
+                            ClaimShopScreen(
+                                shopId = route.shopId,
+                                shopName = route.shopName,
+                                onBackClick = { navigateBack() }
+                            )
                         }
-                        Screen.PROFILE -> {
+                        Route.Profile -> {
                             ProfileScreen(
                                 onBackClick = { navigateBack() }
                             )
                         }
-                        Screen.ABOUT -> {
+                        Route.About -> {
                             AboutScreen(
                                 onBackClick = { navigateBack() }
                             )
                         }
-                        Screen.SUPPORT -> {
+                        Route.Support -> {
                             SupportScreen(
                                 onBackClick = { navigateBack() }
                             )
                         }
-                        Screen.TERMS -> {
+                        Route.Terms -> {
                             TermsScreen(
                                 onBackClick = { navigateBack() }
                             )
@@ -229,7 +210,7 @@ class MainActivity : AppCompatActivity() {
                     OwnerConfirmationDialog(
                         onConfirm = {
                             showOwnerConfirmDialog = false
-                            navigateTo(Screen.ADD_LOCAL_SHOP)
+                            navigateTo(Route.AddShop)
                         },
                         onDismissRequest = {
                             showOwnerConfirmDialog = false
