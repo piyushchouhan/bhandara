@@ -1,5 +1,8 @@
 package com.example.bhandara.services
 
+import kotlinx.coroutines.runBlocking
+import com.example.bhandara.data.auth.AppBackend
+import com.example.bhandara.data.auth.AppAuth
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -25,9 +28,13 @@ class BhandaraMessagingService : FirebaseMessagingService() {
         super.onNewToken(token)
         // Never log the token itself: it lets anyone send notifications to this device
         Log.d(TAG, "New FCM token received")
-        
-        // TODO: send the new token to the backend, or push notifications stop reaching this phone
-        // This will be handled in MainActivity after anonymous auth
+
+        // Firebase replaced this phone's token: tell the backend, or notifications stop reaching it.
+        // This runs on a background thread, so waiting for the request is fine. If nobody is signed in yet,
+        // or it fails, the next app start sends it (UserManager).
+        val uid = AppAuth.service.currentUid ?: return
+        val sent = runBlocking { AppBackend.pushTokenSync(applicationContext).sync(uid, token) }
+        Log.d(TAG, if (sent) "New FCM token sent to the backend" else "New FCM token will be sent at the next app start")
     }
     
     override fun onMessageReceived(message: RemoteMessage) {

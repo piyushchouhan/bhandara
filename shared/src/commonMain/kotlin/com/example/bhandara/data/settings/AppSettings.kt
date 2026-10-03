@@ -30,6 +30,11 @@ class AppSettings(factory: Settings.Factory) {
 
     fun markRegisteredWithBackend(uid: String) = sync.putBoolean(KEY_BACKEND_SYNCED + uid, true)
 
+    /** The push-notification token the backend last confirmed for this user, or null */
+    fun lastPushTokenSent(uid: String): String? = sync.getStringOrNull(KEY_PUSH_TOKEN_SENT + uid)
+
+    fun markPushTokenSent(uid: String, fcmToken: String) = sync.putString(KEY_PUSH_TOKEN_SENT + uid, fcmToken)
+
     // ==================== Vendor (moving cart owner) ====================
 
     /** The moving cart this phone's user listed, or null if none */
@@ -110,6 +115,7 @@ class AppSettings(factory: Settings.Factory) {
         const val VERIFICATION = "VerificationPrefs"
 
         const val KEY_BACKEND_SYNCED = "backend_synced_"
+        const val KEY_PUSH_TOKEN_SENT = "push_token_sent_"
         const val KEY_VENDOR_SHOP_ID = "vendor_shop_id"
         const val KEY_VENDOR_OWNER_UID = "vendor_owner_uid"
         const val KEY_VENDOR_MODE = "vendor_mode_active"

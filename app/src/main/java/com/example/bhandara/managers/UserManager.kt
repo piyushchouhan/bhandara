@@ -1,5 +1,6 @@
 package com.example.bhandara.managers
 
+import com.example.bhandara.data.auth.AppBackend
 import com.example.bhandara.data.settings.AppSettings
 import android.content.Context
 import android.util.Log
@@ -83,13 +84,17 @@ class UserManager(
                     val backendResponse = backendRepository.createUser(uid, fcmToken, null)
                     if (backendResponse != null) {
                         markUserSyncedToBackend(uid)
+                        // Registration included the token
+                        settings.markPushTokenSent(uid, fcmToken)
                         initCompleted.complete(true)
                     } else {
                         Log.e(TAG, "Failed to create user in backend, will retry on next start")
                         initCompleted.complete(false)
                     }
                 } else {
-                    // Already synced from a previous session
+                    // Already synced from a previous session. Make sure the backend has this phone's current
+                    // push token: it may have changed while the app was closed, or an earlier send failed.
+                    AppBackend.pushTokenSync(context).sync(uid, fcmToken)
                     initCompleted.complete(true)
                 }
                 

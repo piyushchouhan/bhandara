@@ -131,6 +131,7 @@ class AppSettingsTest {
     fun dataIsStoredWhereOlderVersionsOfTheAndroidAppKeptIt() {
         // Changing any of these names would make updated apps forget what users had saved
         settings.markRegisteredWithBackend("u1")
+        settings.markPushTokenSent("u1", "push-token")
         settings.rememberVendorCart(42, "vendor-uid")
         settings.isVendorModeOn = true
         settings.draftMenuItems = listOf(MenuItemRequest("Chai", "VEG", 10.0))
@@ -143,7 +144,7 @@ class AppSettingsTest {
         val keysByStore = stores.byName.mapValues { (_, store) -> store.keys.toSet() }
         assertEquals(
             mapOf(
-                "user_sync_prefs" to setOf("backend_synced_u1"),
+                "user_sync_prefs" to setOf("backend_synced_u1", "push_token_sent_u1"),
                 "VendorPrefs" to setOf("vendor_shop_id", "vendor_owner_uid", "vendor_mode_active"),
                 "DraftMenuItems" to setOf("draft_items", "draft_shop"),
                 "ShopActionsPrefs" to setOf("reported_shop_5", "suggested_delete_shop_5"),
