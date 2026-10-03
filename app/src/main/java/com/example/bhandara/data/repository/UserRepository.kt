@@ -45,7 +45,8 @@ class UserRepository {
     suspend fun getFcmToken(): String? {
         return try {
             val token = messaging.token.await()
-            Log.d(TAG, "FCM token retrieved: $token")
+            // Never log the token itself: it lets anyone send notifications to this device
+            Log.d(TAG, "FCM token retrieved")
             token
         } catch (e: Exception) {
             Log.e(TAG, "Failed to get FCM token", e)

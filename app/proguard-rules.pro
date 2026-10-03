@@ -19,3 +19,12 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# Release builds: remove verbose/debug/info logging entirely. These logs include user IDs and GPS
+# coordinates, and anything in Logcat can be read via adb or bug reports. Warnings and errors stay
+# so crashes and failures remain diagnosable.
+-assumenosideeffects class android.util.Log {
+    public static int v(...);
+    public static int d(...);
+    public static int i(...);
+}
