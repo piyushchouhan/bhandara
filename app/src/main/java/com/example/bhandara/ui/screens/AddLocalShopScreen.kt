@@ -1,5 +1,6 @@
 package com.example.bhandara.ui.screens
 
+import com.example.bhandara.data.settings.AppSettings
 import android.Manifest
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -142,24 +143,8 @@ fun AddLocalShopScreen(
     var selectedImages by remember { mutableStateOf<List<Uri>>(emptyList()) }
 
     // Step 3 - Detailed Menu
-    val menuItemPrefs = remember { context.getSharedPreferences("DraftMenuItems", android.content.Context.MODE_PRIVATE) }
-    val initialDraftItems: List<com.example.bhandara.data.models.api.MenuItemRequest> = remember {
-        val json = menuItemPrefs.getString("draft_items", null)
-        if (json != null) {
-            try {
-                val arr = org.json.JSONArray(json)
-                List(arr.length()) { i ->
-                    val obj = arr.getJSONObject(i)
-                    com.example.bhandara.data.models.api.MenuItemRequest(
-                        name = obj.getString("name"),
-                        foodType = obj.getString("foodType"),
-                        price = if (obj.has("price") && !obj.isNull("price")) obj.getDouble("price") else null
-                    )
-                }
-            } catch (e: Exception) { listOf() }
-        } else listOf()
-    }
-    var draftDetailedMenuItems by remember { mutableStateOf(initialDraftItems) }
+    val settings = remember { AppSettings(context) }
+    var draftDetailedMenuItems by remember { mutableStateOf(settings.draftMenuItems) }
     var showDetailedMenuScreen by remember { mutableStateOf(false) }
 
     // Step 4 - Optional Details
@@ -243,7 +228,7 @@ fun AddLocalShopScreen(
         wifiAvailable = false
         isMovingCart = null
         draftDetailedMenuItems = emptyList()
-        menuItemPrefs.edit().remove("draft_items").apply()
+        settings.draftMenuItems = emptyList()
         errorMessage = null
         currentStep = 1
     }
@@ -336,14 +321,10 @@ fun AddLocalShopScreen(
                     }
                     // Save vendor info if moving cart
                     if (isMovingCart == true) {
-                        val vendorPrefs = context.getSharedPreferences("VendorPrefs", android.content.Context.MODE_PRIVATE)
-                        vendorPrefs.edit()
-                            .putLong("vendor_shop_id", response.id.toLongOrNull() ?: -1L)
-                            .putString("vendor_owner_uid", firebaseUid)
-                            .apply()
+                        response.id.toLongOrNull()?.let { cartId -> settings.rememberVendorCart(cartId, firebaseUid) }
                     }
                     // Clear local draft
-                    menuItemPrefs.edit().remove("draft_items").apply()
+                    settings.draftMenuItems = emptyList()
                     onNavigateBack()
                 } else {
                     errorMessage = "Failed to add shop. Please try again."
@@ -378,22 +359,12 @@ fun AddLocalShopScreen(
             initialItems = draftDetailedMenuItems,
             onSaveItems = { items ->
                 draftDetailedMenuItems = items
-                // Persist to SharedPreferences
-                val json = org.json.JSONArray().apply {
-                    items.forEach { item ->
-                        put(org.json.JSONObject().apply {
-                            put("name", item.name)
-                            put("foodType", item.foodType)
-                            if (item.price != null) put("price", item.price) else put("price", org.json.JSONObject.NULL)
-                        })
-                    }
-                }.toString()
-                menuItemPrefs.edit().putString("draft_items", json).apply()
+                settings.draftMenuItems = items
                 showDetailedMenuScreen = false
             },
             onClearAll = {
                 draftDetailedMenuItems = emptyList()
-                menuItemPrefs.edit().remove("draft_items").apply()
+                settings.draftMenuItems = emptyList()
                 showDetailedMenuScreen = false
             },
             onNavigateBack = { showDetailedMenuScreen = false }

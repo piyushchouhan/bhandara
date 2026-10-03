@@ -1,5 +1,6 @@
 package com.example.bhandara.ui.components
 
+import com.example.bhandara.data.settings.AppSettings
 import android.Manifest
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -385,8 +386,8 @@ fun ReviewItem(
     onReport: () -> Unit
 ) {
     val context = LocalContext.current
-    val prefs = remember { context.getSharedPreferences("ReviewActionsPrefs", android.content.Context.MODE_PRIVATE) }
-    var hasReported by remember { mutableStateOf(prefs.getBoolean("reported_review_${review.id}", false)) }
+    val settings = remember { AppSettings(context) }
+    var hasReported by remember { mutableStateOf(settings.hasReportedReview(review.id)) }
     var selectedImageIndex by remember { mutableStateOf<Int?>(null) }
 
     Card(
@@ -455,7 +456,7 @@ fun ReviewItem(
                                     .clickable(enabled = !hasReported) {
                                         onReport()
                                         hasReported = true
-                                        prefs.edit().putBoolean("reported_review_${review.id}", true).apply()
+                                        settings.markReportedReview(review.id)
                                     }
                                     .padding(horizontal = 4.dp, vertical = 4.dp)
                             ) {

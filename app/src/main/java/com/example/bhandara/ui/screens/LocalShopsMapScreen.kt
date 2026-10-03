@@ -1,5 +1,6 @@
 package com.example.bhandara.ui.screens
 
+import com.example.bhandara.data.settings.AppSettings
 import android.Manifest
 import android.annotation.SuppressLint
 import android.graphics.Bitmap
@@ -116,7 +117,7 @@ fun LocalShopsMapScreen(
 
     // ── Verification prompt state ────────────────────────────────────────────
     var verificationPrompt by remember { mutableStateOf<LocalShopResponse?>(null) }
-    val verifyPrefs = remember { context.getSharedPreferences("VerificationPrefs", android.content.Context.MODE_PRIVATE) }
+    val settings = remember { AppSettings(context) }
 
     // Cart tracking bottom sheet state
     var trackedCartShopId by remember { mutableLongStateOf(-1L) }
@@ -169,7 +170,7 @@ fun LocalShopsMapScreen(
                     movingCarts = feed.activeShops.filter { it.isMovingCart == true }
                     // Show verification prompt if not already voted
                     val prompt = feed.verificationPrompt
-                    if (prompt != null && !verifyPrefs.getBoolean("verified_${prompt.id}", false)) {
+                    if (prompt != null && !settings.hasAnsweredVerification(prompt.id)) {
                         verificationPrompt = prompt
                     }
                 }
@@ -507,7 +508,7 @@ fun LocalShopsMapScreen(
                                             val here = locationHelper.getCurrentLocation()
                                             val result = repository.verifyShop(prompt.id, vote, here?.latitude, here?.longitude)
                                             if (result.success || result.alreadyVoted) {
-                                                verifyPrefs.edit().putBoolean("verified_${prompt.id}", true).apply()
+                                                settings.markAnsweredVerification(prompt.id)
                                             }
                                             // On other refusals (e.g. too far away) the prompt can come back when the user is closer
                                             verificationPrompt = null

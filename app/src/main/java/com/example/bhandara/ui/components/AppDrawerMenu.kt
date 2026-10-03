@@ -1,6 +1,6 @@
 package com.example.bhandara.ui.components
 
-import android.content.Context
+import com.example.bhandara.data.settings.AppSettings
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -69,11 +69,6 @@ import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 import java.util.Locale
 
-private const val VENDOR_PREFS = "VendorPrefs"
-private const val KEY_SHOP_ID = "vendor_shop_id"
-private const val KEY_OWNER_UID = "vendor_owner_uid"
-private const val KEY_VENDOR_MODE = "vendor_mode_active"
-
 // App drawer code
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -89,14 +84,14 @@ fun AppDrawerMenu(
     val scope = rememberCoroutineScope()
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
 
-    val prefs = remember { context.getSharedPreferences(VENDOR_PREFS, Context.MODE_PRIVATE) }
-    val vendorShopId = remember { prefs.getLong(KEY_SHOP_ID, -1L) }
-    val vendorOwnerUid = remember { prefs.getString(KEY_OWNER_UID, null) }
+    val settings = remember { AppSettings(context) }
+    val vendorShopId = remember { settings.vendorShopId ?: -1L }
+    val vendorOwnerUid = remember { settings.vendorOwnerUid }
     val hasMovingCartShop = vendorShopId > 0 && vendorOwnerUid != null
 
     val currentUser = FirebaseAuth.getInstance().currentUser
     var currentLanguage by remember { mutableStateOf(Locale.getDefault().language) }
-    var vendorModeOn by remember { mutableStateOf(prefs.getBoolean(KEY_VENDOR_MODE, false)) }
+    var vendorModeOn by remember { mutableStateOf(settings.isVendorModeOn) }
 
     var showReportIssueDialog by remember { mutableStateOf(false) }
     var showSuggestFeatureDialog by remember { mutableStateOf(false) }
@@ -270,7 +265,7 @@ fun AppDrawerMenu(
                             onCheckedChange = { enabled ->
                                 if (!hasMovingCartShop) return@Switch
                                 vendorModeOn = enabled
-                                prefs.edit().putBoolean(KEY_VENDOR_MODE, enabled).apply()
+                                settings.isVendorModeOn = enabled
                                 if (enabled) {
                                     VendorTrackingService.start(context, vendorShopId, vendorOwnerUid!!)
                                 } else {

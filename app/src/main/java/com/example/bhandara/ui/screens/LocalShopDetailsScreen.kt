@@ -1,5 +1,6 @@
 package com.example.bhandara.ui.screens
 
+import com.example.bhandara.data.settings.AppSettings
 import com.example.bhandara.ui.components.CrowdBadge
 import android.content.Intent
 import android.net.Uri
@@ -61,9 +62,9 @@ fun LocalShopDetailsScreen(
     var selectedFullScreenImageIndex by remember { mutableStateOf<Int?>(null) }
     val currentUserUid = remember { FirebaseAuth.getInstance().currentUser?.uid }
     
-    val prefs = context.getSharedPreferences("ShopActionsPrefs", android.content.Context.MODE_PRIVATE)
-    var hasReported by remember { mutableStateOf(prefs.getBoolean("reported_shop_$shopId", false)) }
-    var hasSuggestedDelete by remember { mutableStateOf(prefs.getBoolean("suggested_delete_shop_$shopId", false)) }
+    val settings = remember { AppSettings(context) }
+    var hasReported by remember { mutableStateOf(settings.hasReportedShop(shopId)) }
+    var hasSuggestedDelete by remember { mutableStateOf(settings.hasSuggestedDeletingShop(shopId)) }
     
     // Fetch shop details from backend
     LaunchedEffect(shopId) {
@@ -441,7 +442,7 @@ fun LocalShopDetailsScreen(
                             val result = repository.reportLocalShop(shopId)
                             if (result != null) {
                                 Toast.makeText(context, "Shop reported successfully", Toast.LENGTH_SHORT).show()
-                                prefs.edit().putBoolean("reported_shop_$shopId", true).apply()
+                                settings.markReportedShop(shopId)
                                 hasReported = true
                                 shop = result
                             } else {
@@ -509,7 +510,7 @@ fun LocalShopDetailsScreen(
                             val result = repository.suggestDeleteLocalShop(shopId)
                             if (result != null) {
                                 Toast.makeText(context, "Deletion suggested successfully", Toast.LENGTH_SHORT).show()
-                                prefs.edit().putBoolean("suggested_delete_shop_$shopId", true).apply()
+                                settings.markSuggestedDeletingShop(shopId)
                                 hasSuggestedDelete = true
                                 shop = result
                             } else {

@@ -1,5 +1,6 @@
 package com.example.bhandara.managers
 
+import com.example.bhandara.data.settings.AppSettings
 import android.content.Context
 import android.util.Log
 import androidx.work.Constraints
@@ -27,8 +28,7 @@ class UserManager(
     private val backendRepository = BackendRepository()
     private val locationHelper = LocationHelper(context)
     
-    // SharedPreferences to track backend sync status
-    private val prefs = context.getSharedPreferences("user_sync_prefs", Context.MODE_PRIVATE)
+    private val settings = AppSettings(context)
     
     /**
      * Deferred that completes when initializeUser() finishes.
@@ -39,21 +39,20 @@ class UserManager(
     
     companion object {
         private const val TAG = "UserManager"
-        const val KEY_BACKEND_SYNCED = "backend_synced_"
     }
     
     /**
      * Check if user has been synced to backend
      */
     fun isUserSyncedToBackend(uid: String): Boolean {
-        return prefs.getBoolean(KEY_BACKEND_SYNCED + uid, false)
+        return settings.isRegisteredWithBackend(uid)
     }
     
     /**
      * Mark user as synced to backend
      */
     private fun markUserSyncedToBackend(uid: String) {
-        prefs.edit().putBoolean(KEY_BACKEND_SYNCED + uid, true).apply()
+        settings.markRegisteredWithBackend(uid)
         Log.d(TAG, "Marked user $uid as synced to backend")
     }
     
