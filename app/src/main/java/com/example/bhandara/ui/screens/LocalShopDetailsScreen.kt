@@ -691,6 +691,7 @@ private fun DetailedMenuSection(menu: List<MenuItemResponse>, onAddItems: (() ->
 
             menu.forEach { item ->
                 val available = item.isAvailable
+                val price = item.price
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
@@ -710,8 +711,8 @@ private fun DetailedMenuSection(menu: List<MenuItemResponse>, onAddItems: (() ->
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                        item.price != null -> Text(
-                            text = formatPrice(item.price),
+                        price != null -> Text(
+                            text = formatPrice(price),
                             style = MaterialTheme.typography.bodyLarge,
                             fontWeight = FontWeight.SemiBold
                         )
