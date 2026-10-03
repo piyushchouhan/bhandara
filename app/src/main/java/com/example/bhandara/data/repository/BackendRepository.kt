@@ -348,6 +348,22 @@ class BackendRepository {
 
     // --- Menu Items ---
 
+    /** The shop's menu with prices (empty for older shops that only have a list of item names) */
+    suspend fun getShopMenu(shopId: String): List<com.example.bhandara.data.models.api.MenuItemResponse>? {
+        return try {
+            val response = apiService.getShopMenu(shopId)
+            if (response.isSuccessful) {
+                response.body()
+            } else {
+                Log.e(TAG, "❌ Failed to fetch shop menu: ${response.code()}")
+                null
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ Error fetching shop menu", e)
+            null
+        }
+    }
+
     suspend fun addMenuItemsManual(shopId: String, request: com.example.bhandara.data.models.api.ManualMenuItemsRequest): List<com.example.bhandara.data.models.api.MenuItemResponse>? {
         return try {
             val response = apiService.addMenuItemsManual(shopId, request)

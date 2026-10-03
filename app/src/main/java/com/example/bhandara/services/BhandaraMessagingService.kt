@@ -23,7 +23,8 @@ class BhandaraMessagingService : FirebaseMessagingService() {
     
     override fun onNewToken(token: String) {
         super.onNewToken(token)
-        Log.d(TAG, "New FCM token: $token")
+        // Never log the token itself: it lets anyone send notifications to this device
+        Log.d(TAG, "New FCM token received")
         
         // TODO: Save token to Firestore when user is authenticated
         // This will be handled in MainActivity after anonymous auth

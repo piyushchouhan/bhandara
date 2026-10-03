@@ -183,6 +183,11 @@ interface ApiService {
 
     // --- Menu Items ---
 
+    @GET("api/menu-items/shop/{shopId}")
+    suspend fun getShopMenu(
+        @retrofit2.http.Path("shopId") shopId: String
+    ): Response<List<com.example.bhandara.data.models.api.MenuItemResponse>>
+
     @POST("api/menu-items/manual/shop/{shopId}")
     suspend fun addMenuItemsManual(
         @retrofit2.http.Path("shopId") shopId: String,

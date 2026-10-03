@@ -58,6 +58,7 @@ import java.util.Locale
 fun AddMenuItemsScreen(
     shopId: String? = null,
     initialItems: List<MenuItemRequest> = emptyList(),
+    existingNames: List<String> = emptyList(),
     onSaveItems: ((List<MenuItemRequest>) -> Unit)? = null,
     onClearAll: (() -> Unit)? = null,
     onNavigateBack: () -> Unit
@@ -137,6 +138,7 @@ fun AddMenuItemsScreen(
                         shopId = shopId,
                         repository = repository,
                         initialItems = initialItems,
+                        existingNames = existingNames,
                         isLoading = isLoading,
                         onLoadingChange = { isLoading = it },
                         onError = { errorMessage = it },
@@ -147,6 +149,7 @@ fun AddMenuItemsScreen(
                     AiImageScanSection(
                         shopId = shopId,
                         repository = repository,
+                        existingNames = existingNames,
                         isLoading = isLoading,
                         onLoadingChange = { isLoading = it },
                         onError = { errorMessage = it },
@@ -180,6 +183,7 @@ fun ManualEntrySection(
     shopId: String?,
     repository: BackendRepository,
     initialItems: List<MenuItemRequest>,
+    existingNames: List<String>,
     isLoading: Boolean,
     onLoadingChange: (Boolean) -> Unit,
     onError: (String?) -> Unit,
@@ -301,6 +305,10 @@ fun ManualEntrySection(
                     onError("Please add at least one item name.")
                     return@Button
                 }
+                duplicateNameError(validItems, existingNames)?.let {
+                    onError(it)
+                    return@Button
+                }
 
                 if (onSaveItems != null) {
                     // Local draft mode — just return items to parent, no API call
@@ -340,6 +348,7 @@ fun ManualEntrySection(
 fun AiImageScanSection(
     shopId: String?,
     repository: BackendRepository,
+    existingNames: List<String>,
     isLoading: Boolean,
     onLoadingChange: (Boolean) -> Unit,
     onError: (String?) -> Unit,
@@ -513,6 +522,10 @@ fun AiImageScanSection(
                         val validItems = editableItems.filter { it.name.isNotBlank() }
                         if (validItems.isEmpty()) {
                             onError("Please keep at least one item.")
+                            return@Button
+                        }
+                        duplicateNameError(validItems, existingNames)?.let {
+                            onError(it)
                             return@Button
                         }
                         if (onSaveItems != null) {
@@ -699,3 +712,18 @@ fun AiImageScanSection(
     }
 }
 
+/**
+ * A menu never lists the same item twice (the server rejects it too). Returns a message for the first name that
+ * is repeated or already on the menu, comparing names ignoring case and surrounding spaces, or null if none.
+ */
+private fun duplicateNameError(items: List<MenuItemRequest>, existingNames: List<String>): String? {
+    val onMenu = existingNames.map { it.trim().lowercase() }.toSet()
+    val seen = mutableSetOf<String>()
+    for (item in items) {
+        val name = item.name.trim()
+        val key = name.lowercase()
+        if (key in onMenu) return "\"$name\" is already on the menu."
+        if (!seen.add(key)) return "\"$name\" is listed more than once."
+    }
+    return null
+}

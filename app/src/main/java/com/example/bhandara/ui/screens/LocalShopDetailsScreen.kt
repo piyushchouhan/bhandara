@@ -5,9 +5,11 @@ import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -21,12 +23,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.bhandara.data.models.api.LocalShopResponse
+import com.example.bhandara.data.models.api.MenuItemResponse
 import com.example.bhandara.data.repository.BackendRepository
 import com.example.bhandara.ui.components.ReviewsSection
 import com.google.firebase.auth.FirebaseAuth
@@ -47,6 +51,8 @@ fun LocalShopDetailsScreen(
     val repository = remember { BackendRepository() }
     
     var shop by remember { mutableStateOf<LocalShopResponse?>(null) }
+    var menu by remember { mutableStateOf<List<MenuItemResponse>>(emptyList()) }
+    var showAddMenuItems by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(true) }
     var showReportDialog by remember { mutableStateOf(false) }
     var showDeactivateDialog by remember { mutableStateOf(false) }
@@ -66,7 +72,21 @@ fun LocalShopDetailsScreen(
         if (result != null) {
             shop = result
         }
+        menu = repository.getShopMenu(shopId).orEmpty()
         isLoading = false
+    }
+
+    // Owner adding items to their menu (full screen); the menu reloads when they come back
+    if (showAddMenuItems) {
+        AddMenuItemsScreen(
+            shopId = shopId,
+            existingNames = menu.map { it.name },
+            onNavigateBack = {
+                showAddMenuItems = false
+                scope.launch { menu = repository.getShopMenu(shopId).orEmpty() }
+            }
+        )
+        return
     }
     
     Scaffold(
@@ -283,9 +303,21 @@ fun LocalShopDetailsScreen(
                     // Time, Location
                     InfoCard(shop!!)
                     
-                    // Menu Items
-                    if (!shop!!.menuItems.isNullOrEmpty()) {
-                        MenuItemsSection(shop!!.menuItems!!)
+                    // Menu: items with prices when the owner added them, else the plain list of names
+                    val isOwner = currentUserUid != null && shop!!.ownerUid == currentUserUid
+                    val canEditMenu = isOwner && shop!!.isActive != false
+                    if (menu.isNotEmpty()) {
+                        DetailedMenuSection(
+                            menu = menu,
+                            onAddItems = if (canEditMenu) ({ showAddMenuItems = true }) else null
+                        )
+                    } else if (!shop!!.menuItems.isNullOrEmpty()) {
+                        MenuItemsSection(
+                            menuItems = shop!!.menuItems!!,
+                            onAddItems = if (canEditMenu) ({ showAddMenuItems = true }) else null
+                        )
+                    } else if (canEditMenu) {
+                        MenuItemsSection(menuItems = emptyList(), onAddItems = { showAddMenuItems = true })
                     }
                     
                     // Description
@@ -590,7 +622,7 @@ private fun InfoCard(shop: LocalShopResponse) {
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun MenuItemsSection(menuItems: List<String>) {
+private fun MenuItemsSection(menuItems: List<String>, onAddItems: (() -> Unit)? = null) {
     Card(
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -598,11 +630,7 @@ private fun MenuItemsSection(menuItems: List<String>) {
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Text(
-                text = "Menu Items",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
-            )
+            MenuHeader(onAddItems)
             
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -625,6 +653,106 @@ private fun MenuItemsSection(menuItems: List<String>) {
         }
     }
 }
+
+/** "Menu Items" title, with an "Add items" button for the shop's owner */
+@Composable
+private fun MenuHeader(onAddItems: (() -> Unit)?) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = "Menu Items",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.weight(1f)
+        )
+        if (onAddItems != null) {
+            TextButton(onClick = onAddItems) {
+                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(4.dp))
+                Text("Add items")
+            }
+        }
+    }
+}
+
+/** The menu with a veg / non-veg marker and price for each item */
+@Composable
+private fun DetailedMenuSection(menu: List<MenuItemResponse>, onAddItems: (() -> Unit)?) {
+    Card(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            MenuHeader(onAddItems)
+
+            menu.forEach { item ->
+                val available = item.isAvailable
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    FoodTypeMarker(item.foodType)
+                    Text(
+                        text = item.name,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = if (available) MaterialTheme.colorScheme.onSurface
+                        else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
+                        modifier = Modifier.weight(1f)
+                    )
+                    when {
+                        !available -> Text(
+                            text = "Unavailable",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        item.price != null -> Text(
+                            text = formatPrice(item.price),
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+/** The square veg / non-veg symbol used on Indian menus: a dot in a bordered square */
+@Composable
+private fun FoodTypeMarker(foodType: String) {
+    val color = when (foodType) {
+        "VEG", "VEGAN", "JAIN" -> Color(0xFF2E7D32)
+        "NON_VEG" -> Color(0xFFC62828)
+        "EGG" -> Color(0xFFF9A825)
+        else -> null
+    }
+    if (color == null) {
+        // Unknown type: keep the names aligned without claiming veg or non-veg
+        Spacer(Modifier.size(16.dp))
+        return
+    }
+    Box(
+        modifier = Modifier
+            .size(16.dp)
+            .border(1.5.dp, color, RoundedCornerShape(2.dp)),
+        contentAlignment = Alignment.Center
+    ) {
+        Box(
+            modifier = Modifier
+                .size(8.dp)
+                .background(color, CircleShape)
+        )
+    }
+}
+
+/** ₹20 for whole rupees, ₹20.50 otherwise */
+private fun formatPrice(price: Double): String =
+    if (price % 1.0 == 0.0) "₹${price.toLong()}" else "₹" + String.format(java.util.Locale.ROOT, "%.2f", price)
 
 @Composable
 private fun DescriptionSection(description: String) {
