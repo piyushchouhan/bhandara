@@ -6,7 +6,7 @@ import com.example.bhandara.data.models.api.CreateUserRequest
 import com.example.bhandara.data.models.api.CreateUserResponse
 import com.example.bhandara.data.models.api.FeastRequest
 import com.example.bhandara.data.models.api.FeastResponse
-import com.google.firebase.firestore.GeoPoint
+import com.example.bhandara.data.location.GeoLocation
 
 /**
  * Repository for backend API calls
@@ -29,7 +29,7 @@ class BackendRepository {
     suspend fun createUser(
         firebaseUid: String,
         fcmToken: String,
-        location: GeoPoint?
+        location: GeoLocation?
     ): CreateUserResponse? {
         return try {
             val request = CreateUserRequest(
@@ -63,7 +63,7 @@ class BackendRepository {
     suspend fun updateUserLocation(
         firebaseUid: String,
         fcmToken: String,
-        location: GeoPoint
+        location: GeoLocation
     ): Boolean {
         return try {
             val request = com.example.bhandara.data.models.api.UpdateLocationRequest(

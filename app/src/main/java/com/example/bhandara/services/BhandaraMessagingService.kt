@@ -26,7 +26,7 @@ class BhandaraMessagingService : FirebaseMessagingService() {
         // Never log the token itself: it lets anyone send notifications to this device
         Log.d(TAG, "New FCM token received")
         
-        // TODO: Save token to Firestore when user is authenticated
+        // TODO: send the new token to the backend, or push notifications stop reaching this phone
         // This will be handled in MainActivity after anonymous auth
     }
     

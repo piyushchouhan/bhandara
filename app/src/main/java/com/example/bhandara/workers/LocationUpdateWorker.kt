@@ -11,7 +11,7 @@ import com.example.bhandara.managers.UserManager
 import com.example.bhandara.utils.LocationHelper
 
 /**
- * Worker to periodically update user location in Firestore and backend
+ * Worker to periodically send the user's location to the backend
  */
 class LocationUpdateWorker(
     context: Context,
@@ -36,8 +36,6 @@ class LocationUpdateWorker(
             if (location == null) {
                 return Result.retry()
             }
-            
-            userRepository.updateUserLocation(uid, location)
             
             // Only call backend if the user has been registered there
             val isSynced = settings.isRegisteredWithBackend(uid)

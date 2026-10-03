@@ -78,8 +78,6 @@ class UserManager(
                     return@launch
                 }
                 
-                userRepository.saveUser(uid, fcmToken)
-                
                 // Only create user in backend if not already synced
                 if (!isUserSyncedToBackend(uid)) {
                     val backendResponse = backendRepository.createUser(uid, fcmToken, null)
@@ -103,7 +101,7 @@ class UserManager(
     }
     
     /**
-     * Update user location in Firestore and backend.
+     * Send the user's location to the backend.
      * Waits for [initializeUser] to complete before calling the backend
      * to avoid the "User not found" error.
      */
@@ -113,9 +111,6 @@ class UserManager(
             
             val location = locationHelper.getCurrentLocation()
             if (location != null) {
-                // Always update Firestore (no dependency on backend registration)
-                userRepository.updateUserLocation(uid, location)
-                
                 // Wait for backend registration to finish before sending location
                 val backendReady = initCompleted.await()
                 if (!backendReady) {

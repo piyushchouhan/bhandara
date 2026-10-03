@@ -11,7 +11,7 @@ import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.tasks.CancellationTokenSource
-import com.google.firebase.firestore.GeoPoint
+import com.example.bhandara.data.location.GeoLocation
 import kotlinx.coroutines.tasks.await
 
 class LocationHelper(private val context: Context) {
@@ -49,7 +49,7 @@ class LocationHelper(private val context: Context) {
     /**
      * Get current location
      */
-    suspend fun getCurrentLocation(): GeoPoint? {
+    suspend fun getCurrentLocation(): GeoLocation? {
         if (!hasLocationPermissions()) {
             Log.w(TAG, "Location permissions not granted")
             return null
@@ -62,7 +62,7 @@ class LocationHelper(private val context: Context) {
                 cancellationTokenSource.token
             ).await()
             
-            GeoPoint(location.latitude, location.longitude).also {
+            GeoLocation(location.latitude, location.longitude).also {
                 Log.d(TAG, "Location obtained: ${it.latitude}, ${it.longitude}")
             }
         } catch (e: Exception) {
@@ -74,7 +74,7 @@ class LocationHelper(private val context: Context) {
     /**
      * Get last known location (faster but may be outdated)
      */
-    suspend fun getLastKnownLocation(): GeoPoint? {
+    suspend fun getLastKnownLocation(): GeoLocation? {
         if (!hasLocationPermissions()) {
             Log.w(TAG, "Location permissions not granted")
             return null
@@ -83,8 +83,8 @@ class LocationHelper(private val context: Context) {
         return try {
             val location: Location? = fusedLocationClient.lastLocation.await()
             location?.let {
-                GeoPoint(it.latitude, it.longitude).also { geoPoint ->
-                    Log.d(TAG, "Last known location: ${geoPoint.latitude}, ${geoPoint.longitude}")
+                GeoLocation(it.latitude, it.longitude).also { point ->
+                    Log.d(TAG, "Last known location: ${point.latitude}, ${point.longitude}")
                 }
             }
         } catch (e: Exception) {
