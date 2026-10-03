@@ -4,6 +4,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 //   src/commonMain  - Kotlin + Compose used by both platforms (models, theme, home screen; more over time)
 //   src/androidMain - Android-only implementations, when common code needs one
 //   src/iosMain     - iOS-only code, including the entry point the iOS app calls (MainViewController)
+//   src/commonTest  - tests for shared code; they run on Android (JVM) and on the iOS simulator
 //   src/commonMain/composeResources - images, fonts and translated text used by shared screens
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
@@ -32,11 +33,28 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             implementation(libs.kotlinx.serialization.json)
+            implementation(libs.kotlinx.coroutines.core)
+            implementation(libs.ktor.client.core)
+            implementation(libs.ktor.client.content.negotiation)
+            implementation(libs.ktor.serialization.kotlinx.json)
             implementation(compose.runtime)
             implementation(compose.foundation)
             implementation(compose.material3)
             implementation(compose.ui)
             implementation(compose.components.resources)
+        }
+        // Each platform sends requests with its own networking stack
+        androidMain.dependencies {
+            implementation(libs.ktor.client.okhttp)
+        }
+        iosMain.dependencies {
+            implementation(libs.ktor.client.darwin)
+        }
+        // Tests run on both platforms against a fake server (Ktor's MockEngine)
+        commonTest.dependencies {
+            implementation(libs.kotlin.test)
+            implementation(libs.kotlinx.coroutines.test)
+            implementation(libs.ktor.client.mock)
         }
     }
 }
