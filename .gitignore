@@ -100,6 +100,7 @@ Thumbs.db
 *.bak
 
 app/google-services.json
+iosApp/iosApp/GoogleService-Info.plist
 
 # NDK
 obj/
