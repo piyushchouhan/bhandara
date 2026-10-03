@@ -1,5 +1,6 @@
 package com.example.bhandara.data.repository
 
+import com.example.bhandara.data.auth.AppAuth
 import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.messaging.FirebaseMessaging
@@ -17,21 +18,10 @@ class UserRepository {
      * Sign in anonymously and return the user UID
      */
     suspend fun signInAnonymously(): String? {
-        return try {
-            val currentUser = auth.currentUser
-            if (currentUser != null) {
-                Log.d(TAG, "User already signed in: ${currentUser.uid}")
-                return currentUser.uid
-            }
-            
-            val result = auth.signInAnonymously().await()
-            val uid = result.user?.uid
-            Log.d(TAG, "Anonymous sign in successful: $uid")
-            uid
-        } catch (e: Exception) {
-            Log.e(TAG, "Anonymous sign in failed", e)
-            null
-        }
+        // Shared with iOS: signs in only if needed, and never twice at the same time
+        return AppAuth.service.ensureSignedIn()
+            .onFailure { Log.e(TAG, "Anonymous sign in failed", it) }
+            .getOrNull()
     }
     
     /**

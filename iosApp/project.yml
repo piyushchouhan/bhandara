@@ -5,12 +5,20 @@ options:
   bundleIdPrefix: com.localfeast
   deploymentTarget:
     iOS: "16.0"
+# Firebase's official iOS SDK (Swift Package Manager). Only the parts the app uses are linked (see the target).
+packages:
+  Firebase:
+    url: https://github.com/firebase/firebase-ios-sdk
+    from: "12.0.0"
 targets:
   iosApp:
     type: application
     platform: iOS
     sources:
       - iosApp
+    dependencies:
+      - package: Firebase
+        product: FirebaseAuth
     info:
       path: iosApp/Info.plist
       properties:
@@ -23,6 +31,9 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.localfeast.app
         SWIFT_VERSION: "5.0"
         CODE_SIGN_STYLE: Automatic
+        # Simulator builds are signed locally (no Apple account needed); without a signature Firebase can't use
+        # the keychain, so sign-in fails
+        "CODE_SIGN_IDENTITY[sdk=iphonesimulator*]": "-"
         # The Kotlin "Shared" framework built by Gradle (see the build script below)
         FRAMEWORK_SEARCH_PATHS: "$(SRCROOT)/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)"
         OTHER_LDFLAGS: ["$(inherited)", "-framework", "Shared"]

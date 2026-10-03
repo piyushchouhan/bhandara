@@ -10,6 +10,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
@@ -19,13 +20,30 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.ComposeUIViewController
+import com.example.bhandara.auth.AuthService
+import com.example.bhandara.auth.PlatformAuth
 import com.example.bhandara.navigation.Route
 import com.example.bhandara.navigation.rememberAppNavigator
 import com.example.bhandara.ui.screens.HomeScreen
 import com.example.bhandara.ui.theme.BhandaraTheme
 
-/** The iOS app's entry point: ContentView.swift shows this */
-fun MainViewController() = ComposeUIViewController {
+/**
+ * The iOS app's entry point: ContentView.swift shows this.
+ *
+ * @param auth Firebase sign-in, implemented in Swift (IosPlatformAuth.swift)
+ */
+fun MainViewController(auth: PlatformAuth) = ComposeUIViewController {
+    val authService = remember { AuthService(auth) }
+
+    // Like on Android, everyone is signed in (anonymously) from the start, so the backend knows who did what
+    LaunchedEffect(Unit) {
+        authService.ensureSignedIn()
+            .onSuccess { uid ->
+                println("Signed in: ${uid.take(6)}…, ID token for the backend: ${if (authService.idToken() != null) "yes" else "no"}")
+            }
+            .onFailure { println("Sign-in failed: ${it.message}") }
+    }
+
     BhandaraTheme {
         val navigator = rememberAppNavigator()
         var homeTabIndex by remember { mutableIntStateOf(0) }
