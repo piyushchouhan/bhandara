@@ -172,6 +172,12 @@ data class VerifyShopRequest(
     val longitude: Double? = null
 )
 
+/** Why a user reports a shop; sent as the code (e.g. WRONG_LOCATION) so moderators see it in any language */
+enum class ShopReportReason { NOT_FOOD_SHOP, WRONG_LOCATION, INAPPROPRIATE_CONTENT, PERMANENTLY_CLOSED }
+
+@Serializable
+data class ReportShopRequest(val reason: String)
+
 /** Outcome of a verification vote */
 @Serializable
 data class VerifyShopResult(

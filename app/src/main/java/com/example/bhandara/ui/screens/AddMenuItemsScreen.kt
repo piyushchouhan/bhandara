@@ -51,7 +51,7 @@ import java.util.Locale
 /**
  * A local-first menu item form.
  * When [shopId] is null: works as a local draft (no API calls). Items are returned via [onSaveItems].
- * When [shopId] is provided: posts items directly to API (used from LocalShopDetailsScreen).
+ * When [shopId] is provided: posts items directly to API (used from the shop details page).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -314,7 +314,7 @@ fun ManualEntrySection(
                     // Local draft mode — just return items to parent, no API call
                     onSaveItems(validItems)
                 } else if (shopId != null) {
-                    // Direct API mode (used from LocalShopDetailsScreen)
+                    // Direct API mode (used from the shop details page)
                     scope.launch {
                         onLoadingChange(true)
                         onError(null)

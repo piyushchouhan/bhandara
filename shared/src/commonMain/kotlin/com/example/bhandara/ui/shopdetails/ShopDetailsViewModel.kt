@@ -1,0 +1,166 @@
+package com.example.bhandara.ui.shopdetails
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.bhandara.data.location.GeoLocation
+import com.example.bhandara.data.location.LocationResult
+import com.example.bhandara.data.location.LocationService
+import com.example.bhandara.data.location.distanceMeters
+import com.example.bhandara.data.models.api.LocalShopResponse
+import com.example.bhandara.data.models.api.MenuItemResponse
+import com.example.bhandara.data.models.api.ShopReportReason
+import com.example.bhandara.data.network.ApiResult
+import com.example.bhandara.data.network.ShopApi
+import com.example.bhandara.data.network.getOrNull
+import com.example.bhandara.data.settings.AppSettings
+import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+
+/**
+ * What the shop details page shows.
+ *
+ * @param menu            the menu with prices; empty for older shops that only have [LocalShopResponse.menuItems]
+ * @param distanceMeters  from where the user is now; null without location permission
+ * @param working         a report, deletion suggestion or deactivation is being sent
+ * @param message         a one-time message (e.g. "Thanks for reporting"), cleared with onMessageShown()
+ */
+data class ShopDetailsState(
+    val loading: Boolean = true,
+    val shop: LocalShopResponse? = null,
+    val menu: List<MenuItemResponse> = emptyList(),
+    val error: String? = null,
+    val distanceMeters: Double? = null,
+    val isOwner: Boolean = false,
+    val hasReported: Boolean = false,
+    val hasSuggestedDelete: Boolean = false,
+    val working: Boolean = false,
+    val message: String? = null,
+) {
+    val isActive: Boolean get() = shop?.isActive != false
+
+    /** Owners manage their shop; everyone else can flag it, once each */
+    val canReport: Boolean get() = shop != null && !isOwner && !hasReported
+    val canSuggestDelete: Boolean get() = shop != null && !isOwner && isActive && !hasSuggestedDelete
+    val canDeactivate: Boolean get() = isOwner && isActive
+    val canEditMenu: Boolean get() = isOwner && isActive
+
+    /** Listed by the platform and not claimed yet, so its real owner can claim it */
+    val canClaim: Boolean get() = shop?.ownerClaimed == false && isActive && !isOwner
+    val canCall: Boolean get() = isActive && !shop?.ownerPhone.isNullOrBlank()
+}
+
+/** One shop's page, the same on Android and iOS */
+class ShopDetailsViewModel(
+    private val shopId: String,
+    private val shopApi: ShopApi,
+    private val settings: AppSettings,
+    private val currentUid: () -> String?,
+    private val locationService: LocationService?,
+) : ViewModel() {
+
+    private val _state = MutableStateFlow(
+        ShopDetailsState(
+            hasReported = settings.hasReportedShop(shopId),
+            hasSuggestedDelete = settings.hasSuggestedDeletingShop(shopId),
+        )
+    )
+    val state: StateFlow<ShopDetailsState> = _state.asStateFlow()
+
+    init {
+        load()
+    }
+
+    fun retry() = load()
+
+    /** After the owner added items, so the page shows them */
+    fun refreshMenu() {
+        viewModelScope.launch {
+            shopApi.getMenu(shopId).getOrNull()?.let { menu -> _state.update { it.copy(menu = menu) } }
+        }
+    }
+
+    fun report(reason: ShopReportReason) {
+        if (!_state.value.canReport) return
+        send(
+            call = { shopApi.reportShop(shopId, reason) },
+            thanks = "Thanks for reporting. A moderator will take a look.",
+        ) {
+            settings.markReportedShop(shopId)
+            it.copy(hasReported = true)
+        }
+    }
+
+    fun suggestDelete() {
+        if (!_state.value.canSuggestDelete) return
+        send(
+            call = { shopApi.suggestDeleteShop(shopId) },
+            thanks = "Thanks. A moderator will review this shop.",
+        ) {
+            settings.markSuggestedDeletingShop(shopId)
+            it.copy(hasSuggestedDelete = true)
+        }
+    }
+
+    /** The owner takes their shop off the map */
+    fun deactivate() {
+        if (!_state.value.canDeactivate) return
+        send(
+            call = { shopApi.deactivateShop(shopId) },
+            thanks = "Shop deactivated. It's no longer shown to others.",
+        ) { state -> state.copy(shop = state.shop?.copy(isActive = false)) }
+    }
+
+    fun onMessageShown() = _state.update { it.copy(message = null) }
+
+    private fun load() {
+        _state.update { it.copy(loading = true, error = null) }
+        viewModelScope.launch {
+            val menu = async { shopApi.getMenu(shopId) }
+            when (val result = shopApi.getShop(shopId)) {
+                is ApiResult.Success -> {
+                    val shop = result.value
+                    val uid = currentUid()
+                    _state.update {
+                        it.copy(
+                            loading = false,
+                            shop = shop,
+                            // Without a menu the page still shows the shop, with its list of item names
+                            menu = menu.await().getOrNull().orEmpty(),
+                            isOwner = uid != null && shop.ownerUid == uid,
+                        )
+                    }
+                    measureDistance(shop)
+                }
+                is ApiResult.Failure -> {
+                    menu.cancel()
+                    _state.update { it.copy(loading = false, error = result.error.message) }
+                }
+            }
+        }
+    }
+
+    /** The backend doesn't know where the user is when it sends one shop, so the distance is worked out here */
+    private suspend fun measureDistance(shop: LocalShopResponse) {
+        val here = (locationService?.locate() as? LocationResult.Found)?.location ?: return
+        _state.update { it.copy(distanceMeters = distanceMeters(here, GeoLocation(shop.latitude, shop.longitude))) }
+    }
+
+    /**
+     * Sends one action at a time. On success the page keeps what it shows (the backend's answer lacks e.g. the
+     * crowd level) and only applies [onSuccess]; on failure it explains why.
+     */
+    private fun send(call: suspend () -> ApiResult<*>, thanks: String, onSuccess: (ShopDetailsState) -> ShopDetailsState) {
+        if (_state.value.working) return
+        _state.update { it.copy(working = true) }
+        viewModelScope.launch {
+            when (val result = call()) {
+                is ApiResult.Success -> _state.update { onSuccess(it).copy(working = false, message = thanks) }
+                is ApiResult.Failure -> _state.update { it.copy(working = false, message = result.error.message) }
+            }
+        }
+    }
+}

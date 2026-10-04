@@ -3,6 +3,8 @@ package com.example.bhandara.data.network
 import com.example.bhandara.data.models.api.LocalShopResponse
 import com.example.bhandara.data.location.GeoLocation
 import com.example.bhandara.data.models.api.MenuItemResponse
+import com.example.bhandara.data.models.api.ReportShopRequest
+import com.example.bhandara.data.models.api.ShopReportReason
 import com.example.bhandara.data.models.api.VerifyShopRequest
 import io.ktor.client.request.setBody
 import io.ktor.http.HttpMethod
@@ -17,9 +19,12 @@ class ShopApi(private val client: ApiClient) {
     suspend fun getMenu(shopId: String): ApiResult<List<MenuItemResponse>> =
         client.call("api/menu-items/shop/$shopId") { method = HttpMethod.Get }
 
-    /** Flag wrong or inappropriate information; a moderator decides. Each user counts once. */
-    suspend fun reportShop(shopId: String): ApiResult<LocalShopResponse> =
-        client.call("api/localshops/$shopId/report") { method = HttpMethod.Put }
+    /** Flag wrong or inappropriate information, saying why; a moderator decides. Each user counts once. */
+    suspend fun reportShop(shopId: String, reason: ShopReportReason): ApiResult<LocalShopResponse> =
+        client.call("api/localshops/$shopId/report") {
+            method = HttpMethod.Put
+            setBody(ReportShopRequest(reason.name))
+        }
 
     /** Suggest the shop no longer exists; a moderator decides. Each user counts once. */
     suspend fun suggestDeleteShop(shopId: String): ApiResult<LocalShopResponse> =

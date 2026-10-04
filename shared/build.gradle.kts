@@ -45,6 +45,7 @@ kotlin {
             implementation(compose.runtime)
             implementation(compose.foundation)
             implementation(compose.material3)
+            implementation(compose.materialIconsExtended) // shop details uses icons beyond the core set
             implementation(compose.ui)
             implementation(compose.components.resources)
         }

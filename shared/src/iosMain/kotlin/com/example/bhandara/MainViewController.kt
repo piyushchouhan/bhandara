@@ -1,5 +1,6 @@
 package com.example.bhandara
 
+import com.example.bhandara.ui.shopdetails.ShopDetailsScreen
 import com.example.bhandara.ui.shopsmap.ShopsMapScreen
 import com.example.bhandara.platform.LocalAppDependencies
 import com.example.bhandara.platform.AppDependencies
@@ -45,7 +46,7 @@ import com.example.bhandara.ui.theme.BhandaraTheme
  */
 fun MainViewController(auth: PlatformAuth, mapBridge: IosMapBridge, apiBaseUrl: String) = ComposeUIViewController {
     val authService = remember { AuthService(auth) }
-    val dependencies = remember { AppDependencies(ApiClient(apiBaseUrl, authService::idToken), createAppSettings()) }
+    val dependencies = remember { AppDependencies(ApiClient(apiBaseUrl, authService::idToken), createAppSettings(), authService) }
 
     // Like on Android, everyone is signed in (anonymously) from the start, so the backend knows who did what
     LaunchedEffect(Unit) {
@@ -76,6 +77,8 @@ fun MainViewController(auth: PlatformAuth, mapBridge: IosMapBridge, apiBaseUrl: 
                         onBack = { navigator.back() },
                         onShopClick = { shopId -> navigator.navigate(Route.ShopDetails(shopId)) },
                     )
+                    // Claiming, adding menu items and reviews come to iPhone in later steps
+                    is Route.ShopDetails -> ShopDetailsScreen(shopId = route.shopId, onBack = { navigator.back() })
                     // Screens move to the shared module one by one; until then iOS says so
                     else -> NotOnIphoneYet(route, onBack = { navigator.back() })
                 }

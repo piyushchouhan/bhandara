@@ -43,8 +43,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.bhandara.data.location.formatDistance
 import com.example.bhandara.data.models.api.LocalShopResponse
+import com.example.bhandara.ui.components.crowdLabel
 import com.example.bhandara.shared.resources.*
-import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -251,12 +251,4 @@ internal fun MapHint(text: String, modifier: Modifier = Modifier) {
             color = MaterialTheme.colorScheme.inverseOnSurface,
         )
     }
-}
-
-/** "Quiet", "Moderately busy" or "Busy now" for the backend's crowd level */
-internal fun crowdLabel(level: String?): StringResource? = when (level) {
-    "QUIET" -> Res.string.crowd_quiet
-    "MODERATE" -> Res.string.crowd_moderate
-    "BUSY" -> Res.string.crowd_busy
-    else -> null
 }

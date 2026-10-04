@@ -1,6 +1,7 @@
 package com.example.bhandara.data.network
 
 import com.example.bhandara.data.models.api.ReviewRequest
+import com.example.bhandara.data.models.api.ShopReportReason
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.MockRequestHandleScope
 import io.ktor.client.engine.mock.respond
@@ -165,7 +166,7 @@ class ApiClientTest {
         val error = ShopApi(client {
             json("""{"error": "Too Many Requests", "message": "Rate limit exceeded. Please try again later."}""",
                 HttpStatusCode.TooManyRequests)
-        }).reportShop("5").error()
+        }).reportShop("5", ShopReportReason.WRONG_LOCATION).error()
 
         assertEquals(ApiError.Kind.RATE_LIMITED, error.kind)
         assertEquals("You're doing that too often. Please wait a while and try again.", error.message)

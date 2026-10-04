@@ -6,6 +6,7 @@ import com.example.bhandara.platform.LocalAppDependencies
 import com.example.bhandara.platform.AppDependencies
 import com.example.bhandara.data.settings.AppSettings
 import com.example.bhandara.data.models.api.LocalShopResponse
+import com.example.bhandara.data.auth.AppAuth
 import com.example.bhandara.data.auth.AppBackend
 import androidx.compose.runtime.CompositionLocalProvider
 import com.example.bhandara.data.location.AndroidDeviceLocation
@@ -37,13 +38,15 @@ import kotlinx.coroutines.launch
 import com.example.bhandara.managers.UserManager
 import com.example.bhandara.ui.components.AppDrawerMenu
 import com.example.bhandara.ui.components.OwnerConfirmationDialog
+import com.example.bhandara.ui.shopdetails.ShopDetailsScreen
+import com.example.bhandara.ui.components.ReviewsSection
+import com.example.bhandara.ui.screens.AddMenuItemsScreen
 import com.example.bhandara.ui.screens.FeastDetailsScreen
 import com.example.bhandara.ui.screens.HomeScreen
 import com.example.bhandara.ui.screens.HungryScreen
 import com.example.bhandara.ui.screens.ReportBhandaraScreen
 import com.example.bhandara.ui.screens.AddLocalShopScreen
 import com.example.bhandara.ui.screens.ClaimShopScreen
-import com.example.bhandara.ui.screens.LocalShopDetailsScreen
 import com.example.bhandara.ui.screens.ProfileScreen
 import com.example.bhandara.ui.components.appDrawer.AboutScreen
 import com.example.bhandara.ui.components.appDrawer.SupportScreen
@@ -97,7 +100,7 @@ class MainActivity : AppCompatActivity() {
         setContent {
             ProvideAppEnvironment {
               CompositionLocalProvider(
-                  LocalAppDependencies provides remember { AppDependencies(AppBackend.client, AppSettings(this)) }
+                  LocalAppDependencies provides remember { AppDependencies(AppBackend.client, AppSettings(this), AppAuth.service) }
               ) {
                 BhandaraTheme {
                     // Which screens are open (shared with iOS); kept across rotation
@@ -196,12 +199,15 @@ class MainActivity : AppCompatActivity() {
                                 }
                             }
                             is Route.ShopDetails -> {
-                                LocalShopDetailsScreen(
+                                ShopDetailsScreen(
                                     shopId = route.shopId,
-                                    onBackClick = { navigateBack() },
-                                    onClaimClick = { shopName ->
-                                        navigateTo(Route.ClaimShop(route.shopId, shopName))
-                                    }
+                                    onBack = { navigateBack() },
+                                    onClaim = { shopName -> navigateTo(Route.ClaimShop(route.shopId, shopName)) },
+                                    // Android-only until they move to shared code (adding items: phase 2, reviews: 1.5)
+                                    addMenuItems = { existingNames, onDone ->
+                                        AddMenuItemsScreen(shopId = route.shopId, existingNames = existingNames, onNavigateBack = onDone)
+                                    },
+                                    reviews = { modifier -> ReviewsSection(targetId = route.shopId, modifier = modifier) },
                                 )
                             }
                             is Route.ClaimShop -> {
