@@ -77,6 +77,8 @@ import com.example.bhandara.shared.resources.tab_overview
 import com.example.bhandara.shared.resources.tab_reviews
 import com.example.bhandara.shared.resources.try_again
 import com.example.bhandara.ui.components.ScreenViewModels
+import com.example.bhandara.ui.reviews.ReviewPhotos
+import com.example.bhandara.ui.reviews.ReviewsSection
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -87,7 +89,7 @@ import org.jetbrains.compose.resources.stringResource
  * @param onClaim       the real owner claims a shop the platform listed; null hides "Is this your shop?"
  * @param addMenuItems  the owner's "Add items" screen, shown in place of the page until it calls onDone;
  *                      null hides the button
- * @param reviews       the Reviews tab's content; null shows the page without tabs
+ * @param reviewPhotos  adds photos to reviews; null where that isn't supported yet
  */
 @Composable
 fun ShopDetailsScreen(
@@ -95,7 +97,7 @@ fun ShopDetailsScreen(
     onBack: () -> Unit,
     onClaim: ((shopName: String) -> Unit)? = null,
     addMenuItems: (@Composable (existingNames: List<String>, onDone: () -> Unit) -> Unit)? = null,
-    reviews: (@Composable (Modifier) -> Unit)? = null,
+    reviewPhotos: ReviewPhotos? = null,
 ) = ScreenViewModels {
     val dependencies = LocalAppDependencies.current
     val deviceLocation = rememberDeviceLocation()
@@ -118,11 +120,12 @@ fun ShopDetailsScreen(
         }
     } else {
         ShopDetailsPage(
+            shopId = shopId,
             viewModel = viewModel,
             onBack = onBack,
             onClaim = onClaim,
             onAddMenuItems = addMenuItems?.let { { addingMenuItems = true } },
-            reviews = reviews,
+            reviewPhotos = reviewPhotos,
         )
     }
 }
@@ -132,11 +135,12 @@ private enum class ShopDialog { REPORT, SUGGEST_DELETE, DEACTIVATE }
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ShopDetailsPage(
+    shopId: String,
     viewModel: ShopDetailsViewModel,
     onBack: () -> Unit,
     onClaim: ((shopName: String) -> Unit)?,
     onAddMenuItems: (() -> Unit)?,
-    reviews: (@Composable (Modifier) -> Unit)?,
+    reviewPhotos: ReviewPhotos?,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val actions = LocalPlatformActions.current
@@ -177,26 +181,29 @@ private fun ShopDetailsPage(
                 ShopPhotos(shop.imageUrls.orEmpty(), onPhotoClick = { fullScreenPhoto = it })
                 Spacer(Modifier.height(16.dp))
 
-                if (reviews != null) {
-                    TabRow(selectedTabIndex = selectedTab, containerColor = MaterialTheme.colorScheme.background) {
-                        listOf(Res.string.tab_overview, Res.string.tab_reviews).forEachIndexed { index, title ->
-                            Tab(
-                                selected = selectedTab == index,
-                                onClick = { selectedTab = index },
-                                text = {
-                                    Text(
-                                        stringResource(title),
-                                        fontWeight = if (selectedTab == index) FontWeight.Bold else FontWeight.Normal,
-                                    )
-                                },
-                            )
-                        }
+                TabRow(selectedTabIndex = selectedTab, containerColor = MaterialTheme.colorScheme.background) {
+                    listOf(Res.string.tab_overview, Res.string.tab_reviews).forEachIndexed { index, title ->
+                        Tab(
+                            selected = selectedTab == index,
+                            onClick = { selectedTab = index },
+                            text = {
+                                Text(
+                                    stringResource(title),
+                                    fontWeight = if (selectedTab == index) FontWeight.Bold else FontWeight.Normal,
+                                )
+                            },
+                        )
                     }
-                    Spacer(Modifier.height(16.dp))
                 }
+                Spacer(Modifier.height(16.dp))
 
-                if (reviews != null && selectedTab == 1) {
-                    reviews(Modifier.padding(horizontal = 16.dp))
+                if (selectedTab == 1) {
+                    ReviewsSection(
+                        shopId = shopId,
+                        photos = reviewPhotos,
+                        showMessage = { snackbar.showSnackbar(it) },
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                    )
                 } else {
                     ShopOverview(
                         state = state,

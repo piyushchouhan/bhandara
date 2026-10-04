@@ -82,4 +82,26 @@
     <string name="suggest_delete_title">काढण्याची सूचना द्या</string>
     <string name="suggest_delete_text">हे दुकान आता अस्तित्वात नाही का? काहीही काढण्यापूर्वी मॉडरेटर तपासेल.</string>
     <string name="suggest_delete_confirm">सूचना पाठवा</string>
+    <!-- Reviews -->
+    <string name="reviews_count">रिव्ह्यू (%1$d)</string>
+    <string name="review_write">रिव्ह्यू लिहा</string>
+    <string name="review_edit_yours">तुमचा रिव्ह्यू बदला</string>
+    <string name="reviews_empty">अजून एकही रिव्ह्यू नाही. पहिला रिव्ह्यू तुम्ही लिहा!</string>
+    <string name="review_tap_stars">रेटिंग देण्यासाठी स्टार दाबा</string>
+    <string name="review_stars">%1$d स्टार</string>
+    <string name="review_comment_hint">टिप्पणी (ऐच्छिक)</string>
+    <string name="review_photos_label">फोटो (ऐच्छिक, जास्तीत जास्त %1$d)</string>
+    <string name="review_add_photo">फोटो जोडा</string>
+    <string name="review_remove_photo">फोटो काढा</string>
+    <string name="review_uploading">फोटो अपलोड होत आहेत… %1$s</string>
+    <string name="review_post">पोस्ट करा</string>
+    <string name="review_save">सेव्ह करा</string>
+    <string name="review_edit">रिव्ह्यू बदला</string>
+    <string name="review_delete">रिव्ह्यू काढा</string>
+    <string name="review_delete_title">तुमचा रिव्ह्यू काढायचा?</string>
+    <string name="review_delete_text">तुमचा रिव्ह्यू या दुकानातून काढला जाईल.</string>
+    <string name="review_delete_confirm">काढा</string>
+    <string name="review_report">रिव्ह्यूची तक्रार करा</string>
+    <string name="review_photo">रिव्ह्यू फोटो %1$d</string>
+    <string name="review_yours">तुमचा रिव्ह्यू</string>
 </resources>

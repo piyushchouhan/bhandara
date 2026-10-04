@@ -39,7 +39,7 @@ import com.example.bhandara.managers.UserManager
 import com.example.bhandara.ui.components.AppDrawerMenu
 import com.example.bhandara.ui.components.OwnerConfirmationDialog
 import com.example.bhandara.ui.shopdetails.ShopDetailsScreen
-import com.example.bhandara.ui.components.ReviewsSection
+import com.example.bhandara.ui.components.AndroidReviewPhotos
 import com.example.bhandara.ui.screens.AddMenuItemsScreen
 import com.example.bhandara.ui.screens.FeastDetailsScreen
 import com.example.bhandara.ui.screens.HomeScreen
@@ -203,11 +203,11 @@ class MainActivity : AppCompatActivity() {
                                     shopId = route.shopId,
                                     onBack = { navigateBack() },
                                     onClaim = { shopName -> navigateTo(Route.ClaimShop(route.shopId, shopName)) },
-                                    // Android-only until they move to shared code (adding items: phase 2, reviews: 1.5)
+                                    // Android-only until photos and menu editing move to shared code (phase 2)
                                     addMenuItems = { existingNames, onDone ->
                                         AddMenuItemsScreen(shopId = route.shopId, existingNames = existingNames, onNavigateBack = onDone)
                                     },
-                                    reviews = { modifier -> ReviewsSection(targetId = route.shopId, modifier = modifier) },
+                                    reviewPhotos = remember { AndroidReviewPhotos(this@MainActivity) },
                                 )
                             }
                             is Route.ClaimShop -> {

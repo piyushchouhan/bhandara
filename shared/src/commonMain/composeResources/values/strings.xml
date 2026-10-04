@@ -82,4 +82,26 @@
     <string name="suggest_delete_title">Suggest deleting</string>
     <string name="suggest_delete_text">Does this shop no longer exist? A moderator will check before anything is removed.</string>
     <string name="suggest_delete_confirm">Suggest delete</string>
+    <!-- Reviews -->
+    <string name="reviews_count">Reviews (%1$d)</string>
+    <string name="review_write">Write a review</string>
+    <string name="review_edit_yours">Edit your review</string>
+    <string name="reviews_empty">No reviews yet. Be the first to review!</string>
+    <string name="review_tap_stars">Tap the stars to rate</string>
+    <string name="review_stars">%1$d stars</string>
+    <string name="review_comment_hint">Comment (optional)</string>
+    <string name="review_photos_label">Photos (optional, up to %1$d)</string>
+    <string name="review_add_photo">Add photo</string>
+    <string name="review_remove_photo">Remove photo</string>
+    <string name="review_uploading">Uploading photos… %1$s</string>
+    <string name="review_post">Post</string>
+    <string name="review_save">Save</string>
+    <string name="review_edit">Edit review</string>
+    <string name="review_delete">Delete review</string>
+    <string name="review_delete_title">Delete your review?</string>
+    <string name="review_delete_text">Your review will be removed from this shop.</string>
+    <string name="review_delete_confirm">Delete</string>
+    <string name="review_report">Report review</string>
+    <string name="review_photo">Review photo %1$d</string>
+    <string name="review_yours">Your review</string>
 </resources>

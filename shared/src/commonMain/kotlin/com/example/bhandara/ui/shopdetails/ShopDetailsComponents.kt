@@ -211,16 +211,21 @@ internal fun ShopPhotos(urls: List<String>, onPhotoClick: (Int) -> Unit) {
     }
 }
 
-/** The photos full screen, swiping between them */
+/** Photos full screen, swiping between them */
 @Composable
-internal fun FullScreenPhotos(urls: List<String>, initialIndex: Int, onDismiss: () -> Unit) {
+internal fun FullScreenPhotos(
+    urls: List<String>,
+    initialIndex: Int,
+    onDismiss: () -> Unit,
+    photoLabel: StringResource = Res.string.shop_photo,
+) {
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         Box(Modifier.fillMaxSize().background(Color.Black)) {
             val pager = rememberPagerState(initialPage = initialIndex) { urls.size }
             HorizontalPager(pager, Modifier.fillMaxSize()) { page ->
                 AsyncImage(
                     model = urls[page],
-                    contentDescription = stringResource(Res.string.shop_photo, page + 1),
+                    contentDescription = stringResource(photoLabel, page + 1),
                     contentScale = ContentScale.Fit,
                     modifier = Modifier.fillMaxSize(),
                 )
