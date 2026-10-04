@@ -35,6 +35,11 @@ targets:
         CFBundleDisplayName: Local Feast
         # From Config/Secrets.xcconfig; read at launch to start Google Maps
         GoogleMapsApiKey: $(MAPS_API_KEY)
+        # The backend's address, also from Config/Secrets.xcconfig
+        ApiBaseUrl: $(API_BASE_URL)
+        # Allows plain http only to this computer (localhost / .local), for a backend run locally
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
         # Shown when the app asks for location access
         NSLocationWhenInUseUsageDescription: Local Feast uses your location to show food shops, carts and community feasts near you.
         UILaunchScreen: {}

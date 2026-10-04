@@ -4,6 +4,7 @@ import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.provider.Settings
 import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -34,6 +35,10 @@ private class AndroidPlatformActions(private val context: Context) : PlatformAct
     }
 
     override fun openUrl(url: String) = start(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+
+    override fun openAppSettings() = start(
+        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", context.packageName, null))
+    )
 
     private fun start(intent: Intent) {
         try {

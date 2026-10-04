@@ -1,5 +1,13 @@
 package com.example.bhandara
 
+import com.example.bhandara.ui.shopsmap.ShopsMapScreen
+import com.example.bhandara.ui.components.MovingCartTracker
+import com.example.bhandara.platform.LocalAppDependencies
+import com.example.bhandara.platform.AppDependencies
+import com.example.bhandara.data.settings.AppSettings
+import com.example.bhandara.data.models.api.LocalShopResponse
+import com.example.bhandara.data.auth.AppBackend
+import androidx.compose.runtime.CompositionLocalProvider
 import com.example.bhandara.data.location.AndroidDeviceLocation
 import com.example.bhandara.platform.ProvideAppEnvironment
 import com.example.bhandara.navigation.Route
@@ -34,7 +42,6 @@ import com.example.bhandara.ui.screens.HomeScreen
 import com.example.bhandara.ui.screens.HungryScreen
 import com.example.bhandara.ui.screens.ReportBhandaraScreen
 import com.example.bhandara.ui.screens.AddLocalShopScreen
-import com.example.bhandara.ui.screens.LocalShopsMapScreen
 import com.example.bhandara.ui.screens.ClaimShopScreen
 import com.example.bhandara.ui.screens.LocalShopDetailsScreen
 import com.example.bhandara.ui.screens.ProfileScreen
@@ -89,6 +96,9 @@ class MainActivity : AppCompatActivity() {
         
         setContent {
             ProvideAppEnvironment {
+              CompositionLocalProvider(
+                  LocalAppDependencies provides remember { AppDependencies(AppBackend.client, AppSettings(this)) }
+              ) {
                 BhandaraTheme {
                     // Which screens are open (shared with iOS); kept across rotation
                     val navigator = rememberAppNavigator()
@@ -164,12 +174,26 @@ class MainActivity : AppCompatActivity() {
                                 )
                             }
                             Route.ShopsMap -> {
-                                LocalShopsMapScreen(
-                                    onBackClick = { navigateBack() },
-                                    onShopClick = { shopId ->
-                                        navigateTo(Route.ShopDetails(shopId))
-                                    }
+                                // Shared with iOS; a tapped live cart opens Android's live tracking
+                                var trackedCart by remember { mutableStateOf<LocalShopResponse?>(null) }
+                                ShopsMapScreen(
+                                    onBack = { navigateBack() },
+                                    onShopClick = { shopId -> navigateTo(Route.ShopDetails(shopId)) },
+                                    onCartClick = { cart -> trackedCart = cart },
                                 )
+                                trackedCart?.let { cart ->
+                                    MovingCartTracker(
+                                        shopId = cart.id.toLongOrNull() ?: -1L,
+                                        shopName = cart.shopName,
+                                        initialLat = cart.latitude,
+                                        initialLng = cart.longitude,
+                                        onDismiss = { trackedCart = null },
+                                        onViewDetails = {
+                                            trackedCart = null
+                                            navigateTo(Route.ShopDetails(cart.id))
+                                        },
+                                    )
+                                }
                             }
                             is Route.ShopDetails -> {
                                 LocalShopDetailsScreen(
@@ -222,6 +246,7 @@ class MainActivity : AppCompatActivity() {
                         )
                     }
                 }
+              }
             }
         }
     }

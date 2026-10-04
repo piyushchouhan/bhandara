@@ -6,4 +6,32 @@
     <string name="community_feast">Community Feast</string>
     <string name="local_shops">Local Shops</string>
     <string name="button_add_food_shop">Add Food Shop</string>
+
+    <!-- Shops map -->
+    <string name="search_local_feast">Search Local Feast</string>
+    <string name="crowd_quiet">Quiet</string>
+    <string name="crowd_moderate">Moderately busy</string>
+    <string name="crowd_busy">Busy now</string>
+    <string name="moving_vendors_label">Moving\nVendors</string>
+    <string name="map_zoom_hint">Showing top-rated shops. Zoom in for more</string>
+    <string name="map_no_moving_vendors">No moving vendors nearby</string>
+    <string name="map_verify_title">Help verify this shop</string>
+    <string name="map_verify_shop_question">Have you seen this shop at the marked location?</string>
+    <string name="map_verify_cart_question">Is this cart here near you right now?</string>
+    <string name="vote_yes">Yes</string>
+    <string name="vote_no">No</string>
+    <string name="vote_not_sure">Not sure</string>
+    <string name="shop_open">Open</string>
+    <string name="shop_closed">Closed</string>
+    <string name="shop_default_subtitle">Local shop</string>
+    <string name="map_location_needed">Allow location to see food shops near you</string>
+    <string name="map_allow_location">Allow location</string>
+    <string name="map_location_denied">Location is off for Local Feast. Turn it on in Settings to see food shops near you.</string>
+    <string name="map_open_settings">Open Settings</string>
+    <string name="map_location_unavailable">Couldn\'t find where you are. Check that location is turned on.</string>
+    <string name="try_again">Try again</string>
+    <string name="my_location">My location</string>
+    <string name="back">Back</string>
+    <string name="clear_search">Clear search</string>
+    <string name="close">Close</string>
 </resources>

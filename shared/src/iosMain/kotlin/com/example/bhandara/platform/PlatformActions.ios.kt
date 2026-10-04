@@ -5,6 +5,7 @@ import androidx.compose.runtime.remember
 import platform.Foundation.NSURL
 import platform.UIKit.UIActivityViewController
 import platform.UIKit.UIApplication
+import platform.UIKit.UIApplicationOpenSettingsURLString
 import platform.UIKit.UIViewController
 
 @Composable
@@ -26,6 +27,8 @@ private class IosPlatformActions : PlatformActions {
     }
 
     override fun openUrl(url: String) = open(url)
+
+    override fun openAppSettings() = open(UIApplicationOpenSettingsURLString)
 
     private fun open(url: String) {
         val nsUrl = NSURL.URLWithString(url) ?: return

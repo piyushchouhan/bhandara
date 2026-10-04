@@ -6,4 +6,32 @@
     <string name="community_feast">सामुदायिक भोज</string>
     <string name="local_shops">स्थानीय दुकानें</string>
     <string name="button_add_food_shop">खाने की दुकान जोड़ें</string>
+
+    <!-- Shops map -->
+    <string name="search_local_feast">Local Feast खोजें</string>
+    <string name="crowd_quiet">शांत</string>
+    <string name="crowd_moderate">थोड़ी भीड़</string>
+    <string name="crowd_busy">अभी भीड़ है</string>
+    <string name="moving_vendors_label">चलते\nविक्रेता</string>
+    <string name="map_zoom_hint">सबसे अच्छी दुकानें दिख रही हैं। और देखने के लिए ज़ूम करें</string>
+    <string name="map_no_moving_vendors">आसपास कोई चलता विक्रेता नहीं है</string>
+    <string name="map_verify_title">इस दुकान की पुष्टि करने में मदद करें</string>
+    <string name="map_verify_shop_question">क्या आपने यह दुकान बताई गई जगह पर देखी है?</string>
+    <string name="map_verify_cart_question">क्या यह ठेला अभी आपके पास है?</string>
+    <string name="vote_yes">हाँ</string>
+    <string name="vote_no">नहीं</string>
+    <string name="vote_not_sure">पता नहीं</string>
+    <string name="shop_open">खुला</string>
+    <string name="shop_closed">बंद</string>
+    <string name="shop_default_subtitle">स्थानीय दुकान</string>
+    <string name="map_location_needed">पास की खाने की दुकानें देखने के लिए लोकेशन की अनुमति दें</string>
+    <string name="map_allow_location">लोकेशन की अनुमति दें</string>
+    <string name="map_location_denied">Local Feast के लिए लोकेशन बंद है। पास की दुकानें देखने के लिए सेटिंग्स में इसे चालू करें।</string>
+    <string name="map_open_settings">सेटिंग्स खोलें</string>
+    <string name="map_location_unavailable">आपकी जगह का पता नहीं चल सका। देखें कि लोकेशन चालू है।</string>
+    <string name="try_again">फिर से कोशिश करें</string>
+    <string name="my_location">मेरी जगह</string>
+    <string name="back">वापस</string>
+    <string name="clear_search">खोज साफ़ करें</string>
+    <string name="close">बंद करें</string>
 </resources>

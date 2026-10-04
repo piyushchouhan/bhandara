@@ -4,7 +4,11 @@ import Shared
 /// Shows the shared Compose UI (from shared/src/iosMain/.../MainViewController.kt) full screen.
 struct ComposeView: UIViewControllerRepresentable {
     func makeUIViewController(context: Context) -> UIViewController {
-        MainViewControllerKt.MainViewController(auth: IosPlatformAuth(), mapBridge: IosGoogleMapBridge())
+        MainViewControllerKt.MainViewController(
+            auth: IosPlatformAuth(),
+            mapBridge: IosGoogleMapBridge(),
+            apiBaseUrl: Bundle.main.object(forInfoDictionaryKey: "ApiBaseUrl") as? String ?? ""
+        )
     }
 
     func updateUIViewController(_ uiViewController: UIViewController, context: Context) {}

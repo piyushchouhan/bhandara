@@ -50,7 +50,20 @@ data class ShopsMapState(
     val zoom: Float = CameraTarget.DEFAULT_ZOOM,
     /** A nearby unverified shop or cart to ask "Is this place real?" about */
     val verificationPrompt: LocalShopResponse? = null,
+    /** The pin the user tapped, shown in a card */
+    val selectedId: String? = null,
 ) {
+    /** The tapped place, if its pin is still on the map (a search or mode change can hide it) */
+    fun selectedPlace(): LocalShopResponse? {
+        val id = selectedId ?: return null
+        if (pins().none { it.id == id }) return null
+        return (shops + carts).firstOrNull { it.id == id }
+    }
+
+    /** Shops match the search but only some are shown until the user zooms in */
+    fun hasMoreShopsWhenZoomedIn(): Boolean =
+        !showMovingVendors && shops.count { it.matches(searchQuery) } > pins().size
+
     /**
      * The pins to draw: live carts in moving-vendor mode, otherwise shops; both filtered by the search. Shops come
      * best first, and only the best few are shown until the user zooms in, so the map stays readable.
@@ -139,6 +152,10 @@ class ShopsMapViewModel(
     fun onZoomChanged(zoom: Float) = _state.update { it.copy(zoom = zoom) }
 
     fun onMessageShown() = _state.update { it.copy(message = null) }
+
+    fun onPinClick(pin: MapPin) = _state.update { it.copy(selectedId = pin.id) }
+
+    fun clearSelection() = _state.update { it.copy(selectedId = null) }
 
     /** Closes the "Is this place real?" card without answering; it may come back next time */
     fun dismissVerification() = _state.update { it.copy(verificationPrompt = null) }

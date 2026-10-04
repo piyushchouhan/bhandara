@@ -248,6 +248,34 @@ class ShopsMapViewModelTest {
         assertEquals(12, viewModel.state.value.pins().size)
     }
 
+    @Test
+    fun tappingAPinShowsThatPlaceAndSwitchingModesClosesIt() = runTest(dispatcher) {
+        feedBody = feed(shops = listOf(shop("1", "Sharma Chaat")), carts = listOf(cart("9", "Momo Cart")))
+        val viewModel = started()
+
+        viewModel.onPinClick(viewModel.state.value.pins().single())
+        assertEquals("Sharma Chaat", viewModel.state.value.selectedPlace()?.shopName)
+
+        viewModel.onShowMovingVendorsChange(true)
+        assertNull(viewModel.state.value.selectedPlace(), "the shop isn't on the map any more")
+
+        viewModel.onPinClick(viewModel.state.value.pins().single())
+        assertEquals("Momo Cart", viewModel.state.value.selectedPlace()?.shopName)
+        viewModel.clearSelection()
+        assertNull(viewModel.state.value.selectedPlace())
+    }
+
+    @Test
+    fun aSelectedShopThatASearchHidesIsNoLongerShown() = runTest(dispatcher) {
+        feedBody = feed(shops = listOf(shop("1", "Sharma Chaat"), shop("2", "Gupta Sweets")))
+        val viewModel = started()
+        viewModel.onPinClick(viewModel.state.value.pins().first())
+
+        viewModel.onSearchQueryChange("gupta")
+
+        assertNull(viewModel.state.value.selectedPlace())
+    }
+
     // ==================== "Is this place real?" ====================
 
     @Test

@@ -6,4 +6,32 @@
     <string name="community_feast">सामुदायिक मेजवानी</string>
     <string name="local_shops">स्थानिक दुकाने</string>
     <string name="button_add_food_shop">खाद्य दुकान जोडा</string>
+
+    <!-- Shops map -->
+    <string name="search_local_feast">Local Feast शोधा</string>
+    <string name="crowd_quiet">शांत</string>
+    <string name="crowd_moderate">थोडी गर्दी</string>
+    <string name="crowd_busy">आता गर्दी आहे</string>
+    <string name="moving_vendors_label">फिरते\nविक्रेते</string>
+    <string name="map_zoom_hint">सर्वोत्तम दुकाने दिसत आहेत. अधिक पाहण्यासाठी झूम करा</string>
+    <string name="map_no_moving_vendors">जवळपास कोणतेही फिरते विक्रेते नाहीत</string>
+    <string name="map_verify_title">या दुकानाची खात्री करण्यात मदत करा</string>
+    <string name="map_verify_shop_question">तुम्ही हे दुकान दाखवलेल्या ठिकाणी पाहिले आहे का?</string>
+    <string name="map_verify_cart_question">ही गाडी आत्ता तुमच्या जवळ आहे का?</string>
+    <string name="vote_yes">हो</string>
+    <string name="vote_no">नाही</string>
+    <string name="vote_not_sure">माहीत नाही</string>
+    <string name="shop_open">उघडे</string>
+    <string name="shop_closed">बंद</string>
+    <string name="shop_default_subtitle">स्थानिक दुकान</string>
+    <string name="map_location_needed">जवळची खाद्य दुकाने पाहण्यासाठी लोकेशनची परवानगी द्या</string>
+    <string name="map_allow_location">लोकेशनची परवानगी द्या</string>
+    <string name="map_location_denied">Local Feast साठी लोकेशन बंद आहे. जवळची दुकाने पाहण्यासाठी सेटिंग्जमध्ये ते चालू करा.</string>
+    <string name="map_open_settings">सेटिंग्ज उघडा</string>
+    <string name="map_location_unavailable">तुमचे ठिकाण सापडले नाही. लोकेशन चालू आहे का ते तपासा.</string>
+    <string name="try_again">पुन्हा प्रयत्न करा</string>
+    <string name="my_location">माझे ठिकाण</string>
+    <string name="back">मागे</string>
+    <string name="clear_search">शोध साफ करा</string>
+    <string name="close">बंद करा</string>
 </resources>

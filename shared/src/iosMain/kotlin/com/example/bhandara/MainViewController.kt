@@ -1,5 +1,10 @@
 package com.example.bhandara
 
+import com.example.bhandara.ui.shopsmap.ShopsMapScreen
+import com.example.bhandara.platform.LocalAppDependencies
+import com.example.bhandara.platform.AppDependencies
+import com.example.bhandara.data.settings.createAppSettings
+import com.example.bhandara.data.network.ApiClient
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -36,9 +41,11 @@ import com.example.bhandara.ui.theme.BhandaraTheme
  *
  * @param auth Firebase sign-in, implemented in Swift (IosPlatformAuth.swift)
  * @param mapBridge Google Maps, implemented in Swift (IosGoogleMapBridge.swift)
+ * @param apiBaseUrl the backend's address (ApiBaseUrl in Info.plist, from Config/Secrets.xcconfig)
  */
-fun MainViewController(auth: PlatformAuth, mapBridge: IosMapBridge) = ComposeUIViewController {
+fun MainViewController(auth: PlatformAuth, mapBridge: IosMapBridge, apiBaseUrl: String) = ComposeUIViewController {
     val authService = remember { AuthService(auth) }
+    val dependencies = remember { AppDependencies(ApiClient(apiBaseUrl, authService::idToken), createAppSettings()) }
 
     // Like on Android, everyone is signed in (anonymously) from the start, so the backend knows who did what
     LaunchedEffect(Unit) {
@@ -50,7 +57,7 @@ fun MainViewController(auth: PlatformAuth, mapBridge: IosMapBridge) = ComposeUIV
     }
 
     ProvideAppEnvironment {
-        CompositionLocalProvider(LocalIosMapBridge provides mapBridge) {
+        CompositionLocalProvider(LocalIosMapBridge provides mapBridge, LocalAppDependencies provides dependencies) {
             BhandaraTheme {
                 val navigator = rememberAppNavigator()
                 var homeTabIndex by remember { mutableIntStateOf(0) }
@@ -64,6 +71,10 @@ fun MainViewController(auth: PlatformAuth, mapBridge: IosMapBridge) = ComposeUIV
                         onReportFeastClick = { navigator.navigate(Route.ReportFeast) },
                         onFindShopsClick = { navigator.navigate(Route.ShopsMap) },
                         onAddShopClick = { navigator.navigate(Route.AddShop) },
+                    )
+                    Route.ShopsMap -> ShopsMapScreen(
+                        onBack = { navigator.back() },
+                        onShopClick = { shopId -> navigator.navigate(Route.ShopDetails(shopId)) },
                     )
                     // Screens move to the shared module one by one; until then iOS says so
                     else -> NotOnIphoneYet(route, onBack = { navigator.back() })

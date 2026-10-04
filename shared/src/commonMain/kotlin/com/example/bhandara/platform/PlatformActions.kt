@@ -20,6 +20,9 @@ interface PlatformActions {
 
     /** Opens a web page in the browser */
     fun openUrl(url: String)
+
+    /** Opens this app's page in the phone's Settings (e.g. to turn location back on) */
+    fun openAppSettings()
 }
 
 /** The current platform's [PlatformActions]; provided at the root of the app's UI */
