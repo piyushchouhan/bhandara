@@ -57,6 +57,7 @@ kotlin {
             implementation(libs.play.services.maps)
             implementation(libs.maps.compose)
             implementation(libs.androidx.activity.compose) // asking for permissions from shared screens
+            implementation(libs.androidx.appcompat) // switching the app's language
         }
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)

@@ -1,6 +1,17 @@
 package com.example.bhandara
 
+import com.example.bhandara.ui.drawer.AboutScreen
+import com.example.bhandara.ui.drawer.AppDrawer
+import com.example.bhandara.ui.drawer.SupportScreen
+import com.example.bhandara.ui.drawer.TermsScreen
+import com.example.bhandara.ui.profile.ProfileScreen
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.windowInsetsPadding
 import com.example.bhandara.ui.feasts.FeastDetailsScreen
+import platform.Foundation.NSBundle
 import com.example.bhandara.ui.feasts.FeastsMapScreen
 import com.example.bhandara.ui.shopdetails.ShopDetailsScreen
 import com.example.bhandara.ui.shopsmap.ShopsMapScreen
@@ -48,7 +59,12 @@ import com.example.bhandara.ui.theme.BhandaraTheme
  */
 fun MainViewController(auth: PlatformAuth, mapBridge: IosMapBridge, apiBaseUrl: String) = ComposeUIViewController {
     val authService = remember { AuthService(auth) }
-    val dependencies = remember { AppDependencies(ApiClient(apiBaseUrl, authService::idToken), createAppSettings(), authService) }
+    val dependencies = remember { AppDependencies(
+            ApiClient(apiBaseUrl, authService::idToken),
+            createAppSettings(),
+            authService,
+            appVersion = NSBundle.mainBundle.objectForInfoDictionaryKey("CFBundleShortVersionString") as? String ?: "",
+        ) }
 
     // Like on Android, everyone is signed in (anonymously) from the start, so the backend knows who did what
     LaunchedEffect(Unit) {
@@ -66,15 +82,22 @@ fun MainViewController(auth: PlatformAuth, mapBridge: IosMapBridge, apiBaseUrl: 
                 var homeTabIndex by remember { mutableIntStateOf(0) }
 
                 when (val route = navigator.current) {
-                    Route.Home -> HomeScreen(
-                        modifier = Modifier.safeDrawingPadding(),
-                        selectedTabIndex = homeTabIndex,
-                        onTabSelected = { homeTabIndex = it },
-                        onHungryClick = { navigator.navigate(Route.Hungry) },
-                        onReportFeastClick = { navigator.navigate(Route.ReportFeast) },
-                        onFindShopsClick = { navigator.navigate(Route.ShopsMap) },
-                        onAddShopClick = { navigator.navigate(Route.AddShop) },
-                    )
+                    Route.Home -> AppDrawer(
+                        onProfileClick = { navigator.navigate(Route.Profile) },
+                        onAboutClick = { navigator.navigate(Route.About) },
+                        onSupportClick = { navigator.navigate(Route.Support) },
+                        onTermsClick = { navigator.navigate(Route.Terms) },
+                    ) {
+                        HomeScreen(
+                            modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal)),
+                            selectedTabIndex = homeTabIndex,
+                            onTabSelected = { homeTabIndex = it },
+                            onHungryClick = { navigator.navigate(Route.Hungry) },
+                            onReportFeastClick = { navigator.navigate(Route.ReportFeast) },
+                            onFindShopsClick = { navigator.navigate(Route.ShopsMap) },
+                            onAddShopClick = { navigator.navigate(Route.AddShop) },
+                        )
+                    }
                     Route.ShopsMap -> ShopsMapScreen(
                         onBack = { navigator.back() },
                         onShopClick = { shopId -> navigator.navigate(Route.ShopDetails(shopId)) },
@@ -85,6 +108,11 @@ fun MainViewController(auth: PlatformAuth, mapBridge: IosMapBridge, apiBaseUrl: 
                     )
                     is Route.FeastDetails -> FeastDetailsScreen(feastId = route.feastId, onBack = { navigator.back() })
                     // Claiming and adding menu items come to iPhone with the other write flows (phase 2)
+                    // Signing in with Google comes to iPhone in phase 2; until then the profile shows the guest account
+                    Route.Profile -> ProfileScreen(onBack = { navigator.back() }, accountSignIn = null)
+                    Route.About -> AboutScreen(onBack = { navigator.back() })
+                    Route.Support -> SupportScreen(onBack = { navigator.back() })
+                    Route.Terms -> TermsScreen(onBack = { navigator.back() })
                     is Route.ShopDetails -> ShopDetailsScreen(shopId = route.shopId, onBack = { navigator.back() })
                     // Screens move to the shared module one by one; until then iOS says so
                     else -> NotOnIphoneYet(route, onBack = { navigator.back() })

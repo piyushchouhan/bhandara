@@ -8,6 +8,17 @@ final class IosPlatformAuth: PlatformAuth {
         Auth.auth().currentUser?.uid
     }
 
+    func currentAccount() -> UserAccount? {
+        guard let user = Auth.auth().currentUser else { return nil }
+        return UserAccount(
+            uid: user.uid,
+            isAnonymous: user.isAnonymous,
+            name: user.displayName,
+            email: user.email,
+            photoUrl: user.photoURL?.absoluteString
+        )
+    }
+
     func signInAnonymously(onResult: @escaping (String?, String?) -> Void) {
         Auth.auth().signInAnonymously { result, error in
             onResult(result?.user.uid, error?.localizedDescription)

@@ -29,6 +29,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -36,10 +37,18 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.example.bhandara.services.CrowdPingManager
 import kotlinx.coroutines.launch
 import com.example.bhandara.managers.UserManager
-import com.example.bhandara.ui.components.AppDrawerMenu
 import com.example.bhandara.ui.components.OwnerConfirmationDialog
 import com.example.bhandara.ui.shopdetails.ShopDetailsScreen
 import com.example.bhandara.ui.components.AndroidReviewPhotos
+import com.example.bhandara.ui.drawer.AppDrawer
+import com.example.bhandara.ui.drawer.AboutScreen
+import com.example.bhandara.ui.drawer.SupportScreen
+import com.example.bhandara.ui.drawer.TermsScreen
+import com.example.bhandara.ui.profile.ProfileScreen
+import com.example.bhandara.ui.components.GoogleAccountSignIn
+import com.example.bhandara.ui.components.VendorMode
+import com.example.bhandara.ui.components.VendorModeBanner
+import com.example.bhandara.ui.components.VendorModeItem
 import com.example.bhandara.ui.screens.AddMenuItemsScreen
 import com.example.bhandara.ui.feasts.FeastDetailsScreen
 import com.example.bhandara.ui.feasts.FeastsMapScreen
@@ -47,10 +56,6 @@ import com.example.bhandara.ui.screens.HomeScreen
 import com.example.bhandara.ui.screens.ReportBhandaraScreen
 import com.example.bhandara.ui.screens.AddLocalShopScreen
 import com.example.bhandara.ui.screens.ClaimShopScreen
-import com.example.bhandara.ui.screens.ProfileScreen
-import com.example.bhandara.ui.components.appDrawer.AboutScreen
-import com.example.bhandara.ui.components.appDrawer.SupportScreen
-import com.example.bhandara.ui.components.appDrawer.TermsScreen
 import com.example.bhandara.BuildConfig
 import com.example.bhandara.ui.theme.BhandaraTheme
 import com.example.bhandara.utils.LocationHelper
@@ -100,7 +105,7 @@ class MainActivity : AppCompatActivity() {
         setContent {
             ProvideAppEnvironment {
               CompositionLocalProvider(
-                  LocalAppDependencies provides remember { AppDependencies(AppBackend.client, AppSettings(this), AppAuth.service) }
+                  LocalAppDependencies provides remember { AppDependencies(AppBackend.client, AppSettings(this), AppAuth.service, BuildConfig.VERSION_NAME) }
               ) {
                 BhandaraTheme {
                     // Which screens are open (shared with iOS); kept across rotation
@@ -116,6 +121,9 @@ class MainActivity : AppCompatActivity() {
                         requestPermissions()
                     }
                 
+                    val vendorMode = remember { VendorMode(this@MainActivity) }
+                    val googleSignIn = remember { GoogleAccountSignIn(this@MainActivity) }
+
                     fun navigateTo(route: Route) = navigator.navigate(route)
 
                     fun navigateBack() {
@@ -132,11 +140,13 @@ class MainActivity : AppCompatActivity() {
                     ) { innerPadding ->
                         when (val route = navigator.current) {
                             Route.Home -> {
-                                AppDrawerMenu(
+                                AppDrawer(
                                     onProfileClick = { navigateTo(Route.Profile) },
                                     onAboutClick = { navigateTo(Route.About) },
                                     onSupportClick = { navigateTo(Route.Support) },
-                                    onTermsClick = { navigateTo(Route.Terms) }
+                                    onTermsClick = { navigateTo(Route.Terms) },
+                                    extraItems = { VendorModeItem(vendorMode) },
+                                    overlay = { VendorModeBanner(vendorMode, Modifier.align(Alignment.TopCenter)) },
                                 ) {
                                     HomeScreen(
                                         modifier = Modifier.padding(innerPadding),
@@ -213,24 +223,16 @@ class MainActivity : AppCompatActivity() {
                                 )
                             }
                             Route.Profile -> {
-                                ProfileScreen(
-                                    onBackClick = { navigateBack() }
-                                )
+                                ProfileScreen(onBack = { navigateBack() }, accountSignIn = googleSignIn)
                             }
                             Route.About -> {
-                                AboutScreen(
-                                    onBackClick = { navigateBack() }
-                                )
+                                AboutScreen(onBack = { navigateBack() })
                             }
                             Route.Support -> {
-                                SupportScreen(
-                                    onBackClick = { navigateBack() }
-                                )
+                                SupportScreen(onBack = { navigateBack() })
                             }
                             Route.Terms -> {
-                                TermsScreen(
-                                    onBackClick = { navigateBack() }
-                                )
+                                TermsScreen(onBack = { navigateBack() })
                             }
                         }
                     }

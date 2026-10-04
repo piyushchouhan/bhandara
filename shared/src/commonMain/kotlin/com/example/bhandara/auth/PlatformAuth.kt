@@ -7,6 +7,9 @@ package com.example.bhandara.auth
  */
 interface PlatformAuth {
 
+    /** Who is signed in, for the profile; null if nobody is */
+    fun currentAccount(): UserAccount?
+
     /** The signed-in user's ID, or null if nobody is signed in */
     fun currentUid(): String?
 
@@ -16,3 +19,16 @@ interface PlatformAuth {
     /** The signed-in user's Firebase ID token for the backend; calls back once with it, or with an error message */
     fun idToken(forceRefresh: Boolean, onResult: (token: String?, error: String?) -> Unit)
 }
+
+/**
+ * The signed-in user as the profile shows them. Anonymous users have no name, email or photo.
+ *
+ * @param photoUrl the account's picture (e.g. from Google), if any
+ */
+data class UserAccount(
+    val uid: String,
+    val isAnonymous: Boolean,
+    val name: String? = null,
+    val email: String? = null,
+    val photoUrl: String? = null,
+)

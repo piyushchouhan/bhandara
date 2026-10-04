@@ -28,7 +28,11 @@ class AuthServiceTest {
         var tokenError: String? = null
         private val pendingSignIns = mutableListOf<(String?, String?) -> Unit>()
 
+        var account: UserAccount? = null
+
         override fun currentUid() = uid
+
+        override fun currentAccount() = account
 
         override fun signInAnonymously(onResult: (uid: String?, error: String?) -> Unit) {
             signInRequests++
@@ -134,5 +138,24 @@ class AuthServiceTest {
         ShopApi(ApiClient("https://api.test/", auth::idToken, engine)).getShop("5")
 
         assertEquals("Bearer token-for-me", sentAuthorization)
+    }
+
+    @Test
+    fun theProfileGetsCleanAccountDetails() {
+        val firebase = FakeFirebase(uid = "u1")
+        firebase.account = UserAccount(
+            uid = "u1", isAnonymous = false, name = "  Piyush ", email = " ", photoUrl = "http://lh3.googleusercontent.com/a/photo",
+        )
+
+        val account = AuthService(firebase).account()
+
+        assertEquals("Piyush", account?.name)
+        assertEquals(null, account?.email)
+        assertEquals("https://lh3.googleusercontent.com/a/photo", account?.photoUrl)
+    }
+
+    @Test
+    fun nobodySignedInHasNoAccount() {
+        assertEquals(null, AuthService(FakeFirebase()).account())
     }
 }

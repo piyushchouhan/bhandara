@@ -33,6 +33,9 @@ targets:
       path: iosApp/Info.plist
       properties:
         CFBundleDisplayName: Local Feast
+        # The app's languages; iOS then offers them on the app's page in Settings (the side menu links there)
+        CFBundleDevelopmentRegion: en
+        CFBundleLocalizations: [en, hi, mr]
         # From Config/Secrets.xcconfig; read at launch to start Google Maps
         GoogleMapsApiKey: $(MAPS_API_KEY)
         # The backend's address, also from Config/Secrets.xcconfig

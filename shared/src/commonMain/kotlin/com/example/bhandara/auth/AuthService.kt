@@ -20,6 +20,20 @@ class AuthService(private val platform: PlatformAuth) {
     val currentUid: String? get() = platform.currentUid()
 
     /**
+     * Who is signed in, for the profile: blank details become null, and an http photo link becomes https (Google
+     * sometimes gives http, which phones refuse to load)
+     */
+    fun account(): UserAccount? = platform.currentAccount()?.let { account ->
+        account.copy(
+            name = account.name?.trim()?.takeIf { it.isNotEmpty() },
+            email = account.email?.trim()?.takeIf { it.isNotEmpty() },
+            photoUrl = account.photoUrl?.trim()?.takeIf { it.isNotEmpty() }?.let {
+                if (it.startsWith("http://")) "https://" + it.removePrefix("http://") else it
+            },
+        )
+    }
+
+    /**
      * The signed-in user's ID, signing in anonymously first if needed. Calls made at the same time (e.g. app start
      * and the first request) share one sign-in, so a user never ends up with two anonymous accounts.
      */
