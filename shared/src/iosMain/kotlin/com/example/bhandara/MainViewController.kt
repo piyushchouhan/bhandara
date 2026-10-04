@@ -1,6 +1,5 @@
 package com.example.bhandara
 
-import com.example.bhandara.platform.ProvideAppEnvironment
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,6 +10,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -25,6 +25,9 @@ import com.example.bhandara.auth.AuthService
 import com.example.bhandara.auth.PlatformAuth
 import com.example.bhandara.navigation.Route
 import com.example.bhandara.navigation.rememberAppNavigator
+import com.example.bhandara.platform.ProvideAppEnvironment
+import com.example.bhandara.ui.map.IosMapBridge
+import com.example.bhandara.ui.map.LocalIosMapBridge
 import com.example.bhandara.ui.screens.HomeScreen
 import com.example.bhandara.ui.theme.BhandaraTheme
 
@@ -32,8 +35,9 @@ import com.example.bhandara.ui.theme.BhandaraTheme
  * The iOS app's entry point: ContentView.swift shows this.
  *
  * @param auth Firebase sign-in, implemented in Swift (IosPlatformAuth.swift)
+ * @param mapBridge Google Maps, implemented in Swift (IosGoogleMapBridge.swift)
  */
-fun MainViewController(auth: PlatformAuth) = ComposeUIViewController {
+fun MainViewController(auth: PlatformAuth, mapBridge: IosMapBridge) = ComposeUIViewController {
     val authService = remember { AuthService(auth) }
 
     // Like on Android, everyone is signed in (anonymously) from the start, so the backend knows who did what
@@ -46,22 +50,24 @@ fun MainViewController(auth: PlatformAuth) = ComposeUIViewController {
     }
 
     ProvideAppEnvironment {
-        BhandaraTheme {
-            val navigator = rememberAppNavigator()
-            var homeTabIndex by remember { mutableIntStateOf(0) }
+        CompositionLocalProvider(LocalIosMapBridge provides mapBridge) {
+            BhandaraTheme {
+                val navigator = rememberAppNavigator()
+                var homeTabIndex by remember { mutableIntStateOf(0) }
 
-            when (val route = navigator.current) {
-                Route.Home -> HomeScreen(
-                    modifier = Modifier.safeDrawingPadding(),
-                    selectedTabIndex = homeTabIndex,
-                    onTabSelected = { homeTabIndex = it },
-                    onHungryClick = { navigator.navigate(Route.Hungry) },
-                    onReportFeastClick = { navigator.navigate(Route.ReportFeast) },
-                    onFindShopsClick = { navigator.navigate(Route.ShopsMap) },
-                    onAddShopClick = { navigator.navigate(Route.AddShop) },
-                )
-                // Screens move to the shared module one by one; until then iOS says so
-                else -> NotOnIphoneYet(route, onBack = { navigator.back() })
+                when (val route = navigator.current) {
+                    Route.Home -> HomeScreen(
+                        modifier = Modifier.safeDrawingPadding(),
+                        selectedTabIndex = homeTabIndex,
+                        onTabSelected = { homeTabIndex = it },
+                        onHungryClick = { navigator.navigate(Route.Hungry) },
+                        onReportFeastClick = { navigator.navigate(Route.ReportFeast) },
+                        onFindShopsClick = { navigator.navigate(Route.ShopsMap) },
+                        onAddShopClick = { navigator.navigate(Route.AddShop) },
+                    )
+                    // Screens move to the shared module one by one; until then iOS says so
+                    else -> NotOnIphoneYet(route, onBack = { navigator.back() })
+                }
             }
         }
     }

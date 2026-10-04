@@ -5,11 +5,15 @@ options:
   bundleIdPrefix: com.localfeast
   deploymentTarget:
     iOS: "16.0"
-# Firebase's official iOS SDK (Swift Package Manager). Only the parts the app uses are linked (see the target).
+# Official iOS SDKs via Swift Package Manager: Firebase (only the parts the app uses are linked, see the target)
+# and Google Maps
 packages:
   Firebase:
     url: https://github.com/firebase/firebase-ios-sdk
     from: "12.0.0"
+  GoogleMaps:
+    url: https://github.com/googlemaps/ios-maps-sdk
+    from: "9.0.0"
 # Local secrets (e.g. the Google Maps key) come from Config/Secrets.xcconfig, which is not in git
 configFiles:
   Debug: Config/Secrets.xcconfig
@@ -23,6 +27,8 @@ targets:
     dependencies:
       - package: Firebase
         product: FirebaseAuth
+      - package: GoogleMaps
+        product: GoogleMaps
     info:
       path: iosApp/Info.plist
       properties:

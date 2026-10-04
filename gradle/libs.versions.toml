@@ -49,6 +49,8 @@ jetbrains-lifecycle-viewmodel-compose = { group = "org.jetbrains.androidx.lifecy
 coil3-compose = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref = "coil3" }
 coil3-network-ktor = { group = "io.coil-kt.coil3", name = "coil-network-ktor3", version.ref = "coil3" }
 play-services-location = { group = "com.google.android.gms", name = "play-services-location", version = "21.3.0" }
+play-services-maps = { group = "com.google.android.gms", name = "play-services-maps", version = "19.0.0" }
+maps-compose = { group = "com.google.maps.android", name = "maps-compose", version = "4.3.3" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
