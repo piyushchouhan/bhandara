@@ -41,9 +41,9 @@ import com.example.bhandara.ui.components.OwnerConfirmationDialog
 import com.example.bhandara.ui.shopdetails.ShopDetailsScreen
 import com.example.bhandara.ui.components.AndroidReviewPhotos
 import com.example.bhandara.ui.screens.AddMenuItemsScreen
-import com.example.bhandara.ui.screens.FeastDetailsScreen
+import com.example.bhandara.ui.feasts.FeastDetailsScreen
+import com.example.bhandara.ui.feasts.FeastsMapScreen
 import com.example.bhandara.ui.screens.HomeScreen
-import com.example.bhandara.ui.screens.HungryScreen
 import com.example.bhandara.ui.screens.ReportBhandaraScreen
 import com.example.bhandara.ui.screens.AddLocalShopScreen
 import com.example.bhandara.ui.screens.ClaimShopScreen
@@ -153,11 +153,9 @@ class MainActivity : AppCompatActivity() {
                                 }
                             }
                             Route.Hungry -> {
-                                HungryScreen(
-                                    onBackClick = { navigateBack() },
-                                    onFeastClick = { feastId ->
-                                        navigateTo(Route.FeastDetails(feastId))
-                                    }
+                                FeastsMapScreen(
+                                    onBack = { navigateBack() },
+                                    onFeastClick = { feastId -> navigateTo(Route.FeastDetails(feastId)) },
                                 )
                             }
                             Route.ReportFeast -> {
@@ -166,10 +164,7 @@ class MainActivity : AppCompatActivity() {
                                 )
                             }
                             is Route.FeastDetails -> {
-                                FeastDetailsScreen(
-                                    feastId = route.feastId,
-                                    onBackClick = { navigateBack() }
-                                )
+                                FeastDetailsScreen(feastId = route.feastId, onBack = { navigateBack() })
                             }
                             Route.AddShop -> {
                                 AddLocalShopScreen(

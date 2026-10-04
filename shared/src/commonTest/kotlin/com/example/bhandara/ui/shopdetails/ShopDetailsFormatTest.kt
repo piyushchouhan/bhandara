@@ -41,6 +41,17 @@ class ShopDetailsFormatTest {
     }
 
     @Test
+    fun aLandmarkIsNotShownAsNearNear() {
+        assertEquals("Datta Mandir", landmarkName("Datta Mandir"))
+        assertEquals("Dhanori Junction", landmarkName("Near Dhanori Junction"))
+        assertEquals("Dhanori Junction", landmarkName("  near: Dhanori Junction "))
+        assertEquals("Nearby Bakery", landmarkName("Nearby Bakery"))
+        assertNull(landmarkName("Near"))
+        assertNull(landmarkName("  "))
+        assertNull(landmarkName(null))
+    }
+
+    @Test
     fun theTypeLineJoinsWhatIsKnown() {
         assertEquals("Restaurant • South Indian", shopTypeLine(shop().copy(shopType = "Restaurant", cuisineType = "South Indian")))
         assertEquals("Cafe", shopTypeLine(shop().copy(shopType = "Cafe", cuisineType = " ")))

@@ -104,4 +104,24 @@
     <string name="review_report">रिव्यू की रिपोर्ट करें</string>
     <string name="review_photo">रिव्यू फ़ोटो %1$d</string>
     <string name="review_yours">आपका रिव्यू</string>
+    <!-- Community feasts -->
+    <string name="feasts_title">भंडारा खोजें</string>
+    <string name="feast_unnamed">भंडारा</string>
+    <string name="feasts_none_nearby">अभी आपके पास कोई भंडारा नहीं है।</string>
+    <string name="feast_now_till">अभी चल रहा है, %1$s तक</string>
+    <string name="feast_today">आज, %1$s</string>
+    <string name="feast_tomorrow">कल, %1$s</string>
+    <string name="feast_later">%1$s, %2$s</string>
+    <string name="feast_ended">ख़त्म हो गया</string>
+    <string name="feast_upcoming">आने वाला</string>
+    <string name="feast_details_title">भंडारे की जानकारी</string>
+    <string name="feast_verified">वेरिफ़ाइड आयोजक</string>
+    <string name="feast_taken_down">हटा दिया गया</string>
+    <string name="feast_food_type">खाने का प्रकार</string>
+    <string name="feast_capacity">अनुमानित लोग</string>
+    <string name="feast_capacity_value">लगभग %1$d लोग</string>
+    <string name="feast_photo">भंडारे की फ़ोटो %1$d</string>
+    <string name="feast_report">इस भंडारे की रिपोर्ट करें</string>
+    <string name="feast_report_title">इस भंडारे की रिपोर्ट करें?</string>
+    <string name="feast_report_text">क्या यह नकली या अनुचित है? रिपोर्ट करने से सबकी सुरक्षा बनी रहती है।</string>
 </resources>

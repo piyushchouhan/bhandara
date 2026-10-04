@@ -117,6 +117,7 @@ class AppSettingsTest {
         settings.markSuggestedDeletingShop("6")
         settings.markReportedReview("7")
         settings.markAnsweredVerification("8")
+        settings.markReportedFeast("9")
 
         assertTrue(settings.hasReportedShop("5"))
         assertFalse(settings.hasReportedShop("6"))
@@ -125,6 +126,8 @@ class AppSettingsTest {
         assertTrue(settings.hasReportedReview("7"))
         assertTrue(settings.hasAnsweredVerification("8"))
         assertFalse(settings.hasAnsweredVerification("5"))
+        assertTrue(settings.hasReportedFeast("9"))
+        assertFalse(settings.hasReportedFeast("5"))
     }
 
     @Test
@@ -140,6 +143,7 @@ class AppSettingsTest {
         settings.markSuggestedDeletingShop("5")
         settings.markReportedReview("7")
         settings.markAnsweredVerification("8")
+        settings.markReportedFeast("9")
 
         val keysByStore = stores.byName.mapValues { (_, store) -> store.keys.toSet() }
         assertEquals(
@@ -150,6 +154,7 @@ class AppSettingsTest {
                 "ShopActionsPrefs" to setOf("reported_shop_5", "suggested_delete_shop_5"),
                 "ReviewActionsPrefs" to setOf("reported_review_7"),
                 "VerificationPrefs" to setOf("verified_8"),
+                "FeastActionsPrefs" to setOf("reported_feast_9"),
             ),
             keysByStore,
         )

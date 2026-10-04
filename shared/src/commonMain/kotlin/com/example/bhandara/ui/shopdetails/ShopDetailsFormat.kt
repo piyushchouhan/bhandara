@@ -32,6 +32,16 @@ fun shopAddress(shop: LocalShopResponse): String? =
             .joinToString(", ")
             .takeIf { it.isNotEmpty() }
 
+/**
+ * The landmark without a leading "Near" (people often type "Near Datta Mandir"), since the screen adds it in the
+ * user's language; null when blank
+ */
+fun landmarkName(landmark: String?): String? =
+    landmark?.trim()
+        ?.replace(Regex("^near\\b[\\s:,-]*", RegexOption.IGNORE_CASE), "")
+        ?.trim()
+        ?.takeIf { it.isNotEmpty() }
+
 /** "Restaurant • South Indian", or null when neither is known */
 fun shopTypeLine(shop: LocalShopResponse): String? =
     listOfNotNull(shop.shopType, shop.cuisineType)

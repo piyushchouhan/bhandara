@@ -173,16 +173,21 @@ internal fun ShopOverview(
     }
 }
 
-/** The shop's photos side by side; tapping one opens them full screen */
+/** Photos side by side (a placeholder when there are none); tapping one opens them full screen */
 @Composable
-internal fun ShopPhotos(urls: List<String>, onPhotoClick: (Int) -> Unit) {
+internal fun ShopPhotos(
+    urls: List<String>,
+    onPhotoClick: (Int) -> Unit,
+    photoLabel: StringResource = Res.string.shop_photo,
+    placeholder: ImageVector = Icons.Default.Storefront,
+) {
     if (urls.isEmpty()) {
         Box(
             Modifier.fillMaxWidth().height(200.dp).background(MaterialTheme.colorScheme.surfaceVariant),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
-                Icons.Default.Storefront,
+                placeholder,
                 contentDescription = null,
                 modifier = Modifier.size(64.dp),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
@@ -197,7 +202,7 @@ internal fun ShopPhotos(urls: List<String>, onPhotoClick: (Int) -> Unit) {
         itemsIndexed(urls) { index, url ->
             AsyncImage(
                 model = url,
-                contentDescription = stringResource(Res.string.shop_photo, index + 1),
+                contentDescription = stringResource(photoLabel, index + 1),
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     // A single photo fills the width; with more, the next one peeks in to show there are more
@@ -314,8 +319,8 @@ private fun InfoCard(shop: LocalShopResponse, distanceMeters: Double?) {
                 Icon(Icons.Default.LocationOn, contentDescription = null, tint = onCard)
                 Column {
                     Text(shopAddress(shop) ?: stringResource(Res.string.shop_location_missing), style = MaterialTheme.typography.bodyLarge, color = onCard)
-                    shop.landmark?.takeIf { it.isNotBlank() }?.let {
-                        Text(stringResource(Res.string.shop_near_landmark, it.trim()), style = MaterialTheme.typography.bodyMedium, color = onCard.copy(alpha = 0.8f))
+                    landmarkName(shop.landmark)?.let {
+                        Text(stringResource(Res.string.shop_near_landmark, it), style = MaterialTheme.typography.bodyMedium, color = onCard.copy(alpha = 0.8f))
                     }
                     distanceMeters?.let {
                         Text(stringResource(Res.string.shop_distance_away, formatDistance(it)), style = MaterialTheme.typography.bodySmall, color = onCard.copy(alpha = 0.7f))
@@ -328,7 +333,7 @@ private fun InfoCard(shop: LocalShopResponse, distanceMeters: Double?) {
 
 /** A titled card, like "Description" */
 @Composable
-private fun SectionCard(title: StringResource, action: (@Composable () -> Unit)? = null, content: @Composable () -> Unit) {
+internal fun SectionCard(title: StringResource, action: (@Composable () -> Unit)? = null, content: @Composable () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
@@ -449,7 +454,7 @@ private val Facility.label: StringResource
     }
 
 @Composable
-private fun InfoRow(icon: ImageVector, title: StringResource, value: String) {
+internal fun InfoRow(icon: ImageVector, title: StringResource, value: String) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
         Column {

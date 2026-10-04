@@ -104,4 +104,24 @@
     <string name="review_report">रिव्ह्यूची तक्रार करा</string>
     <string name="review_photo">रिव्ह्यू फोटो %1$d</string>
     <string name="review_yours">तुमचा रिव्ह्यू</string>
+    <!-- Community feasts -->
+    <string name="feasts_title">भंडारा शोधा</string>
+    <string name="feast_unnamed">भंडारा</string>
+    <string name="feasts_none_nearby">सध्या तुमच्या जवळ कोणताही भंडारा नाही.</string>
+    <string name="feast_now_till">आता सुरू आहे, %1$s पर्यंत</string>
+    <string name="feast_today">आज, %1$s</string>
+    <string name="feast_tomorrow">उद्या, %1$s</string>
+    <string name="feast_later">%1$s, %2$s</string>
+    <string name="feast_ended">संपला</string>
+    <string name="feast_upcoming">येणारा</string>
+    <string name="feast_details_title">भंडाऱ्याची माहिती</string>
+    <string name="feast_verified">पडताळलेले आयोजक</string>
+    <string name="feast_taken_down">काढून टाकले</string>
+    <string name="feast_food_type">जेवणाचा प्रकार</string>
+    <string name="feast_capacity">अपेक्षित लोक</string>
+    <string name="feast_capacity_value">सुमारे %1$d लोक</string>
+    <string name="feast_photo">भंडाऱ्याचा फोटो %1$d</string>
+    <string name="feast_report">या भंडाऱ्याची तक्रार करा</string>
+    <string name="feast_report_title">या भंडाऱ्याची तक्रार करायची?</string>
+    <string name="feast_report_text">हा खोटा किंवा अयोग्य आहे का? तक्रार केल्याने सर्वांची सुरक्षितता राखली जाते.</string>
 </resources>

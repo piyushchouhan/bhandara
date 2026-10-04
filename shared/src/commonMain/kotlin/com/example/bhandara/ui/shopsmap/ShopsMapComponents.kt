@@ -124,16 +124,39 @@ internal fun MovingVendorsToggle(isSelected: Boolean, onToggle: () -> Unit, modi
     }
 }
 
-/** The card for a tapped pin: what it is, whether it's open, how busy and how far; tapping it opens the place */
+/** The card for a tapped shop or cart: what it is, whether it's open, how busy and how far; tapping it opens it */
 @Composable
 internal fun PlacePreviewCard(place: LocalShopResponse, onOpen: () -> Unit, onClose: () -> Unit, modifier: Modifier = Modifier) {
     val isOpen = place.isCurrentlyOpen ?: true
-    val statusColor = if (isOpen) Color(0xFF4CAF50) else Color(0xFFE57373)
-    val details = listOfNotNull(
-        crowdLabel(place.crowdLevel)?.takeIf { isOpen }?.let { stringResource(it) },
-        place.distance?.let { formatDistance(it) },
-    ).joinToString(" • ")
+    MapPreviewCard(
+        emoji = if (place.isMovingCart == true) "🚚" else "📍",
+        title = place.shopName,
+        subtitle = place.cuisineType ?: stringResource(Res.string.shop_default_subtitle),
+        status = stringResource(if (isOpen) Res.string.shop_open else Res.string.shop_closed),
+        statusColor = if (isOpen) Color(0xFF4CAF50) else Color(0xFFE57373),
+        details = listOfNotNull(
+            crowdLabel(place.crowdLevel)?.takeIf { isOpen }?.let { stringResource(it) },
+            place.distance?.let { formatDistance(it) },
+        ).joinToString(" • "),
+        onOpen = onOpen,
+        onClose = onClose,
+        modifier = modifier,
+    )
+}
 
+/** The card for a tapped pin, shared by the shops and feasts maps; tapping it opens the place */
+@Composable
+internal fun MapPreviewCard(
+    emoji: String,
+    title: String,
+    subtitle: String,
+    status: String,
+    statusColor: Color,
+    details: String,
+    onOpen: () -> Unit,
+    onClose: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Card(
         onClick = onOpen,
         modifier = modifier.fillMaxWidth(),
@@ -143,18 +166,18 @@ internal fun PlacePreviewCard(place: LocalShopResponse, onOpen: () -> Unit, onCl
     ) {
         Row(Modifier.padding(start = 12.dp, top = 12.dp, bottom = 12.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.size(40.dp).background(Color(0xFFFFE3E8), CircleShape), contentAlignment = Alignment.Center) {
-                Text(if (place.isMovingCart == true) "🚚" else "📍", style = MaterialTheme.typography.titleMedium)
+                Text(emoji, style = MaterialTheme.typography.titleMedium)
             }
             Spacer(Modifier.width(10.dp))
             Column(Modifier.weight(1f)) {
                 Text(
-                    place.shopName,
+                    title,
                     style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold, color = Color(0xFF212121)),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(
-                    place.cuisineType ?: stringResource(Res.string.shop_default_subtitle),
+                    subtitle,
                     style = MaterialTheme.typography.bodySmall.copy(color = Color(0xFF757575)),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -163,10 +186,7 @@ internal fun PlacePreviewCard(place: LocalShopResponse, onOpen: () -> Unit, onCl
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(Modifier.size(6.dp).background(statusColor, CircleShape))
                     Spacer(Modifier.width(4.dp))
-                    Text(
-                        stringResource(if (isOpen) Res.string.shop_open else Res.string.shop_closed),
-                        style = MaterialTheme.typography.labelSmall.copy(color = statusColor, fontWeight = FontWeight.SemiBold),
-                    )
+                    Text(status, style = MaterialTheme.typography.labelSmall.copy(color = statusColor, fontWeight = FontWeight.SemiBold))
                     if (details.isNotEmpty()) {
                         Text(
                             " • $details",

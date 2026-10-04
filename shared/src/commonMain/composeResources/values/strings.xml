@@ -104,4 +104,24 @@
     <string name="review_report">Report review</string>
     <string name="review_photo">Review photo %1$d</string>
     <string name="review_yours">Your review</string>
+    <!-- Community feasts -->
+    <string name="feasts_title">Find community feasts</string>
+    <string name="feast_unnamed">Community feast</string>
+    <string name="feasts_none_nearby">No community feasts near you right now.</string>
+    <string name="feast_now_till">Now till %1$s</string>
+    <string name="feast_today">Today, %1$s</string>
+    <string name="feast_tomorrow">Tomorrow, %1$s</string>
+    <string name="feast_later">%1$s, %2$s</string>
+    <string name="feast_ended">Ended</string>
+    <string name="feast_upcoming">Upcoming</string>
+    <string name="feast_details_title">Bhandara details</string>
+    <string name="feast_verified">Verified organizer</string>
+    <string name="feast_taken_down">Taken down</string>
+    <string name="feast_food_type">Food type</string>
+    <string name="feast_capacity">Expected people</string>
+    <string name="feast_capacity_value">About %1$d people</string>
+    <string name="feast_photo">Feast photo %1$d</string>
+    <string name="feast_report">Report this feast</string>
+    <string name="feast_report_title">Report this feast?</string>
+    <string name="feast_report_text">Report it as fake or inappropriate? This helps keep the community safe.</string>
 </resources>

@@ -19,6 +19,7 @@ class AppSettings(factory: Settings.Factory) {
     private val drafts = factory.create(DRAFT_MENU)
     private val shopActions = factory.create(SHOP_ACTIONS)
     private val reviewActions = factory.create(REVIEW_ACTIONS)
+    private val feastActions = factory.create(FEAST_ACTIONS)
     private val verification = factory.create(VERIFICATION)
 
     private val json = Json { ignoreUnknownKeys = true }
@@ -100,6 +101,10 @@ class AppSettings(factory: Settings.Factory) {
 
     fun markReportedReview(reviewId: String) = reviewActions.putBoolean(KEY_REPORTED_REVIEW + reviewId, true)
 
+    fun hasReportedFeast(feastId: String): Boolean = feastActions.getBoolean(KEY_REPORTED_FEAST + feastId, false)
+
+    fun markReportedFeast(feastId: String) = feastActions.putBoolean(KEY_REPORTED_FEAST + feastId, true)
+
     /** Whether the user already answered "Is this place real?" for this shop */
     fun hasAnsweredVerification(shopId: String): Boolean = verification.getBoolean(KEY_VERIFIED + shopId, false)
 
@@ -113,6 +118,7 @@ class AppSettings(factory: Settings.Factory) {
         const val SHOP_ACTIONS = "ShopActionsPrefs"
         const val REVIEW_ACTIONS = "ReviewActionsPrefs"
         const val VERIFICATION = "VerificationPrefs"
+        const val FEAST_ACTIONS = "FeastActionsPrefs"
 
         const val KEY_BACKEND_SYNCED = "backend_synced_"
         const val KEY_PUSH_TOKEN_SENT = "push_token_sent_"
@@ -125,6 +131,7 @@ class AppSettings(factory: Settings.Factory) {
         const val KEY_SUGGESTED_DELETE_SHOP = "suggested_delete_shop_"
         const val KEY_REPORTED_REVIEW = "reported_review_"
         const val KEY_VERIFIED = "verified_"
+        const val KEY_REPORTED_FEAST = "reported_feast_"
 
         private const val NO_SHOP = -1L
     }

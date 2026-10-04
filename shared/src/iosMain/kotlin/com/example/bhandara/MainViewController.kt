@@ -1,5 +1,7 @@
 package com.example.bhandara
 
+import com.example.bhandara.ui.feasts.FeastDetailsScreen
+import com.example.bhandara.ui.feasts.FeastsMapScreen
 import com.example.bhandara.ui.shopdetails.ShopDetailsScreen
 import com.example.bhandara.ui.shopsmap.ShopsMapScreen
 import com.example.bhandara.platform.LocalAppDependencies
@@ -77,7 +79,12 @@ fun MainViewController(auth: PlatformAuth, mapBridge: IosMapBridge, apiBaseUrl: 
                         onBack = { navigator.back() },
                         onShopClick = { shopId -> navigator.navigate(Route.ShopDetails(shopId)) },
                     )
-                    // Claiming, adding menu items and reviews come to iPhone in later steps
+                    Route.Hungry -> FeastsMapScreen(
+                        onBack = { navigator.back() },
+                        onFeastClick = { feastId -> navigator.navigate(Route.FeastDetails(feastId)) },
+                    )
+                    is Route.FeastDetails -> FeastDetailsScreen(feastId = route.feastId, onBack = { navigator.back() })
+                    // Claiming and adding menu items come to iPhone with the other write flows (phase 2)
                     is Route.ShopDetails -> ShopDetailsScreen(shopId = route.shopId, onBack = { navigator.back() })
                     // Screens move to the shared module one by one; until then iOS says so
                     else -> NotOnIphoneYet(route, onBack = { navigator.back() })
