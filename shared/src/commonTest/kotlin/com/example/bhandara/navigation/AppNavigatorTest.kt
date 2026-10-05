@@ -76,4 +76,26 @@ class AppNavigatorTest {
         assertEquals(listOf<Route>(Route.Home), restored.backStack)
         assertEquals(listOf<Route>(Route.Home), AppNavigator.restore(emptyList()).backStack)
     }
+
+    @Test
+    fun aScreenCanBeReplacedSoBackSkipsIt() {
+        // After posting a feast, its page replaces the form: back goes home, not to the form
+        val navigator = AppNavigator()
+        navigator.navigate(Route.ReportFeast)
+
+        navigator.replace(Route.FeastDetails("77"))
+
+        assertEquals(listOf(Route.Home, Route.FeastDetails("77")), navigator.backStack)
+        navigator.back()
+        assertEquals(Route.Home, navigator.current)
+    }
+
+    @Test
+    fun homeIsNeverReplaced() {
+        val navigator = AppNavigator()
+
+        navigator.replace(Route.ShopsMap)
+
+        assertEquals(listOf(Route.Home, Route.ShopsMap), navigator.backStack)
+    }
 }

@@ -18,6 +18,15 @@ class StringResourcesTest {
     }
 
     @Test
+    fun everyStringsFileIsValidXml() {
+        // e.g. a bare "&" (write "&amp;") breaks the whole file
+        val parser = javax.xml.parsers.DocumentBuilderFactory.newInstance().newDocumentBuilder()
+        files.forEach { file ->
+            runCatching { parser.parse(file) }.onFailure { throw AssertionError("${file.parentFile.name}/strings.xml: ${it.message}") }
+        }
+    }
+
+    @Test
     fun noStringUsesAnAndroidOnlyEscapedApostrophe() {
         val offending = files.flatMap { file ->
             Regex("""<string name="([^"]+)"[^>]*>([^<]*)</string>""").findAll(file.readText())

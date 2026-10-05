@@ -190,7 +190,6 @@
     <!-- Screens not on iPhone yet -->
     <string name="coming_soon_title">iPhone वर लवकरच येत आहे</string>
     <string name="coming_soon_text">%1$s अजून iPhone वर नाही. तोपर्यंत तुम्ही हे Android ॲपमध्ये करू शकता.</string>
-    <string name="feature_report_feast">भंडाऱ्याची माहिती टाकणे</string>
     <string name="feature_add_shop">दुकान जोडणे</string>
     <string name="feature_claim_shop">दुकान क्लेम करणे</string>
     <string name="feature_this">हे</string>
@@ -199,4 +198,31 @@
     <string name="photo_take">फोटो काढा</string>
     <string name="photo_choose_from_gallery">गॅलरीमधून निवडा</string>
     <string name="sign_in_required_title">पुढे जाण्यासाठी साइन इन करा</string>
+    <!-- Posting a feast -->
+    <string name="report_feast_title">भंडाऱ्याची माहिती टाका</string>
+    <string name="step_food">जेवण आणि फोटो</string>
+    <string name="step_when">कधी आणि संपर्क</string>
+    <string name="step_where">ठिकाण</string>
+    <string name="clear_all">सगळे पुसा</string>
+    <string name="clear_all_title">संपूर्ण फॉर्म पुसायचा?</string>
+    <string name="clear_all_text">यामुळे तुम्ही टाकलेले फोटो, मेनू, तारीख, वेळ, संपर्क आणि ठिकाण काढले जातील.</string>
+    <string name="feast_photos_label">जेवणाचे किंवा ठिकाणाचे फोटो (किमान 1, जास्तीत जास्त %1$d)</string>
+    <string name="feast_menu_label">काय वाढले जात आहे</string>
+    <string name="feast_menu_hint">पदार्थ लिहा, मग स्वल्पविराम</string>
+    <string name="feast_food_type_hint">उदा. शाकाहारी, जैन</string>
+    <string name="feast_description_hint">या भंडाऱ्याबद्दल सांगा</string>
+    <string name="feast_date">तारीख</string>
+    <string name="feast_starts">सुरू</string>
+    <string name="feast_ends">संपतो</string>
+    <string name="choose">निवडा</string>
+    <string name="feast_ends_next_day">दुसऱ्या दिवशी संपेल</string>
+    <string name="feast_organizer">आयोजक (ऐच्छिक)</string>
+    <string name="feast_phone">संपर्क फोन (ऐच्छिक)</string>
+    <string name="feast_place_info">भंडारा नकाशावर तुम्ही आत्ता जिथे आहात तिथे दिसेल, म्हणून त्याच ठिकाणाहून टाका. तुम्ही पत्ताही जोडू शकता.</string>
+    <string name="feast_address">पत्ता (ऐच्छिक)</string>
+    <string name="feast_landmark">खूण (ऐच्छिक)</string>
+    <string name="feast_people">किती लोक (ऐच्छिक)</string>
+    <string name="next">पुढे</string>
+    <string name="post_feast">भंडारा पोस्ट करा</string>
+    <string name="ok">ठीक आहे</string>
 </resources>

@@ -54,9 +54,9 @@ import com.example.bhandara.ui.components.VendorModeBanner
 import com.example.bhandara.ui.components.VendorModeItem
 import com.example.bhandara.ui.screens.AddMenuItemsScreen
 import com.example.bhandara.ui.feasts.FeastDetailsScreen
+import com.example.bhandara.ui.reportfeast.ReportFeastScreen
 import com.example.bhandara.ui.feasts.FeastsMapScreen
 import com.example.bhandara.ui.screens.HomeScreen
-import com.example.bhandara.ui.screens.ReportBhandaraScreen
 import com.example.bhandara.ui.screens.AddLocalShopScreen
 import com.example.bhandara.ui.screens.ClaimShopScreen
 import com.example.bhandara.BuildConfig
@@ -173,8 +173,10 @@ class MainActivity : AppCompatActivity() {
                                 )
                             }
                             Route.ReportFeast -> {
-                                ReportBhandaraScreen(
-                                    onNavigateBack = { navigateBack() }
+                                ReportFeastScreen(
+                                    onBack = { navigateBack() },
+                                    // The new feast's page replaces the form, so back goes home
+                                    onPosted = { feastId -> navigator.replace(Route.FeastDetails(feastId)) },
                                 )
                             }
                             is Route.FeastDetails -> {

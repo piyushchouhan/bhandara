@@ -190,7 +190,6 @@
     <!-- Screens not on iPhone yet -->
     <string name="coming_soon_title">iPhone पर जल्द आ रहा है</string>
     <string name="coming_soon_text">%1$s अभी iPhone पर नहीं है। तब तक आप इसे Android ऐप में कर सकते हैं।</string>
-    <string name="feature_report_feast">भंडारे की जानकारी डालना</string>
     <string name="feature_add_shop">दुकान जोड़ना</string>
     <string name="feature_claim_shop">दुकान क्लेम करना</string>
     <string name="feature_this">यह</string>
@@ -199,4 +198,31 @@
     <string name="photo_take">फ़ोटो खींचें</string>
     <string name="photo_choose_from_gallery">गैलरी से चुनें</string>
     <string name="sign_in_required_title">आगे बढ़ने के लिए साइन इन करें</string>
+    <!-- Posting a feast -->
+    <string name="report_feast_title">भंडारे की जानकारी डालें</string>
+    <string name="step_food">खाना और फ़ोटो</string>
+    <string name="step_when">कब और संपर्क</string>
+    <string name="step_where">जगह</string>
+    <string name="clear_all">सब मिटाएँ</string>
+    <string name="clear_all_title">पूरा फ़ॉर्म मिटाएँ?</string>
+    <string name="clear_all_text">इससे आपकी डाली गई फ़ोटो, मेन्यू, तारीख, समय, संपर्क और जगह हट जाएँगे।</string>
+    <string name="feast_photos_label">खाने या जगह की फ़ोटो (कम से कम 1, ज़्यादा से ज़्यादा %1$d)</string>
+    <string name="feast_menu_label">क्या परोसा जा रहा है</string>
+    <string name="feast_menu_hint">आइटम लिखें, फिर कॉमा</string>
+    <string name="feast_food_type_hint">जैसे शाकाहारी, जैन</string>
+    <string name="feast_description_hint">इस भंडारे के बारे में बताएँ</string>
+    <string name="feast_date">तारीख</string>
+    <string name="feast_starts">शुरू</string>
+    <string name="feast_ends">ख़त्म</string>
+    <string name="choose">चुनें</string>
+    <string name="feast_ends_next_day">अगले दिन ख़त्म होगा</string>
+    <string name="feast_organizer">आयोजक (ज़रूरी नहीं)</string>
+    <string name="feast_phone">संपर्क फ़ोन (ज़रूरी नहीं)</string>
+    <string name="feast_place_info">भंडारा मैप पर वहीं दिखेगा जहाँ आप अभी हैं, इसलिए उसी जगह से डालें। आप पता भी जोड़ सकते हैं।</string>
+    <string name="feast_address">पता (ज़रूरी नहीं)</string>
+    <string name="feast_landmark">लैंडमार्क (ज़रूरी नहीं)</string>
+    <string name="feast_people">कितने लोग (ज़रूरी नहीं)</string>
+    <string name="next">आगे</string>
+    <string name="post_feast">भंडारा पोस्ट करें</string>
+    <string name="ok">ठीक है</string>
 </resources>

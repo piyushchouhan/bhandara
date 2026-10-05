@@ -27,6 +27,11 @@ class AppNavigator(initialBackStack: List<Route> = listOf(Route.Home)) {
         if (route != current) backStack = backStack + route
     }
 
+    /** Shows [route] in place of the current screen, e.g. a feast's page after posting it, so back skips the form */
+    fun replace(route: Route) {
+        backStack = if (canGoBack) backStack.dropLast(1) + route else backStack + route
+    }
+
     /** Closes the current screen; returns false when on the first screen, so the platform decides */
     fun back(): Boolean {
         if (!canGoBack) return false

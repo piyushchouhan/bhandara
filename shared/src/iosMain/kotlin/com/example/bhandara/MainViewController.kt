@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
 import com.example.bhandara.ui.feasts.FeastDetailsScreen
+import com.example.bhandara.ui.reportfeast.ReportFeastScreen
 import platform.Foundation.NSBundle
 import com.example.bhandara.ui.feasts.FeastsMapScreen
 import com.example.bhandara.ui.shopdetails.ShopDetailsScreen
@@ -52,7 +53,6 @@ import com.example.bhandara.shared.resources.coming_soon_text
 import com.example.bhandara.shared.resources.coming_soon_title
 import com.example.bhandara.shared.resources.feature_add_shop
 import com.example.bhandara.shared.resources.feature_claim_shop
-import com.example.bhandara.shared.resources.feature_report_feast
 import com.example.bhandara.shared.resources.feature_this
 import org.jetbrains.compose.resources.stringResource
 import com.example.bhandara.auth.IosAccountSignIn
@@ -143,6 +143,10 @@ fun MainViewController(
                         onFeastClick = { feastId -> navigator.navigate(Route.FeastDetails(feastId)) },
                     )
                     is Route.FeastDetails -> FeastDetailsScreen(feastId = route.feastId, onBack = { navigator.back() })
+                    Route.ReportFeast -> ReportFeastScreen(
+                        onBack = { navigator.back() },
+                        onPosted = { feastId -> navigator.replace(Route.FeastDetails(feastId)) },
+                    )
                     // Claiming and adding menu items come to iPhone with the other write flows (phase 2)
                     Route.Profile -> ProfileScreen(onBack = { navigator.back() })
                     Route.About -> AboutScreen(onBack = { navigator.back() })
@@ -165,7 +169,6 @@ fun MainViewController(
 private fun NotOnIphoneYet(route: Route, onBack: () -> Unit) {
     val feature = stringResource(
         when (route) {
-            Route.ReportFeast -> Res.string.feature_report_feast
             Route.AddShop -> Res.string.feature_add_shop
             is Route.ClaimShop -> Res.string.feature_claim_shop
             else -> Res.string.feature_this

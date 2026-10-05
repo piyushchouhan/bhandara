@@ -1,11 +1,13 @@
 package com.example.bhandara.data.network
 
 import com.example.bhandara.data.location.GeoLocation
+import com.example.bhandara.data.models.api.FeastRequest
 import com.example.bhandara.data.models.api.FeastResponse
 import io.ktor.client.request.parameter
+import io.ktor.client.request.setBody
 import io.ktor.http.HttpMethod
 
-/** Community feasts (bhandaras): finding them and flagging fake ones */
+/** Community feasts (bhandaras): posting, finding and flagging fake ones */
 class FeastApi(private val client: ApiClient) {
 
     /** Feasts on now or coming up near the user, with their distance; ended ones are left out */
@@ -15,6 +17,13 @@ class FeastApi(private val client: ApiClient) {
             parameter("lat", near.latitude)
             parameter("lon", near.longitude)
             parameter("radius", radiusMeters)
+        }
+
+    /** Posts a new feast; everyone nearby is told about it. Limited to a few per hour per user (429 after that). */
+    suspend fun createFeast(feast: FeastRequest): ApiResult<FeastResponse> =
+        client.call("api/feasts") {
+            method = HttpMethod.Post
+            setBody(feast)
         }
 
     suspend fun getFeast(feastId: String): ApiResult<FeastResponse> =

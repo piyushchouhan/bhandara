@@ -190,7 +190,6 @@
     <!-- Screens not on iPhone yet -->
     <string name="coming_soon_title">Coming soon to iPhone</string>
     <string name="coming_soon_text">%1$s isn't on iPhone yet. Until then you can do it in the Android app.</string>
-    <string name="feature_report_feast">Posting a community feast</string>
     <string name="feature_add_shop">Adding a shop</string>
     <string name="feature_claim_shop">Claiming a shop</string>
     <string name="feature_this">This</string>
@@ -199,4 +198,31 @@
     <string name="photo_take">Take photo</string>
     <string name="photo_choose_from_gallery">Choose from gallery</string>
     <string name="sign_in_required_title">Sign in to continue</string>
+    <!-- Posting a feast -->
+    <string name="report_feast_title">Post a community feast</string>
+    <string name="step_food">Food &amp; photos</string>
+    <string name="step_when">When &amp; contact</string>
+    <string name="step_where">Place</string>
+    <string name="clear_all">Clear all</string>
+    <string name="clear_all_title">Clear the whole form?</string>
+    <string name="clear_all_text">This removes the photos, menu, date, times, contact and place you entered.</string>
+    <string name="feast_photos_label">Photos of the food or the place (at least 1, up to %1$d)</string>
+    <string name="feast_menu_label">What's being served</string>
+    <string name="feast_menu_hint">Type an item, then a comma</string>
+    <string name="feast_food_type_hint">e.g. Veg, Jain</string>
+    <string name="feast_description_hint">Tell people about this feast</string>
+    <string name="feast_date">Date</string>
+    <string name="feast_starts">Starts</string>
+    <string name="feast_ends">Ends</string>
+    <string name="choose">Choose</string>
+    <string name="feast_ends_next_day">Ends the next day</string>
+    <string name="feast_organizer">Organizer (optional)</string>
+    <string name="feast_phone">Contact phone (optional)</string>
+    <string name="feast_place_info">The feast goes on the map where you are now, so post it from the place. You can add the address too.</string>
+    <string name="feast_address">Address (optional)</string>
+    <string name="feast_landmark">Landmark (optional)</string>
+    <string name="feast_people">How many people (optional)</string>
+    <string name="next">Next</string>
+    <string name="post_feast">Post feast</string>
+    <string name="ok">OK</string>
 </resources>
