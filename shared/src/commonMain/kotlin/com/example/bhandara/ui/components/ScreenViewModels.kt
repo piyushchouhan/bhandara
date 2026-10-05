@@ -9,8 +9,9 @@ import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 
 /**
- * Gives [content] its own ViewModels, cleared when it leaves the screen. Without it, view models belong to the
- * whole app (Android's activity), so e.g. every shop page would share one view model, still showing the last shop.
+ * Gives [content] its own view models, cleared when it leaves the composition, e.g. a dialog that should start
+ * fresh every time it opens. Screens don't need this: [com.example.bhandara.navigation.NavEntries] gives each open
+ * screen its own.
  */
 @Composable
 fun ScreenViewModels(content: @Composable () -> Unit) {

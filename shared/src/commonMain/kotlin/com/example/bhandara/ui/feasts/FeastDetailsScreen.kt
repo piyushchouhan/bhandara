@@ -97,7 +97,6 @@ import com.example.bhandara.shared.resources.shop_distance_away
 import com.example.bhandara.shared.resources.shop_location_missing
 import com.example.bhandara.shared.resources.shop_near_landmark
 import com.example.bhandara.shared.resources.try_again
-import com.example.bhandara.ui.components.ScreenViewModels
 import com.example.bhandara.ui.shopdetails.FullScreenPhotos
 import com.example.bhandara.ui.shopdetails.InfoRow
 import com.example.bhandara.ui.shopdetails.SectionCard
@@ -110,7 +109,7 @@ import org.jetbrains.compose.resources.stringResource
  * the menu, directions and call, and reporting a fake feast.
  */
 @Composable
-fun FeastDetailsScreen(feastId: String, onBack: () -> Unit) = ScreenViewModels {
+fun FeastDetailsScreen(feastId: String, onBack: () -> Unit) {
     val dependencies = LocalAppDependencies.current
     val deviceLocation = rememberDeviceLocation()
     val viewModel = viewModel {

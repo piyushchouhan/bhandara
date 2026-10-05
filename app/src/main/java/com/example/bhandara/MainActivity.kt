@@ -40,6 +40,7 @@ import com.example.bhandara.managers.UserManager
 import com.example.bhandara.ui.components.OwnerConfirmationDialog
 import com.example.bhandara.ui.shopdetails.ShopDetailsScreen
 import com.example.bhandara.ui.components.AndroidReviewPhotos
+import com.example.bhandara.navigation.NavEntries
 import com.example.bhandara.ui.drawer.AppDrawer
 import com.example.bhandara.ui.drawer.AboutScreen
 import com.example.bhandara.ui.drawer.SupportScreen
@@ -138,7 +139,8 @@ class MainActivity : AppCompatActivity() {
                     Scaffold(
                         modifier = Modifier.fillMaxSize()
                     ) { innerPadding ->
-                        when (val route = navigator.current) {
+                        NavEntries(navigator) { route ->
+                        when (route) {
                             Route.Home -> {
                                 AppDrawer(
                                     onProfileClick = { navigateTo(Route.Profile) },
@@ -234,6 +236,7 @@ class MainActivity : AppCompatActivity() {
                             Route.Terms -> {
                                 TermsScreen(onBack = { navigateBack() })
                             }
+                        }
                         }
                     }
 

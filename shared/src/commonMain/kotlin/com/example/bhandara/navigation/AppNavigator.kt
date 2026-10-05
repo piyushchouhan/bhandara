@@ -34,6 +34,12 @@ class AppNavigator(initialBackStack: List<Route> = listOf(Route.Home)) {
         return true
     }
 
+    /**
+     * One key per open screen, bottom first. The same screen opened twice (e.g. two shops' pages) gets two keys,
+     * and a screen keeps its key while screens open and close above it.
+     */
+    fun entryKeys(): List<String> = backStack.mapIndexed { index, route -> "$index:$route" }
+
     /** The back stack as text, so it can be restored after rotation or when Android recreates the screen */
     fun save(): ArrayList<String> = ArrayList(backStack.map { json.encodeToString(Route.serializer(), it) })
 

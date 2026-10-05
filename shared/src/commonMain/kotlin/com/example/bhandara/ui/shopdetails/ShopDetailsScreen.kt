@@ -76,7 +76,6 @@ import com.example.bhandara.shared.resources.suggest_delete_title
 import com.example.bhandara.shared.resources.tab_overview
 import com.example.bhandara.shared.resources.tab_reviews
 import com.example.bhandara.shared.resources.try_again
-import com.example.bhandara.ui.components.ScreenViewModels
 import com.example.bhandara.ui.reviews.ReviewPhotos
 import com.example.bhandara.ui.reviews.ReviewsSection
 import org.jetbrains.compose.resources.StringResource
@@ -98,7 +97,7 @@ fun ShopDetailsScreen(
     onClaim: ((shopName: String) -> Unit)? = null,
     addMenuItems: (@Composable (existingNames: List<String>, onDone: () -> Unit) -> Unit)? = null,
     reviewPhotos: ReviewPhotos? = null,
-) = ScreenViewModels {
+) {
     val dependencies = LocalAppDependencies.current
     val deviceLocation = rememberDeviceLocation()
     val viewModel = viewModel {

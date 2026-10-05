@@ -187,4 +187,11 @@
     <string name="profile_signing_out">साइन आउट हो रहा है…</string>
     <string name="profile_sign_in_later">iPhone पर Google से साइन इन जल्द आ रहा है।</string>
     <string name="language_in_settings">सेटिंग्स में बदलें</string>
+    <!-- Screens not on iPhone yet -->
+    <string name="coming_soon_title">iPhone पर जल्द आ रहा है</string>
+    <string name="coming_soon_text">%1$s अभी iPhone पर नहीं है। तब तक आप इसे Android ऐप में कर सकते हैं।</string>
+    <string name="feature_report_feast">भंडारे की जानकारी डालना</string>
+    <string name="feature_add_shop">दुकान जोड़ना</string>
+    <string name="feature_claim_shop">दुकान क्लेम करना</string>
+    <string name="feature_this">यह</string>
 </resources>

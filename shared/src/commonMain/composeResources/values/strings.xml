@@ -28,7 +28,7 @@
     <string name="map_allow_location">Allow location</string>
     <string name="map_location_denied">Location is off for Local Feast. Turn it on in Settings to see food shops near you.</string>
     <string name="map_open_settings">Open Settings</string>
-    <string name="map_location_unavailable">Couldn\'t find where you are. Check that location is turned on.</string>
+    <string name="map_location_unavailable">Couldn't find where you are. Check that location is turned on.</string>
     <string name="try_again">Try again</string>
     <string name="my_location">My location</string>
     <string name="back">Back</string>
@@ -187,4 +187,11 @@
     <string name="profile_signing_out">Signing out…</string>
     <string name="profile_sign_in_later">Signing in with Google is coming to iPhone soon.</string>
     <string name="language_in_settings">Change in Settings</string>
+    <!-- Screens not on iPhone yet -->
+    <string name="coming_soon_title">Coming soon to iPhone</string>
+    <string name="coming_soon_text">%1$s isn't on iPhone yet. Until then you can do it in the Android app.</string>
+    <string name="feature_report_feast">Posting a community feast</string>
+    <string name="feature_add_shop">Adding a shop</string>
+    <string name="feature_claim_shop">Claiming a shop</string>
+    <string name="feature_this">This</string>
 </resources>

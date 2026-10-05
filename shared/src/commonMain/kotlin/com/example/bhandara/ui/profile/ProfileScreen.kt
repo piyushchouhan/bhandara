@@ -60,7 +60,6 @@ import com.example.bhandara.shared.resources.profile_dialog_sign_out
 import com.example.bhandara.shared.resources.profile_dialog_title
 import com.example.bhandara.shared.resources.profile_sign_in_later
 import com.example.bhandara.shared.resources.profile_signing_out
-import com.example.bhandara.ui.components.ScreenViewModels
 import org.jetbrains.compose.resources.stringResource
 
 /**
@@ -79,7 +78,7 @@ interface AccountSignIn {
 
 /** The profile, shared by Android and iOS: who is signed in, and signing in with Google or out */
 @Composable
-fun ProfileScreen(onBack: () -> Unit, accountSignIn: AccountSignIn?) = ScreenViewModels {
+fun ProfileScreen(onBack: () -> Unit, accountSignIn: AccountSignIn?) {
     val dependencies = LocalAppDependencies.current
     val viewModel = viewModel { ProfileViewModel(dependencies.auth, accountSignIn?.let { it::signOut }) }
     ProfilePage(viewModel, accountSignIn, onBack)
