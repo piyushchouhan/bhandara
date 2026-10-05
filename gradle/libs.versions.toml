@@ -6,8 +6,11 @@ coreKtx = "1.17.0"
 junit = "4.13.2"
 junitVersion = "1.3.0"
 espressoCore = "3.7.0"
-lifecycleRuntimeKtx = "2.10.0"
-activityCompose = "1.12.1"
+# lifecycle and activity stay on the versions built for Compose 1.7: newer ones pull Compose 1.9 into the app, while
+# the shared module is built against Compose 1.7 (Compose Multiplatform 1.7.3), and screens using APIs that changed
+# in between crash (e.g. FlowRow: NoSuchMethodError). Upgrade together with composeMultiplatform.
+lifecycleRuntimeKtx = "2.8.7"
+activityCompose = "1.9.3"
 composeBom = "2024.09.00"
 appcompat = "1.7.1"
 kotlinxSerialization = "1.7.3"
