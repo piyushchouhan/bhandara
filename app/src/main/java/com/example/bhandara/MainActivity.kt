@@ -52,7 +52,6 @@ import com.example.bhandara.ui.components.GoogleAccountSignIn
 import com.example.bhandara.ui.components.VendorMode
 import com.example.bhandara.ui.components.VendorModeBanner
 import com.example.bhandara.ui.components.VendorModeItem
-import com.example.bhandara.ui.screens.AddMenuItemsScreen
 import com.example.bhandara.ui.feasts.FeastDetailsScreen
 import com.example.bhandara.ui.reportfeast.ReportFeastScreen
 import com.example.bhandara.ui.feasts.FeastsMapScreen
@@ -214,10 +213,6 @@ class MainActivity : AppCompatActivity() {
                                     shopId = route.shopId,
                                     onBack = { navigateBack() },
                                     onClaim = { shopName -> navigateTo(Route.ClaimShop(route.shopId, shopName)) },
-                                    // Android-only until adding menu items moves to shared code (phase 2)
-                                    addMenuItems = { existingNames, onDone ->
-                                        AddMenuItemsScreen(shopId = route.shopId, existingNames = existingNames, onNavigateBack = onDone)
-                                    },
                                 )
                             }
                             is Route.ClaimShop -> {

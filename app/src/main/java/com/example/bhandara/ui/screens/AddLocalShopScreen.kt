@@ -1,5 +1,6 @@
 package com.example.bhandara.ui.screens
 
+import com.example.bhandara.ui.menu.AddMenuItemsScreen
 import com.example.bhandara.data.settings.AddShopDraft
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.LifecycleEventObserver
@@ -405,19 +406,21 @@ fun AddLocalShopScreen(
 
     // Show the detailed menu local form (full-screen overlay)
     if (showDetailedMenuScreen) {
+        // Shared with iOS; without a shop id the items come back as the new shop's draft menu
         AddMenuItemsScreen(
+            shopId = null,
+            existingNames = emptyList(),
             initialItems = draftDetailedMenuItems,
-            onSaveItems = { items ->
+            onSaved = { items ->
                 draftDetailedMenuItems = items
                 settings.draftMenuItems = items
                 showDetailedMenuScreen = false
             },
-            onClearAll = {
+            onBack = { showDetailedMenuScreen = false },
+            onClearDraft = {
                 draftDetailedMenuItems = emptyList()
                 settings.draftMenuItems = emptyList()
-                showDetailedMenuScreen = false
             },
-            onNavigateBack = { showDetailedMenuScreen = false }
         )
         return
     }

@@ -225,4 +225,22 @@
     <string name="next">आगे</string>
     <string name="post_feast">भंडारा पोस्ट करें</string>
     <string name="ok">ठीक है</string>
+    <!-- Adding menu items -->
+    <string name="menu_items_title">मेन्यू आइटम</string>
+    <string name="tab_type_items">आइटम लिखें</string>
+    <string name="tab_scan_menu">मेन्यू की फ़ोटो स्कैन करें</string>
+    <string name="item_name">आइटम का नाम</string>
+    <string name="item_price">कीमत (₹)</string>
+    <string name="food_egg">अंडा</string>
+    <string name="add_another_item">एक और आइटम जोड़ें</string>
+    <string name="remove_item">आइटम हटाएँ</string>
+    <string name="scan_intro">मेन्यू की फ़ोटो लें या चुनें। AI आइटम पढ़ेगा, और सेव करने से पहले आप उन्हें जाँच लें।</string>
+    <string name="scan_read">मेन्यू पढ़ें</string>
+    <string name="scan_reading">मेन्यू पढ़ा जा रहा है…</string>
+    <string name="scan_found">%1$d आइटम पढ़े गए। जाँचें, फिर सेव करें।</string>
+    <string name="save_menu">मेन्यू सेव करें</string>
+    <string name="save_and_back">सेव करके वापस जाएँ</string>
+    <string name="clear_menu">मेन्यू मिटाएँ</string>
+    <string name="clear_menu_title">मेन्यू मिटाएँ?</string>
+    <string name="clear_menu_text">इससे इस ड्राफ़्ट के सारे आइटम हट जाएँगे।</string>
 </resources>

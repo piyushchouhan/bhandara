@@ -225,4 +225,22 @@
     <string name="next">Next</string>
     <string name="post_feast">Post feast</string>
     <string name="ok">OK</string>
+    <!-- Adding menu items -->
+    <string name="menu_items_title">Menu items</string>
+    <string name="tab_type_items">Type items</string>
+    <string name="tab_scan_menu">Scan menu photo</string>
+    <string name="item_name">Item name</string>
+    <string name="item_price">Price (₹)</string>
+    <string name="food_egg">Egg</string>
+    <string name="add_another_item">Add another item</string>
+    <string name="remove_item">Remove item</string>
+    <string name="scan_intro">Take or choose photos of the menu. AI reads the items, and you check them before saving.</string>
+    <string name="scan_read">Read the menu</string>
+    <string name="scan_reading">Reading the menu…</string>
+    <string name="scan_found">Read %1$d items. Check them, then save.</string>
+    <string name="save_menu">Save menu</string>
+    <string name="save_and_back">Save and go back</string>
+    <string name="clear_menu">Clear menu</string>
+    <string name="clear_menu_title">Clear the menu?</string>
+    <string name="clear_menu_text">This removes all the items in this draft.</string>
 </resources>

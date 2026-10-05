@@ -225,4 +225,22 @@
     <string name="next">पुढे</string>
     <string name="post_feast">भंडारा पोस्ट करा</string>
     <string name="ok">ठीक आहे</string>
+    <!-- Adding menu items -->
+    <string name="menu_items_title">मेनू पदार्थ</string>
+    <string name="tab_type_items">पदार्थ लिहा</string>
+    <string name="tab_scan_menu">मेनूचा फोटो स्कॅन करा</string>
+    <string name="item_name">पदार्थाचे नाव</string>
+    <string name="item_price">किंमत (₹)</string>
+    <string name="food_egg">अंडे</string>
+    <string name="add_another_item">आणखी पदार्थ जोडा</string>
+    <string name="remove_item">पदार्थ काढा</string>
+    <string name="scan_intro">मेनूचे फोटो काढा किंवा निवडा. AI पदार्थ वाचेल, आणि सेव्ह करण्यापूर्वी तुम्ही ते तपासा.</string>
+    <string name="scan_read">मेनू वाचा</string>
+    <string name="scan_reading">मेनू वाचत आहे…</string>
+    <string name="scan_found">%1$d पदार्थ वाचले. तपासा, मग सेव्ह करा.</string>
+    <string name="save_menu">मेनू सेव्ह करा</string>
+    <string name="save_and_back">सेव्ह करून मागे जा</string>
+    <string name="clear_menu">मेनू पुसा</string>
+    <string name="clear_menu_title">मेनू पुसायचा?</string>
+    <string name="clear_menu_text">यामुळे या ड्राफ्टमधील सर्व पदार्थ काढले जातील.</string>
 </resources>

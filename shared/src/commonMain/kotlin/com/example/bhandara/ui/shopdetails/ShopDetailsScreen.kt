@@ -76,6 +76,7 @@ import com.example.bhandara.shared.resources.suggest_delete_title
 import com.example.bhandara.shared.resources.tab_overview
 import com.example.bhandara.shared.resources.tab_reviews
 import com.example.bhandara.shared.resources.try_again
+import com.example.bhandara.ui.menu.AddMenuItemsScreen
 import com.example.bhandara.ui.reviews.ReviewsSection
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
@@ -85,15 +86,12 @@ import org.jetbrains.compose.resources.stringResource
  * with prices, facilities, directions and call, and reporting or (for its owner) deactivating the shop.
  *
  * @param onClaim       the real owner claims a shop the platform listed; null hides "Is this your shop?"
- * @param addMenuItems  the owner's "Add items" screen, shown in place of the page until it calls onDone;
- *                      null hides the button
  */
 @Composable
 fun ShopDetailsScreen(
     shopId: String,
     onBack: () -> Unit,
     onClaim: ((shopName: String) -> Unit)? = null,
-    addMenuItems: (@Composable (existingNames: List<String>, onDone: () -> Unit) -> Unit)? = null,
 ) {
     val dependencies = LocalAppDependencies.current
     val deviceLocation = rememberDeviceLocation()
@@ -108,19 +106,25 @@ fun ShopDetailsScreen(
     }
     var addingMenuItems by rememberSaveable { mutableStateOf(false) }
 
-    if (addingMenuItems && addMenuItems != null) {
-        val menu by viewModel.state.collectAsStateWithLifecycle()
-        addMenuItems(menu.menu.map { it.name }) {
-            addingMenuItems = false
-            viewModel.refreshMenu()
-        }
+    if (addingMenuItems) {
+        // The owner adding items, in place of the page; the menu reloads when they're saved
+        val state by viewModel.state.collectAsStateWithLifecycle()
+        AddMenuItemsScreen(
+            shopId = shopId,
+            existingNames = state.menu.map { it.name },
+            onSaved = {
+                addingMenuItems = false
+                viewModel.refreshMenu()
+            },
+            onBack = { addingMenuItems = false },
+        )
     } else {
         ShopDetailsPage(
             shopId = shopId,
             viewModel = viewModel,
             onBack = onBack,
             onClaim = onClaim,
-            onAddMenuItems = addMenuItems?.let { { addingMenuItems = true } },
+            onAddMenuItems = { addingMenuItems = true },
         )
     }
 }

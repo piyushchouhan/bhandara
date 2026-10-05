@@ -68,3 +68,9 @@ inline fun <T> ApiResult<T>.onFailure(action: (ApiError) -> Unit): ApiResult<T> 
 }
 
 fun <T> ApiResult<T>.getOrNull(): T? = (this as? ApiResult.Success)?.value
+
+/** The value changed by [transform] on success; the same failure otherwise */
+inline fun <T, R> ApiResult<T>.map(transform: (T) -> R): ApiResult<R> = when (this) {
+    is ApiResult.Success -> ApiResult.Success(transform(value))
+    is ApiResult.Failure -> this
+}
