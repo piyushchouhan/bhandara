@@ -55,7 +55,10 @@ import com.example.bhandara.shared.resources.feature_claim_shop
 import com.example.bhandara.shared.resources.feature_report_feast
 import com.example.bhandara.shared.resources.feature_this
 import org.jetbrains.compose.resources.stringResource
+import com.example.bhandara.auth.IosAccountSignIn
+import com.example.bhandara.auth.IosGoogleSignInBridge
 import com.example.bhandara.navigation.NavEntries
+import com.example.bhandara.ui.profile.LocalAccountSignIn
 import com.example.bhandara.photos.IosPlatformStorage
 import com.example.bhandara.photos.IosStorageBridge
 import com.example.bhandara.photos.PhotoUploader
@@ -74,8 +77,15 @@ import com.example.bhandara.ui.theme.BhandaraTheme
  * @param mapBridge Google Maps, implemented in Swift (IosGoogleMapBridge.swift)
  * @param apiBaseUrl the backend's address (ApiBaseUrl in Info.plist, from Config/Secrets.xcconfig)
  * @param storage Firebase Storage for photos, implemented in Swift (IosFirebaseStorage.swift)
+ * @param googleSignIn Google sign-in, implemented in Swift (IosGoogleSignIn.swift)
  */
-fun MainViewController(auth: PlatformAuth, mapBridge: IosMapBridge, apiBaseUrl: String, storage: IosStorageBridge) = ComposeUIViewController {
+fun MainViewController(
+    auth: PlatformAuth,
+    mapBridge: IosMapBridge,
+    apiBaseUrl: String,
+    storage: IosStorageBridge,
+    googleSignIn: IosGoogleSignInBridge,
+) = ComposeUIViewController {
     val authService = remember { AuthService(auth) }
     val dependencies = remember { AppDependencies(
             ApiClient(apiBaseUrl, authService::idToken),
@@ -95,7 +105,11 @@ fun MainViewController(auth: PlatformAuth, mapBridge: IosMapBridge, apiBaseUrl: 
     }
 
     ProvideAppEnvironment {
-        CompositionLocalProvider(LocalIosMapBridge provides mapBridge, LocalAppDependencies provides dependencies) {
+        CompositionLocalProvider(
+            LocalIosMapBridge provides mapBridge,
+            LocalAppDependencies provides dependencies,
+            LocalAccountSignIn provides remember { IosAccountSignIn(googleSignIn) },
+        ) {
             BhandaraTheme {
                 val navigator = rememberAppNavigator()
                 var homeTabIndex by remember { mutableIntStateOf(0) }
@@ -130,8 +144,7 @@ fun MainViewController(auth: PlatformAuth, mapBridge: IosMapBridge, apiBaseUrl: 
                     )
                     is Route.FeastDetails -> FeastDetailsScreen(feastId = route.feastId, onBack = { navigator.back() })
                     // Claiming and adding menu items come to iPhone with the other write flows (phase 2)
-                    // Signing in with Google comes to iPhone in phase 2; until then the profile shows the guest account
-                    Route.Profile -> ProfileScreen(onBack = { navigator.back() }, accountSignIn = null)
+                    Route.Profile -> ProfileScreen(onBack = { navigator.back() })
                     Route.About -> AboutScreen(onBack = { navigator.back() })
                     Route.Support -> SupportScreen(onBack = { navigator.back() })
                     Route.Terms -> TermsScreen(onBack = { navigator.back() })

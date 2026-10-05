@@ -8,7 +8,8 @@ struct ComposeView: UIViewControllerRepresentable {
             auth: IosPlatformAuth(),
             mapBridge: IosGoogleMapBridge(),
             apiBaseUrl: Bundle.main.object(forInfoDictionaryKey: "ApiBaseUrl") as? String ?? "",
-            storage: IosFirebaseStorage()
+            storage: IosFirebaseStorage(),
+            googleSignIn: IosGoogleSignIn()
         )
     }
 

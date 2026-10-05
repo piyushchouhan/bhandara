@@ -1,6 +1,7 @@
 import SwiftUI
 import FirebaseCore
 import GoogleMaps
+import GoogleSignIn
 
 @main
 struct iOSApp: App {
@@ -16,6 +17,8 @@ struct iOSApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                // Google's sign-in page returns to the app through its URL scheme (REVERSED_CLIENT_ID)
+                .onOpenURL { url in _ = GIDSignIn.sharedInstance.handle(url) }
         }
     }
 }

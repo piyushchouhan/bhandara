@@ -14,6 +14,9 @@ packages:
   GoogleMaps:
     url: https://github.com/googlemaps/ios-maps-sdk
     from: "9.0.0"
+  GoogleSignIn:
+    url: https://github.com/google/GoogleSignIn-iOS
+    from: "8.0.0"
 # Local secrets (e.g. the Google Maps key) come from Config/Secrets.xcconfig, which is not in git
 configFiles:
   Debug: Config/Secrets.xcconfig
@@ -31,10 +34,14 @@ targets:
         product: FirebaseStorage
       - package: GoogleMaps
         product: GoogleMaps
+      - package: GoogleSignIn
+        product: GoogleSignIn
     info:
       path: iosApp/Info.plist
       properties:
         CFBundleDisplayName: Local Feast
+        # The name iOS uses in its own prompts (e.g. "Local Feast wants to use google.com to sign in")
+        CFBundleName: Local Feast
         # The app's languages; iOS then offers them on the app's page in Settings (the side menu links there)
         CFBundleDevelopmentRegion: en
         CFBundleLocalizations: [en, hi, mr]
@@ -46,6 +53,9 @@ targets:
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
         # Shown when the app asks for location access
+        # Google's sign-in page returns to the app through this URL scheme (from Config/Secrets.xcconfig)
+        CFBundleURLTypes:
+          - CFBundleURLSchemes: [$(GOOGLE_REVERSED_CLIENT_ID)]
         # Shown when the app asks to use the camera (photos of reviews, feasts and shops); choosing from the
         # photo library uses the system picker, which needs no permission
         NSCameraUsageDescription: Local Feast uses the camera to take photos of food, shops and community feasts you share.

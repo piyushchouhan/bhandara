@@ -63,8 +63,7 @@ import com.example.bhandara.shared.resources.profile_signing_out
 import org.jetbrains.compose.resources.stringResource
 
 /**
- * Signing in with an account (Google), as each platform does it. Android implements it; iPhone gets it with the
- * other sign-in work (phase 2), until then the profile shows the guest account only.
+ * Signing in with an account (Google), as each platform does it: Android in the app module, iOS in Swift.
  */
 interface AccountSignIn {
 
@@ -78,7 +77,7 @@ interface AccountSignIn {
 
 /** The profile, shared by Android and iOS: who is signed in, and signing in with Google or out */
 @Composable
-fun ProfileScreen(onBack: () -> Unit, accountSignIn: AccountSignIn?) {
+fun ProfileScreen(onBack: () -> Unit, accountSignIn: AccountSignIn? = LocalAccountSignIn.current) {
     val dependencies = LocalAppDependencies.current
     val viewModel = viewModel { ProfileViewModel(dependencies.auth, accountSignIn?.let { it::signOut }) }
     ProfilePage(viewModel, accountSignIn, onBack)

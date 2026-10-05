@@ -198,4 +198,5 @@
     <string name="photo_sheet_title">फोटो जोडा</string>
     <string name="photo_take">फोटो काढा</string>
     <string name="photo_choose_from_gallery">गॅलरीमधून निवडा</string>
+    <string name="sign_in_required_title">पुढे जाण्यासाठी साइन इन करा</string>
 </resources>

@@ -46,6 +46,7 @@ import com.example.bhandara.ui.drawer.AppDrawer
 import com.example.bhandara.ui.drawer.AboutScreen
 import com.example.bhandara.ui.drawer.SupportScreen
 import com.example.bhandara.ui.drawer.TermsScreen
+import com.example.bhandara.ui.profile.LocalAccountSignIn
 import com.example.bhandara.ui.profile.ProfileScreen
 import com.example.bhandara.ui.components.GoogleAccountSignIn
 import com.example.bhandara.ui.components.VendorMode
@@ -107,7 +108,8 @@ class MainActivity : AppCompatActivity() {
         setContent {
             ProvideAppEnvironment {
               CompositionLocalProvider(
-                  LocalAppDependencies provides remember { AppDependencies(AppBackend.client, AppSettings(this), AppAuth.service, BuildConfig.VERSION_NAME, PhotoUploader(AndroidFirebaseStorage())) }
+                  LocalAppDependencies provides remember { AppDependencies(AppBackend.client, AppSettings(this), AppAuth.service, BuildConfig.VERSION_NAME, PhotoUploader(AndroidFirebaseStorage())) },
+                  LocalAccountSignIn provides remember { GoogleAccountSignIn(this) },
               ) {
                 BhandaraTheme {
                     // Which screens are open (shared with iOS); kept across rotation
@@ -124,7 +126,6 @@ class MainActivity : AppCompatActivity() {
                     }
                 
                     val vendorMode = remember { VendorMode(this@MainActivity) }
-                    val googleSignIn = remember { GoogleAccountSignIn(this@MainActivity) }
 
                     fun navigateTo(route: Route) = navigator.navigate(route)
 
@@ -225,7 +226,7 @@ class MainActivity : AppCompatActivity() {
                                 )
                             }
                             Route.Profile -> {
-                                ProfileScreen(onBack = { navigateBack() }, accountSignIn = googleSignIn)
+                                ProfileScreen(onBack = { navigateBack() })
                             }
                             Route.About -> {
                                 AboutScreen(onBack = { navigateBack() })

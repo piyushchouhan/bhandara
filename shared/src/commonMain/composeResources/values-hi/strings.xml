@@ -198,4 +198,5 @@
     <string name="photo_sheet_title">फ़ोटो जोड़ें</string>
     <string name="photo_take">फ़ोटो खींचें</string>
     <string name="photo_choose_from_gallery">गैलरी से चुनें</string>
+    <string name="sign_in_required_title">आगे बढ़ने के लिए साइन इन करें</string>
 </resources>
