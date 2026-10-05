@@ -35,10 +35,11 @@ private class IosPlatformActions : PlatformActions {
         UIApplication.sharedApplication.openURL(nsUrl, options = emptyMap<Any?, Any>(), completionHandler = null)
     }
 
-    /** The screen currently shown, to present the share sheet on top of it */
-    private fun topViewController(): UIViewController? {
-        var top = UIApplication.sharedApplication.keyWindow?.rootViewController
-        while (top?.presentedViewController != null) top = top.presentedViewController
-        return top
-    }
+}
+
+/** The screen currently shown, to present system screens (share sheet, photo picker) on top of it */
+internal fun topViewController(): UIViewController? {
+    var top = UIApplication.sharedApplication.keyWindow?.rootViewController
+    while (top?.presentedViewController != null) top = top.presentedViewController
+    return top
 }

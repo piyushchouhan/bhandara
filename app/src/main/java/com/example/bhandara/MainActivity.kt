@@ -6,7 +6,9 @@ import com.example.bhandara.platform.LocalAppDependencies
 import com.example.bhandara.platform.AppDependencies
 import com.example.bhandara.data.settings.AppSettings
 import com.example.bhandara.data.models.api.LocalShopResponse
+import com.example.bhandara.data.storage.AndroidFirebaseStorage
 import com.example.bhandara.data.auth.AppAuth
+import com.example.bhandara.photos.PhotoUploader
 import com.example.bhandara.data.auth.AppBackend
 import androidx.compose.runtime.CompositionLocalProvider
 import com.example.bhandara.data.location.AndroidDeviceLocation
@@ -39,7 +41,6 @@ import kotlinx.coroutines.launch
 import com.example.bhandara.managers.UserManager
 import com.example.bhandara.ui.components.OwnerConfirmationDialog
 import com.example.bhandara.ui.shopdetails.ShopDetailsScreen
-import com.example.bhandara.ui.components.AndroidReviewPhotos
 import com.example.bhandara.navigation.NavEntries
 import com.example.bhandara.ui.drawer.AppDrawer
 import com.example.bhandara.ui.drawer.AboutScreen
@@ -106,7 +107,7 @@ class MainActivity : AppCompatActivity() {
         setContent {
             ProvideAppEnvironment {
               CompositionLocalProvider(
-                  LocalAppDependencies provides remember { AppDependencies(AppBackend.client, AppSettings(this), AppAuth.service, BuildConfig.VERSION_NAME) }
+                  LocalAppDependencies provides remember { AppDependencies(AppBackend.client, AppSettings(this), AppAuth.service, BuildConfig.VERSION_NAME, PhotoUploader(AndroidFirebaseStorage())) }
               ) {
                 BhandaraTheme {
                     // Which screens are open (shared with iOS); kept across rotation
@@ -210,11 +211,10 @@ class MainActivity : AppCompatActivity() {
                                     shopId = route.shopId,
                                     onBack = { navigateBack() },
                                     onClaim = { shopName -> navigateTo(Route.ClaimShop(route.shopId, shopName)) },
-                                    // Android-only until photos and menu editing move to shared code (phase 2)
+                                    // Android-only until adding menu items moves to shared code (phase 2)
                                     addMenuItems = { existingNames, onDone ->
                                         AddMenuItemsScreen(shopId = route.shopId, existingNames = existingNames, onNavigateBack = onDone)
                                     },
-                                    reviewPhotos = remember { AndroidReviewPhotos(this@MainActivity) },
                                 )
                             }
                             is Route.ClaimShop -> {

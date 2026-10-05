@@ -194,4 +194,8 @@
     <string name="feature_add_shop">दुकान जोडणे</string>
     <string name="feature_claim_shop">दुकान क्लेम करणे</string>
     <string name="feature_this">हे</string>
+    <!-- Photos -->
+    <string name="photo_sheet_title">फोटो जोडा</string>
+    <string name="photo_take">फोटो काढा</string>
+    <string name="photo_choose_from_gallery">गॅलरीमधून निवडा</string>
 </resources>

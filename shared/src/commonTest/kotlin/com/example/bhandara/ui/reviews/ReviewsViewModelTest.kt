@@ -3,6 +3,9 @@ package com.example.bhandara.ui.reviews
 import com.example.bhandara.data.network.ApiClient
 import com.example.bhandara.data.network.ReviewApi
 import com.example.bhandara.data.settings.AppSettings
+import com.example.bhandara.photos.CompressedPhoto
+import com.example.bhandara.photos.PhotoUploadException
+import com.example.bhandara.photos.PickedPhoto
 import com.russhwolf.settings.MapSettings
 import com.russhwolf.settings.Settings
 import io.ktor.client.engine.mock.MockEngine
@@ -80,14 +83,23 @@ class ReviewsViewModelTest {
 
     private fun reviewsAre(vararg reviews: String) = answer(HttpMethod.Get, "reviews/shop/5", "[${reviews.joinToString(",")}]")
 
+    /** A photo picked on the phone, named for the test */
+    private data class Photo(val name: String) : PickedPhoto {
+        override val preview: Any = name
+        override suspend fun compressed(): CompressedPhoto? = null
+    }
+
+    private fun photos(vararg names: String) = names.map { Photo(it) }
+
     /** Photos "uploaded" so far, and whether the next upload fails */
-    private val uploaded = mutableListOf<List<Any>>()
+    private val uploaded = mutableListOf<List<String>>()
     private var uploadFails = false
-    private val uploader: suspend (List<Any>, (Int) -> Unit) -> List<String> = { photos, onProgress ->
-        uploaded += photos
-        if (uploadFails) throw IllegalStateException("Upload failed")
+    private val uploader: suspend (List<PickedPhoto>, (Int) -> Unit) -> List<String> = { picked, onProgress ->
+        val names = picked.map { (it as Photo).name }
+        uploaded += names
+        if (uploadFails) throw PhotoUploadException("Upload failed")
         onProgress(100)
-        photos.map { "https://img.test/$it.webp" }
+        names.map { "https://img.test/$it.webp" }
     }
 
     init {
@@ -321,11 +333,11 @@ class ReviewsViewModelTest {
 
         viewModel.startWriting()
         viewModel.removeKeptPhoto("https://img.test/old1.webp")
-        viewModel.addPhotos(listOf("new1"))
+        viewModel.addPhotos(photos("new1"))
         viewModel.submit()
         advanceUntilIdle()
 
-        assertEquals(listOf<List<Any>>(listOf("new1")), uploaded)
+        assertEquals(listOf(listOf("new1")), uploaded)
         val urls = requestsTo(HttpMethod.Put, "reviews/7").single().json()["imageUrls"]?.jsonArray?.map { it.jsonPrimitive.content }
         assertEquals(listOf("https://img.test/old2.webp", "https://img.test/new1.webp"), urls)
     }
@@ -336,13 +348,13 @@ class ReviewsViewModelTest {
         val viewModel = opened()
         viewModel.startWriting()
 
-        viewModel.addPhotos(listOf("p1", "p2", "p3", "p4"))
+        viewModel.addPhotos(photos("p1", "p2", "p3", "p4"))
 
         val draft = assertNotNull(viewModel.state.value.draft)
-        assertEquals(listOf<Any>("p1", "p2", "p3"), draft.newPhotos)
+        assertEquals(photos("p1", "p2", "p3"), draft.newPhotos)
         assertFalse(draft.canAddPhotos)
 
-        viewModel.removeNewPhoto("p2")
+        viewModel.removeNewPhoto(Photo("p2"))
         assertTrue(viewModel.state.value.draft!!.canAddPhotos)
     }
 
@@ -354,23 +366,22 @@ class ReviewsViewModelTest {
 
         viewModel.startWriting()
         viewModel.setRating(5)
-        viewModel.addPhotos(listOf("p1"))
+        viewModel.addPhotos(photos("p1"))
         viewModel.submit()
         advanceUntilIdle()
 
         assertTrue(requestsTo(HttpMethod.Post, "reviews").isEmpty())
-        assertEquals(listOf<Any>("p1"), viewModel.state.value.draft?.newPhotos)
+        assertEquals(photos("p1"), viewModel.state.value.draft?.newPhotos)
         assertEquals("Couldn't upload the photos. Please try again.", viewModel.state.value.message)
         assertFalse(viewModel.state.value.submitting)
     }
 
     @Test
     fun withoutPhotoSupportPhotosCannotBeAdded() = runTest(dispatcher) {
-        // iPhone, until photos come in phase 2
         val viewModel = opened(photos = false)
         viewModel.startWriting()
 
-        viewModel.addPhotos(listOf("p1"))
+        viewModel.addPhotos(photos("p1"))
 
         assertFalse(viewModel.state.value.photosSupported)
         assertTrue(viewModel.state.value.draft!!.newPhotos.isEmpty())

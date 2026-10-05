@@ -8,6 +8,7 @@ import com.example.bhandara.data.network.ApiError
 import com.example.bhandara.data.network.ApiResult
 import com.example.bhandara.data.network.ReviewApi
 import com.example.bhandara.data.settings.AppSettings
+import com.example.bhandara.photos.PickedPhoto
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -27,15 +28,14 @@ const val MAX_REVIEW_COMMENT = 1000
  * @param reviewId       the review being edited; null for a new one
  * @param rating         1 to 5 stars; 0 until the user picks
  * @param keptImageUrls  photos already on the review that stay
- * @param newPhotos      photos picked on this phone, uploaded when the review is sent (whatever the platform's
- *                       picker gives, e.g. an Android content Uri; the screen shows them with Coil)
+ * @param newPhotos      photos taken or chosen on this phone, uploaded when the review is sent
  */
 data class ReviewDraft(
     val reviewId: String? = null,
     val rating: Int = 0,
     val comment: String = "",
     val keptImageUrls: List<String> = emptyList(),
-    val newPhotos: List<Any> = emptyList(),
+    val newPhotos: List<PickedPhoto> = emptyList(),
 ) {
     val photoCount: Int get() = keptImageUrls.size + newPhotos.size
     val canAddPhotos: Boolean get() = photoCount < MAX_REVIEW_PHOTOS
@@ -78,14 +78,14 @@ data class ReviewsState(
  * A shop's reviews, the same on Android and iOS.
  *
  * @param uploadPhotos uploads picked photos and returns their URLs, reporting progress 0-100; throws if any photo
- *                     fails. Null where photos aren't supported yet.
+ *                     fails (see [com.example.bhandara.photos.PhotoUploader]). Null where photos aren't supported.
  */
 class ReviewsViewModel(
     private val shopId: String,
     private val reviewApi: ReviewApi,
     private val settings: AppSettings,
     private val currentUid: () -> String?,
-    private val uploadPhotos: (suspend (photos: List<Any>, onProgress: (Int) -> Unit) -> List<String>)?,
+    private val uploadPhotos: (suspend (photos: List<PickedPhoto>, onProgress: (Int) -> Unit) -> List<String>)?,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(ReviewsState(photosSupported = uploadPhotos != null))
@@ -116,12 +116,12 @@ class ReviewsViewModel(
     fun removeKeptPhoto(url: String) = updateDraft { it.copy(keptImageUrls = it.keptImageUrls - url) }
 
     /** Adds picked photos, up to the limit */
-    fun addPhotos(photos: List<Any>) {
+    fun addPhotos(photos: List<PickedPhoto>) {
         if (uploadPhotos == null) return
         updateDraft { it.copy(newPhotos = it.newPhotos + photos.take(MAX_REVIEW_PHOTOS - it.photoCount)) }
     }
 
-    fun removeNewPhoto(photo: Any) = updateDraft { it.copy(newPhotos = it.newPhotos - photo) }
+    fun removeNewPhoto(photo: PickedPhoto) = updateDraft { it.copy(newPhotos = it.newPhotos - photo) }
 
     fun cancelDraft() {
         if (!_state.value.submitting) _state.update { it.copy(draft = null) }
@@ -206,7 +206,7 @@ class ReviewsViewModel(
     }
 
     /** The uploaded photos' URLs, or null if any failed */
-    private suspend fun upload(photos: List<Any>): List<String>? {
+    private suspend fun upload(photos: List<PickedPhoto>): List<String>? {
         val uploader = uploadPhotos ?: return null
         _state.update { it.copy(uploadProgress = 0) }
         return try {

@@ -62,6 +62,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import com.example.bhandara.data.models.api.ReviewResponse
 import com.example.bhandara.data.network.ReviewApi
+import com.example.bhandara.photos.PhotoSourceSheet
+import com.example.bhandara.photos.PickedPhoto
 import com.example.bhandara.platform.LocalAppDependencies
 import com.example.bhandara.shared.resources.Res
 import com.example.bhandara.shared.resources.cancel
@@ -97,13 +99,11 @@ private val StarColor = Color(0xFFFFC107)
 /**
  * A shop's reviews: the list, writing or editing your own (one per shop), deleting it, and reporting others.
  *
- * @param photos      adds photos to reviews; null where that isn't supported yet (reviews are text only)
  * @param showMessage shows a short message, e.g. in the page's snackbar
  */
 @Composable
 fun ReviewsSection(
     shopId: String,
-    photos: ReviewPhotos?,
     showMessage: suspend (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -114,7 +114,7 @@ fun ReviewsSection(
             ReviewApi(dependencies.apiClient),
             dependencies.settings,
             { dependencies.auth.currentUid },
-            photos?.let { it::upload },
+            dependencies.photoUploader::upload,
         )
     }
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -183,7 +183,6 @@ fun ReviewsSection(
             draft = draft,
             submitting = state.submitting,
             uploadProgress = state.uploadProgress,
-            photos = photos,
             onRating = viewModel::setRating,
             onComment = viewModel::setComment,
             onRemoveKept = viewModel::removeKeptPhoto,
@@ -303,12 +302,11 @@ private fun ReviewEditor(
     draft: ReviewDraft,
     submitting: Boolean,
     uploadProgress: Int?,
-    photos: ReviewPhotos?,
     onRating: (Int) -> Unit,
     onComment: (String) -> Unit,
     onRemoveKept: (String) -> Unit,
-    onAddPhotos: (List<Any>) -> Unit,
-    onRemoveNew: (Any) -> Unit,
+    onAddPhotos: (List<PickedPhoto>) -> Unit,
+    onRemoveNew: (PickedPhoto) -> Unit,
     onSubmit: () -> Unit,
     onCancel: () -> Unit,
 ) {
@@ -346,21 +344,19 @@ private fun ReviewEditor(
                     minLines = 3,
                     maxLines = 6,
                 )
-                if (photos != null || draft.keptImageUrls.isNotEmpty()) {
-                    Text(stringResource(Res.string.review_photos_label, MAX_REVIEW_PHOTOS), style = MaterialTheme.typography.labelMedium)
-                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        items(draft.keptImageUrls) { url -> PhotoThumb(url, enabled = !submitting) { onRemoveKept(url) } }
-                        items(draft.newPhotos) { photo -> PhotoThumb(photo, enabled = !submitting) { onRemoveNew(photo) } }
-                        if (photos != null && draft.canAddPhotos) {
-                            item {
-                                OutlinedButton(
-                                    onClick = { picking = true },
-                                    enabled = !submitting,
-                                    modifier = Modifier.size(64.dp),
-                                    contentPadding = PaddingValues(0.dp),
-                                ) {
-                                    Icon(Icons.Default.AddPhotoAlternate, contentDescription = stringResource(Res.string.review_add_photo))
-                                }
+                Text(stringResource(Res.string.review_photos_label, MAX_REVIEW_PHOTOS), style = MaterialTheme.typography.labelMedium)
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(draft.keptImageUrls) { url -> PhotoThumb(url, enabled = !submitting) { onRemoveKept(url) } }
+                    items(draft.newPhotos) { photo -> PhotoThumb(photo.preview, enabled = !submitting) { onRemoveNew(photo) } }
+                    if (draft.canAddPhotos) {
+                        item {
+                            OutlinedButton(
+                                onClick = { picking = true },
+                                enabled = !submitting,
+                                modifier = Modifier.size(64.dp),
+                                contentPadding = PaddingValues(0.dp),
+                            ) {
+                                Icon(Icons.Default.AddPhotoAlternate, contentDescription = stringResource(Res.string.review_add_photo))
                             }
                         }
                     }
@@ -381,8 +377,8 @@ private fun ReviewEditor(
         },
         dismissButton = { TextButton(onClick = onCancel, enabled = !submitting) { Text(stringResource(Res.string.cancel)) } },
     )
-    if (picking && photos != null) {
-        photos.Picker(
+    if (picking) {
+        PhotoSourceSheet(
             maxCount = MAX_REVIEW_PHOTOS - draft.photoCount,
             onPicked = onAddPhotos,
             onDismiss = { picking = false },

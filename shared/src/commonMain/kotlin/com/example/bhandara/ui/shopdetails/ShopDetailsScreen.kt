@@ -76,7 +76,6 @@ import com.example.bhandara.shared.resources.suggest_delete_title
 import com.example.bhandara.shared.resources.tab_overview
 import com.example.bhandara.shared.resources.tab_reviews
 import com.example.bhandara.shared.resources.try_again
-import com.example.bhandara.ui.reviews.ReviewPhotos
 import com.example.bhandara.ui.reviews.ReviewsSection
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
@@ -88,7 +87,6 @@ import org.jetbrains.compose.resources.stringResource
  * @param onClaim       the real owner claims a shop the platform listed; null hides "Is this your shop?"
  * @param addMenuItems  the owner's "Add items" screen, shown in place of the page until it calls onDone;
  *                      null hides the button
- * @param reviewPhotos  adds photos to reviews; null where that isn't supported yet
  */
 @Composable
 fun ShopDetailsScreen(
@@ -96,7 +94,6 @@ fun ShopDetailsScreen(
     onBack: () -> Unit,
     onClaim: ((shopName: String) -> Unit)? = null,
     addMenuItems: (@Composable (existingNames: List<String>, onDone: () -> Unit) -> Unit)? = null,
-    reviewPhotos: ReviewPhotos? = null,
 ) {
     val dependencies = LocalAppDependencies.current
     val deviceLocation = rememberDeviceLocation()
@@ -124,7 +121,6 @@ fun ShopDetailsScreen(
             onBack = onBack,
             onClaim = onClaim,
             onAddMenuItems = addMenuItems?.let { { addingMenuItems = true } },
-            reviewPhotos = reviewPhotos,
         )
     }
 }
@@ -139,7 +135,6 @@ private fun ShopDetailsPage(
     onBack: () -> Unit,
     onClaim: ((shopName: String) -> Unit)?,
     onAddMenuItems: (() -> Unit)?,
-    reviewPhotos: ReviewPhotos?,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val actions = LocalPlatformActions.current
@@ -199,7 +194,6 @@ private fun ShopDetailsPage(
                 if (selectedTab == 1) {
                     ReviewsSection(
                         shopId = shopId,
-                        photos = reviewPhotos,
                         showMessage = { snackbar.showSnackbar(it) },
                         modifier = Modifier.padding(horizontal = 16.dp),
                     )

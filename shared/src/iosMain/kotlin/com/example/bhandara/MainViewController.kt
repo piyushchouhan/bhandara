@@ -56,6 +56,9 @@ import com.example.bhandara.shared.resources.feature_report_feast
 import com.example.bhandara.shared.resources.feature_this
 import org.jetbrains.compose.resources.stringResource
 import com.example.bhandara.navigation.NavEntries
+import com.example.bhandara.photos.IosPlatformStorage
+import com.example.bhandara.photos.IosStorageBridge
+import com.example.bhandara.photos.PhotoUploader
 import com.example.bhandara.navigation.rememberAppNavigator
 import com.example.bhandara.navigation.swipeFromEdgeToGoBack
 import com.example.bhandara.platform.ProvideAppEnvironment
@@ -70,14 +73,16 @@ import com.example.bhandara.ui.theme.BhandaraTheme
  * @param auth Firebase sign-in, implemented in Swift (IosPlatformAuth.swift)
  * @param mapBridge Google Maps, implemented in Swift (IosGoogleMapBridge.swift)
  * @param apiBaseUrl the backend's address (ApiBaseUrl in Info.plist, from Config/Secrets.xcconfig)
+ * @param storage Firebase Storage for photos, implemented in Swift (IosFirebaseStorage.swift)
  */
-fun MainViewController(auth: PlatformAuth, mapBridge: IosMapBridge, apiBaseUrl: String) = ComposeUIViewController {
+fun MainViewController(auth: PlatformAuth, mapBridge: IosMapBridge, apiBaseUrl: String, storage: IosStorageBridge) = ComposeUIViewController {
     val authService = remember { AuthService(auth) }
     val dependencies = remember { AppDependencies(
             ApiClient(apiBaseUrl, authService::idToken),
             createAppSettings(),
             authService,
             appVersion = NSBundle.mainBundle.objectForInfoDictionaryKey("CFBundleShortVersionString") as? String ?: "",
+            photoUploader = PhotoUploader(IosPlatformStorage(storage)),
         ) }
 
     // Like on Android, everyone is signed in (anonymously) from the start, so the backend knows who did what

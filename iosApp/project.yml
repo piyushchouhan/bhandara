@@ -27,6 +27,8 @@ targets:
     dependencies:
       - package: Firebase
         product: FirebaseAuth
+      - package: Firebase
+        product: FirebaseStorage
       - package: GoogleMaps
         product: GoogleMaps
     info:
@@ -44,6 +46,9 @@ targets:
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
         # Shown when the app asks for location access
+        # Shown when the app asks to use the camera (photos of reviews, feasts and shops); choosing from the
+        # photo library uses the system picker, which needs no permission
+        NSCameraUsageDescription: Local Feast uses the camera to take photos of food, shops and community feasts you share.
         NSLocationWhenInUseUsageDescription: Local Feast uses your location to show food shops, carts and community feasts near you.
         # The logo on the app's background colour while it starts (Assets.xcassets; dark in dark mode)
         UILaunchScreen:

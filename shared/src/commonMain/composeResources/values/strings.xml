@@ -194,4 +194,8 @@
     <string name="feature_add_shop">Adding a shop</string>
     <string name="feature_claim_shop">Claiming a shop</string>
     <string name="feature_this">This</string>
+    <!-- Photos -->
+    <string name="photo_sheet_title">Add photos</string>
+    <string name="photo_take">Take photo</string>
+    <string name="photo_choose_from_gallery">Choose from gallery</string>
 </resources>
