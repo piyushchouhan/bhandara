@@ -187,11 +187,6 @@
     <string name="profile_signing_out">साइन आउट होत आहे…</string>
     <string name="profile_sign_in_later">iPhone वर Google ने साइन इन लवकरच येत आहे.</string>
     <string name="language_in_settings">सेटिंग्जमध्ये बदला</string>
-    <!-- Screens not on iPhone yet -->
-    <string name="coming_soon_title">iPhone वर लवकरच येत आहे</string>
-    <string name="coming_soon_text">%1$s अजून iPhone वर नाही. तोपर्यंत तुम्ही हे Android ॲपमध्ये करू शकता.</string>
-    <string name="feature_claim_shop">दुकान क्लेम करणे</string>
-    <string name="feature_this">हे</string>
     <!-- Photos -->
     <string name="photo_sheet_title">फोटो जोडा</string>
     <string name="photo_take">फोटो काढा</string>
@@ -283,4 +278,26 @@
     <string name="owner_confirm_message">कृपया दुकान तुम्ही त्याचे खरे मालक असाल तरच जोडा.</string>
     <string name="menu_not_saved_title">दुकान जोडले</string>
     <string name="menu_not_saved_text">तुमचे दुकान जोडले गेले, पण किमतींचा मेनू सेव्ह झाला नाही. तुम्ही तो दुकानाच्या पेजवरून जोडू शकता.</string>
+    <!-- Claiming a shop -->
+    <string name="claim_screen_title">हे दुकान क्लेम करा</string>
+    <string name="claim_intro">%1$s तुमचे दुकान आहे का? त्याची माहिती, मेनू आणि वेळा सांभाळण्यासाठी ते क्लेम करा.</string>
+    <string name="claim_how">हे कसे चालते</string>
+    <string name="claim_step1">1. तुमच्या दुकानावर उभे राहा.</string>
+    <string name="claim_step2">2. दुकानाच्या समोरचे 1 ते %1$d फोटो काढा, ज्यात फलक स्पष्ट दिसेल.</string>
+    <string name="claim_step3">3. आम्ही तुमचे ठिकाण आणि फोटो तपासतो. बहुतेक क्लेम काही सेकंदात मंजूर होतात; काही आमची टीम तपासते.</string>
+    <string name="claim_photos">दुकानाचे फोटो</string>
+    <string name="claim_no_camera">क्लेम करण्यासाठी दुकानाचा फोटो काढायला कॅमेरा लागतो. कॅमेरा असलेल्या फोनवरून प्रयत्न करा.</string>
+    <string name="claim_phone">तुमचा फोन नंबर (ऐच्छिक)</string>
+    <string name="claim_phone_hint">दुकानाच्या पेजवर दिसेल, म्हणजे ग्राहक तुम्हाला कॉल करू शकतील</string>
+    <string name="claim_submit">क्लेम पाठवा</string>
+    <string name="claim_locating">तुमचे ठिकाण शोधत आहे…</string>
+    <string name="claim_checking">तुमचा क्लेम तपासत आहे…</string>
+    <string name="claim_approved">आता हे दुकान तुमचे आहे</string>
+    <string name="claim_in_review">तुमचा क्लेम तपासला जात आहे</string>
+    <string name="claim_in_review_text">आमची टीम लवकरच ते तपासेल. मंजूर झाल्यावर तुम्ही दुकान सांभाळू शकाल.</string>
+    <string name="claim_rejected">क्लेम मंजूर झाला नाही</string>
+    <string name="claim_try_again">नवीन फोटोंसह पुन्हा प्रयत्न करा</string>
+    <string name="claim_go_to_shop">माझ्या दुकानावर जा</string>
+    <string name="done">झाले</string>
+    <string name="claim_sign_in_reason">हे दुकान क्लेम करण्यासाठी Google ने साइन इन करा, म्हणजे ते तुमच्याशी जोडले जाईल आणि फक्त तुम्हीच ते सांभाळू शकाल.</string>
 </resources>

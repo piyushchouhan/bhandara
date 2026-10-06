@@ -27,6 +27,16 @@ class StringResourcesTest {
     }
 
     @Test
+    fun noStringNameIsUsedTwice() {
+        // A second string with the same name silently replaces the first one
+        files.forEach { file ->
+            val names = Regex("""<string name="([^"]+)"""").findAll(file.readText()).map { it.groupValues[1] }.toList()
+            val repeated = names.groupBy { it }.filterValues { it.size > 1 }.keys
+            assertTrue(repeated.isEmpty(), "${file.parentFile.name}/strings.xml repeats $repeated")
+        }
+    }
+
+    @Test
     fun noStringUsesAnAndroidOnlyEscapedApostrophe() {
         val offending = files.flatMap { file ->
             Regex("""<string name="([^"]+)"[^>]*>([^<]*)</string>""").findAll(file.readText())

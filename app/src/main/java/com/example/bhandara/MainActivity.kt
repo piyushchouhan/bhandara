@@ -56,7 +56,7 @@ import com.example.bhandara.ui.reportfeast.ReportFeastScreen
 import com.example.bhandara.ui.feasts.FeastsMapScreen
 import com.example.bhandara.ui.screens.HomeScreen
 import com.example.bhandara.ui.addshop.AddShopScreen
-import com.example.bhandara.ui.screens.ClaimShopScreen
+import com.example.bhandara.ui.claim.ClaimShopScreen
 import com.example.bhandara.BuildConfig
 import com.example.bhandara.ui.theme.BhandaraTheme
 import com.example.bhandara.utils.LocationHelper
@@ -213,11 +213,7 @@ class MainActivity : AppCompatActivity() {
                                 )
                             }
                             is Route.ClaimShop -> {
-                                ClaimShopScreen(
-                                    shopId = route.shopId,
-                                    shopName = route.shopName,
-                                    onBackClick = { navigateBack() }
-                                )
+                                ClaimShopScreen(shopId = route.shopId, shopName = route.shopName, onDone = { navigateBack() })
                             }
                             Route.Profile -> {
                                 ProfileScreen(onBack = { navigateBack() })

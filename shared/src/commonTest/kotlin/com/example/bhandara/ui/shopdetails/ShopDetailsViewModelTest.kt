@@ -182,6 +182,23 @@ class ShopDetailsViewModelTest {
         assertNull(opened().state.value.distanceMeters)
     }
 
+    @Test
+    fun reloadingKeepsThePageShownAndPicksUpANewOwner() = runTest(dispatcher) {
+        // Coming back to the page after claiming the shop
+        answer("localshops/5", shop(ownerUid = "platform", claimed = false))
+        val viewModel = opened()
+        assertTrue(viewModel.state.value.canClaim)
+
+        answer("localshops/5", shop(ownerUid = "customer-1", claimed = true))
+        viewModel.retry()
+        assertNotNull(viewModel.state.value.shop) // still shown while it reloads
+        advanceUntilIdle()
+
+        assertTrue(viewModel.state.value.isOwner)
+        assertTrue(viewModel.state.value.canEditMenu)
+        assertFalse(viewModel.state.value.canClaim)
+    }
+
     // ==================== Who can do what ====================
 
     @Test

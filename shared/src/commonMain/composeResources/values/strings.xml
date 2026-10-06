@@ -187,11 +187,6 @@
     <string name="profile_signing_out">Signing out…</string>
     <string name="profile_sign_in_later">Signing in with Google is coming to iPhone soon.</string>
     <string name="language_in_settings">Change in Settings</string>
-    <!-- Screens not on iPhone yet -->
-    <string name="coming_soon_title">Coming soon to iPhone</string>
-    <string name="coming_soon_text">%1$s isn't on iPhone yet. Until then you can do it in the Android app.</string>
-    <string name="feature_claim_shop">Claiming a shop</string>
-    <string name="feature_this">This</string>
     <!-- Photos -->
     <string name="photo_sheet_title">Add photos</string>
     <string name="photo_take">Take photo</string>
@@ -283,4 +278,26 @@
     <string name="owner_confirm_message">Please add a shop only if you are its actual owner.</string>
     <string name="menu_not_saved_title">Shop added</string>
     <string name="menu_not_saved_text">Your shop is added, but its menu with prices couldn't be saved. You can add it from the shop's page.</string>
+    <!-- Claiming a shop -->
+    <string name="claim_screen_title">Claim this shop</string>
+    <string name="claim_intro">Do you own %1$s? Claim it to manage its details, menu and timings.</string>
+    <string name="claim_how">How it works</string>
+    <string name="claim_step1">1. Stand at your shop.</string>
+    <string name="claim_step2">2. Take 1 to %1$d photos of the shop front with the signboard clearly visible.</string>
+    <string name="claim_step3">3. We check your location and photos. Most claims are approved in seconds; some are reviewed by our team.</string>
+    <string name="claim_photos">Shop photos</string>
+    <string name="claim_no_camera">Claiming needs a camera to photograph the shop. Try from a phone with a camera.</string>
+    <string name="claim_phone">Your phone number (optional)</string>
+    <string name="claim_phone_hint">Shown on the shop page so customers can call you</string>
+    <string name="claim_submit">Submit claim</string>
+    <string name="claim_locating">Finding where you are…</string>
+    <string name="claim_checking">Checking your claim…</string>
+    <string name="claim_approved">You now own this shop</string>
+    <string name="claim_in_review">Your claim is being reviewed</string>
+    <string name="claim_in_review_text">Our team will check it soon. You'll be able to manage the shop once it's approved.</string>
+    <string name="claim_rejected">Claim not approved</string>
+    <string name="claim_try_again">Try again with new photos</string>
+    <string name="claim_go_to_shop">Go to my shop</string>
+    <string name="done">Done</string>
+    <string name="claim_sign_in_reason">Sign in with Google to claim this shop, so it's tied to you and only you can manage it.</string>
 </resources>

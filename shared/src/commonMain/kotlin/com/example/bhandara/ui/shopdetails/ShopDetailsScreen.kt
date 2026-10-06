@@ -105,6 +105,11 @@ fun ShopDetailsScreen(
         )
     }
     var addingMenuItems by rememberSaveable { mutableStateOf(false) }
+    // Coming back to the page (e.g. after claiming the shop) shows it as it is now
+    var shownBefore by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        if (shownBefore) viewModel.retry() else shownBefore = true
+    }
 
     if (addingMenuItems) {
         // The owner adding items, in place of the page; the menu reloads when they're saved

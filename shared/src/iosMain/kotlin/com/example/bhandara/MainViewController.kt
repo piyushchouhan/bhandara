@@ -1,6 +1,7 @@
 package com.example.bhandara
 
 import com.example.bhandara.ui.addshop.AddShopScreen
+import com.example.bhandara.ui.claim.ClaimShopScreen
 import com.example.bhandara.ui.drawer.AboutScreen
 import com.example.bhandara.ui.drawer.AppDrawer
 import com.example.bhandara.ui.drawer.SupportScreen
@@ -23,38 +24,18 @@ import com.example.bhandara.data.settings.createAppSettings
 import com.example.bhandara.data.network.ApiClient
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.ComposeUIViewController
 import com.example.bhandara.auth.AuthService
 import com.example.bhandara.auth.PlatformAuth
 import com.example.bhandara.navigation.Route
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.TopAppBar
-import com.example.bhandara.shared.resources.Res
 import com.example.bhandara.shared.resources.back
-import com.example.bhandara.shared.resources.coming_soon_text
-import com.example.bhandara.shared.resources.coming_soon_title
-import com.example.bhandara.shared.resources.feature_claim_shop
-import com.example.bhandara.shared.resources.feature_this
-import org.jetbrains.compose.resources.stringResource
 import com.example.bhandara.auth.IosAccountSignIn
 import com.example.bhandara.auth.IosGoogleSignInBridge
 import com.example.bhandara.navigation.NavEntries
@@ -152,48 +133,20 @@ fun MainViewController(
                         onBack = { navigator.back() },
                         onAdded = { shopId -> navigator.replace(Route.ShopDetails(shopId)) },
                     )
-                    // Claiming comes to iPhone with the other write flows (phase 2)
+                    is Route.ClaimShop -> ClaimShopScreen(shopId = route.shopId, shopName = route.shopName, onDone = { navigator.back() })
                     Route.Profile -> ProfileScreen(onBack = { navigator.back() })
                     Route.About -> AboutScreen(onBack = { navigator.back() })
                     Route.Support -> SupportScreen(onBack = { navigator.back() })
                     Route.Terms -> TermsScreen(onBack = { navigator.back() })
-                    is Route.ShopDetails -> ShopDetailsScreen(shopId = route.shopId, onBack = { navigator.back() })
-                    // Screens move to the shared module one by one; until then iOS says so
-                    else -> NotOnIphoneYet(route, onBack = { navigator.back() })
+                    is Route.ShopDetails -> ShopDetailsScreen(
+                        shopId = route.shopId,
+                        onBack = { navigator.back() },
+                        onClaim = { shopName -> navigator.navigate(Route.ClaimShop(route.shopId, shopName)) },
+                    )
                 }
                 }
                 }
             }
-        }
-    }
-}
-
-/** Screens that come to iPhone with the other write flows (phase 2); says so instead of showing nothing */
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun NotOnIphoneYet(route: Route, onBack: () -> Unit) {
-    val feature = stringResource(
-        when (route) {
-            is Route.ClaimShop -> Res.string.feature_claim_shop
-            else -> Res.string.feature_this
-        }
-    )
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(Res.string.coming_soon_title)) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(Res.string.back)) }
-                },
-            )
-        },
-    ) { padding ->
-        Box(Modifier.fillMaxSize().padding(padding).padding(32.dp), contentAlignment = Alignment.Center) {
-            Text(
-                stringResource(Res.string.coming_soon_text, feature),
-                style = MaterialTheme.typography.titleMedium,
-                textAlign = TextAlign.Center,
-            )
         }
     }
 }
