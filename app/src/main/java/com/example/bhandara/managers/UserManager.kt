@@ -9,7 +9,8 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
-import com.example.bhandara.data.repository.BackendRepository
+import com.example.bhandara.data.network.ApiResult
+import com.example.bhandara.data.network.onFailure
 import com.example.bhandara.data.repository.UserRepository
 import com.example.bhandara.utils.LocationHelper
 import com.example.bhandara.workers.LocationUpdateWorker
@@ -26,7 +27,6 @@ class UserManager(
     private val coroutineScope: CoroutineScope
 ) {
     private val userRepository = UserRepository()
-    private val backendRepository = BackendRepository()
     private val locationHelper = LocationHelper(context)
     
     private val settings = AppSettings(context)
@@ -81,8 +81,8 @@ class UserManager(
                 
                 // Only create user in backend if not already synced
                 if (!isUserSyncedToBackend(uid)) {
-                    val backendResponse = backendRepository.createUser(uid, fcmToken, null)
-                    if (backendResponse != null) {
+                    val registered = AppBackend.userApi.register(uid, fcmToken, null)
+                    if (registered is ApiResult.Success) {
                         markUserSyncedToBackend(uid)
                         // Registration included the token
                         settings.markPushTokenSent(uid, fcmToken)
@@ -125,7 +125,8 @@ class UserManager(
                 
                 val fcmToken = userRepository.getFcmToken()
                 if (fcmToken != null) {
-                    backendRepository.updateUserLocation(uid, fcmToken, location)
+                    AppBackend.userApi.updateLocation(uid, fcmToken, location)
+                        .onFailure { Log.w(TAG, "Location update failed: ${it.message}") }
                 }
             }
         }

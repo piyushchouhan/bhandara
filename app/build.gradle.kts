@@ -86,7 +86,7 @@ android {
 }
 
 dependencies {
-    // Code shared with the iOS app (models for now)
+    // Code shared with the iOS app: screens, view models, networking and models
     implementation(project(":shared"))
 
     implementation(libs.androidx.core.ktx)
@@ -122,14 +122,10 @@ dependencies {
     // Google Sign-In
     implementation("com.google.android.gms:play-services-auth:21.2.0")
     
-    // Coil for image loading
-    implementation("io.coil-kt:coil-compose:2.5.0")
     
-    // Retrofit for REST API calls
-    implementation("com.squareup.retrofit2:retrofit:2.11.0")
-    implementation("com.squareup.retrofit2:converter-gson:2.11.0")
+    // Live cart locations over a WebSocket (STOMP); REST calls go through the shared module
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
-    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+    implementation("com.google.code.gson:gson:2.10.1")
     
     // WorkManager for periodic location updates
     implementation("androidx.work:work-runtime-ktx:2.9.0")

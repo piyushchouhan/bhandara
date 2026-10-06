@@ -7,6 +7,7 @@ import com.example.bhandara.data.models.api.MenuItemResponse
 import com.example.bhandara.data.models.api.ReportShopRequest
 import com.example.bhandara.data.models.api.ShopReportReason
 import com.example.bhandara.data.models.api.VerifyShopRequest
+import io.ktor.client.request.parameter
 import io.ktor.client.request.setBody
 import io.ktor.http.HttpMethod
 
@@ -18,6 +19,16 @@ class ShopApi(private val client: ApiClient) {
         client.call("api/localshops") {
             method = HttpMethod.Post
             setBody(shop)
+        }
+
+    /** Shops (not moving carts) customers can see within [radiusMeters] of a point */
+    suspend fun getNearbyShops(near: GeoLocation, radiusMeters: Double): ApiResult<List<LocalShopResponse>> =
+        client.call("api/localshops/nearby") {
+            method = HttpMethod.Get
+            parameter("latitude", near.latitude)
+            parameter("longitude", near.longitude)
+            parameter("radius", radiusMeters)
+            parameter("isMovingCart", false)
         }
 
     suspend fun getShop(shopId: String): ApiResult<LocalShopResponse> =

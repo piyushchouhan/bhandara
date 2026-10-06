@@ -5,7 +5,8 @@ import android.content.Context
 import android.util.Log
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import com.example.bhandara.data.repository.BackendRepository
+import com.example.bhandara.data.auth.AppBackend
+import com.example.bhandara.data.network.ApiResult
 import com.example.bhandara.data.repository.UserRepository
 import com.example.bhandara.managers.UserManager
 import com.example.bhandara.utils.LocationHelper
@@ -19,7 +20,6 @@ class LocationUpdateWorker(
 ) : CoroutineWorker(context, params) {
     
     private val userRepository = UserRepository()
-    private val backendRepository = BackendRepository()
     private val locationHelper = LocationHelper(context)
     private val settings = AppSettings(context)
     
@@ -44,12 +44,12 @@ class LocationUpdateWorker(
                 return Result.success()
             }
             
-            val fcmToken = userRepository.getFcmToken()
-            if (fcmToken != null) {
-                backendRepository.updateUserLocation(uid, fcmToken, location)
+            val fcmToken = userRepository.getFcmToken() ?: return Result.retry()
+            // A failed update (e.g. no connection) is tried again later instead of being dropped
+            when (AppBackend.userApi.updateLocation(uid, fcmToken, location)) {
+                is ApiResult.Success -> Result.success()
+                is ApiResult.Failure -> Result.retry()
             }
-            
-            Result.success()
         } catch (e: Exception) {
             Log.e(TAG, "Error during periodic location update", e)
             Result.retry()

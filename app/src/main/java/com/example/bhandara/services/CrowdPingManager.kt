@@ -4,8 +4,10 @@ import android.content.Context
 import android.location.Location
 import android.os.SystemClock
 import android.util.Log
-import com.example.bhandara.data.api.NetworkModule
-import com.example.bhandara.data.models.api.CrowdPingRequest
+import com.example.bhandara.data.auth.AppBackend
+import com.example.bhandara.data.location.GeoLocation
+import com.example.bhandara.data.network.getOrNull
+import com.example.bhandara.data.network.onFailure
 import com.example.bhandara.utils.LocationHelper
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.currentCoroutineContext
@@ -40,7 +42,6 @@ class CrowdPingManager(context: Context) {
     }
 
     private val locationHelper = LocationHelper(context.applicationContext)
-    private val apiService = NetworkModule.apiService
 
     private var cachedShops: List<Location> = emptyList()
     private var cacheCenter: Location? = null
@@ -70,10 +71,8 @@ class CrowdPingManager(context: Context) {
         val atAShop = shopsAround(here).any { it.distanceTo(here) <= NEAR_SHOP_RADIUS_M }
         if (!atAShop) return
 
-        val response = apiService.crowdPing(CrowdPingRequest(latitude = here.latitude, longitude = here.longitude))
-        if (!response.isSuccessful) {
-            Log.w(TAG, "Crowd ping rejected: ${response.code()}")
-        }
+        AppBackend.crowdApi.ping(GeoLocation(here.latitude, here.longitude))
+            .onFailure { Log.w(TAG, "Crowd ping rejected: ${it.message}") }
     }
 
     private suspend fun shopsAround(here: Location): List<Location> {
@@ -82,9 +81,9 @@ class CrowdPingManager(context: Context) {
                 || SystemClock.elapsedRealtime() - cacheTimeMs > SHOP_CACHE_MAX_AGE_MS
                 || center.distanceTo(here) > SHOP_CACHE_MAX_DRIFT_M
         if (stale) {
-            val response = apiService.getNearbyShops(here.latitude, here.longitude, SHOP_SEARCH_RADIUS_M)
-            if (response.isSuccessful) {
-                cachedShops = response.body().orEmpty().map { shop ->
+            val shops = AppBackend.shopApi.getNearbyShops(GeoLocation(here.latitude, here.longitude), SHOP_SEARCH_RADIUS_M).getOrNull()
+            if (shops != null) {
+                cachedShops = shops.map { shop ->
                     Location("shop").apply {
                         latitude = shop.latitude
                         longitude = shop.longitude
