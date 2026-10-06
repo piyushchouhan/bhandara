@@ -1,5 +1,6 @@
 package com.example.bhandara.data.network
 
+import com.example.bhandara.data.models.api.LocalShopRequest
 import com.example.bhandara.data.models.api.LocalShopResponse
 import com.example.bhandara.data.location.GeoLocation
 import com.example.bhandara.data.models.api.MenuItemResponse
@@ -11,6 +12,13 @@ import io.ktor.http.HttpMethod
 
 /** Local shops: details, menu, and what customers and owners can do with a shop */
 class ShopApi(private val client: ApiClient) {
+
+    /** Lists a new shop owned by the signed-in user (the backend takes the owner from their sign-in, not the body) */
+    suspend fun createShop(shop: LocalShopRequest): ApiResult<LocalShopResponse> =
+        client.call("api/localshops") {
+            method = HttpMethod.Post
+            setBody(shop)
+        }
 
     suspend fun getShop(shopId: String): ApiResult<LocalShopResponse> =
         client.call("api/localshops/$shopId") { method = HttpMethod.Get }

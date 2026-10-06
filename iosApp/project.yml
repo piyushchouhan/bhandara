@@ -47,6 +47,9 @@ targets:
         CFBundleLocalizations: [en, hi, mr]
         # From Config/Secrets.xcconfig; read at launch to start Google Maps
         GoogleMapsApiKey: $(MAPS_API_KEY)
+        # Platform admins (comma-separated), as in Android's ADMIN_EMAILS; keep in sync with the backend's
+        # app.admin-emails. Only skips owner-only prompts; the backend does the real check from the sign-in token.
+        AdminEmails: "piyush9695@gmail.com"
         # The backend's address, also from Config/Secrets.xcconfig
         ApiBaseUrl: $(API_BASE_URL)
         # Allows plain http only to this computer (localhost / .local), for a backend run locally

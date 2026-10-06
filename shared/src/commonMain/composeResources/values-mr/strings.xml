@@ -190,7 +190,6 @@
     <!-- Screens not on iPhone yet -->
     <string name="coming_soon_title">iPhone वर लवकरच येत आहे</string>
     <string name="coming_soon_text">%1$s अजून iPhone वर नाही. तोपर्यंत तुम्ही हे Android ॲपमध्ये करू शकता.</string>
-    <string name="feature_add_shop">दुकान जोडणे</string>
     <string name="feature_claim_shop">दुकान क्लेम करणे</string>
     <string name="feature_this">हे</string>
     <!-- Photos -->
@@ -243,4 +242,45 @@
     <string name="clear_menu">मेनू पुसा</string>
     <string name="clear_menu_title">मेनू पुसायचा?</string>
     <string name="clear_menu_text">यामुळे या ड्राफ्टमधील सर्व पदार्थ काढले जातील.</string>
+    <!-- Adding a shop -->
+    <string name="add_shop_title">दुकान जोडा</string>
+    <string name="step_kind">प्रकार</string>
+    <string name="step_basics">मुख्य माहिती</string>
+    <string name="step_menu">मेनू</string>
+    <string name="step_details">अधिक माहिती</string>
+    <string name="shop_kind_question">हे एका ठिकाणी असलेले दुकान आहे, की फिरणारी गाडी?</string>
+    <string name="shop_kind_fixed">दुकान किंवा स्टॉल</string>
+    <string name="shop_kind_fixed_text">एकाच ठिकाणी असते</string>
+    <string name="shop_kind_cart">फिरणारी गाडी</string>
+    <string name="shop_kind_cart_text">चाकांवरची खाद्यगाडी; ग्राहक ती थेट पाहू शकतात</string>
+    <string name="shop_name">दुकानाचे नाव</string>
+    <string name="shop_type">दुकानाचा प्रकार</string>
+    <string name="shop_type_restaurant">रेस्टॉरंट</string>
+    <string name="shop_type_food_truck">फूड ट्रक</string>
+    <string name="shop_type_street_food">स्ट्रीट फूड</string>
+    <string name="shop_type_cafe">कॅफे</string>
+    <string name="shop_type_fast_food">फास्ट फूड</string>
+    <string name="shop_type_bakery">बेकरी</string>
+    <string name="shop_type_sweet_shop">मिठाईचे दुकान</string>
+    <string name="shop_dishes">इथे मिळणारे पदार्थ</string>
+    <string name="shop_dishes_hint">उदा. सामोसा, चहा, वडापाव</string>
+    <string name="shop_photos_label">फोटो (ऐच्छिक, जास्तीत जास्त %1$d)</string>
+    <string name="detailed_menu_title">किमतींसह मेनू (ऐच्छिक)</string>
+    <string name="detailed_menu_text">किंमत आणि शाकाहारी / मांसाहारीसह पदार्थ जोडा, लिहून किंवा मेनूच्या फोटोतून.</string>
+    <string name="detailed_menu_add">किमतींसह मेनू जोडा</string>
+    <string name="detailed_menu_count">किमतींसह %1$d पदार्थ</string>
+    <string name="edit">बदला</string>
+    <string name="shop_phone">फोन (ऐच्छिक)</string>
+    <string name="shop_email">ईमेल (ऐच्छिक)</string>
+    <string name="shop_address">पूर्ण पत्ता (ऐच्छिक)</string>
+    <string name="shop_landmark">खूण (ऐच्छिक)</string>
+    <string name="shop_cuisine">पाककृती प्रकार (ऐच्छिक)</string>
+    <string name="shop_cost_for_two">दोघांचा खर्च, ₹ (ऐच्छिक)</string>
+    <string name="shop_place_info">दुकान नकाशावर तुम्ही आत्ता जिथे आहात तिथे दिसेल, म्हणून दुकानातूनच जोडा.</string>
+    <string name="add_shop_button">दुकान जोडा</string>
+    <string name="add_shop_sign_in_reason">दुकान जोडण्यासाठी Google ने साइन इन करा, म्हणजे ग्राहकांना कळेल की ते खऱ्या व्यक्तीने जोडले आहे आणि तुम्ही नंतर ते सांभाळू शकाल.</string>
+    <string name="owner_confirm_title">मालकाची खात्री</string>
+    <string name="owner_confirm_message">कृपया दुकान तुम्ही त्याचे खरे मालक असाल तरच जोडा.</string>
+    <string name="menu_not_saved_title">दुकान जोडले</string>
+    <string name="menu_not_saved_text">तुमचे दुकान जोडले गेले, पण किमतींचा मेनू सेव्ह झाला नाही. तुम्ही तो दुकानाच्या पेजवरून जोडू शकता.</string>
 </resources>

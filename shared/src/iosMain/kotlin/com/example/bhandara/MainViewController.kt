@@ -1,5 +1,6 @@
 package com.example.bhandara
 
+import com.example.bhandara.ui.addshop.AddShopScreen
 import com.example.bhandara.ui.drawer.AboutScreen
 import com.example.bhandara.ui.drawer.AppDrawer
 import com.example.bhandara.ui.drawer.SupportScreen
@@ -51,7 +52,6 @@ import com.example.bhandara.shared.resources.Res
 import com.example.bhandara.shared.resources.back
 import com.example.bhandara.shared.resources.coming_soon_text
 import com.example.bhandara.shared.resources.coming_soon_title
-import com.example.bhandara.shared.resources.feature_add_shop
 import com.example.bhandara.shared.resources.feature_claim_shop
 import com.example.bhandara.shared.resources.feature_this
 import org.jetbrains.compose.resources.stringResource
@@ -93,6 +93,7 @@ fun MainViewController(
             authService,
             appVersion = NSBundle.mainBundle.objectForInfoDictionaryKey("CFBundleShortVersionString") as? String ?: "",
             photoUploader = PhotoUploader(IosPlatformStorage(storage)),
+            adminEmails = (NSBundle.mainBundle.objectForInfoDictionaryKey("AdminEmails") as? String).orEmpty().split(","),
         ) }
 
     // Like on Android, everyone is signed in (anonymously) from the start, so the backend knows who did what
@@ -147,7 +148,11 @@ fun MainViewController(
                         onBack = { navigator.back() },
                         onPosted = { feastId -> navigator.replace(Route.FeastDetails(feastId)) },
                     )
-                    // Claiming and adding menu items come to iPhone with the other write flows (phase 2)
+                    Route.AddShop -> AddShopScreen(
+                        onBack = { navigator.back() },
+                        onAdded = { shopId -> navigator.replace(Route.ShopDetails(shopId)) },
+                    )
+                    // Claiming comes to iPhone with the other write flows (phase 2)
                     Route.Profile -> ProfileScreen(onBack = { navigator.back() })
                     Route.About -> AboutScreen(onBack = { navigator.back() })
                     Route.Support -> SupportScreen(onBack = { navigator.back() })
@@ -169,7 +174,6 @@ fun MainViewController(
 private fun NotOnIphoneYet(route: Route, onBack: () -> Unit) {
     val feature = stringResource(
         when (route) {
-            Route.AddShop -> Res.string.feature_add_shop
             is Route.ClaimShop -> Res.string.feature_claim_shop
             else -> Res.string.feature_this
         }

@@ -190,7 +190,6 @@
     <!-- Screens not on iPhone yet -->
     <string name="coming_soon_title">Coming soon to iPhone</string>
     <string name="coming_soon_text">%1$s isn't on iPhone yet. Until then you can do it in the Android app.</string>
-    <string name="feature_add_shop">Adding a shop</string>
     <string name="feature_claim_shop">Claiming a shop</string>
     <string name="feature_this">This</string>
     <!-- Photos -->
@@ -243,4 +242,45 @@
     <string name="clear_menu">Clear menu</string>
     <string name="clear_menu_title">Clear the menu?</string>
     <string name="clear_menu_text">This removes all the items in this draft.</string>
+    <!-- Adding a shop -->
+    <string name="add_shop_title">Add a shop</string>
+    <string name="step_kind">Kind</string>
+    <string name="step_basics">Basics</string>
+    <string name="step_menu">Menu</string>
+    <string name="step_details">Details</string>
+    <string name="shop_kind_question">Is it a shop in one place, or a cart that moves around?</string>
+    <string name="shop_kind_fixed">Shop or stall</string>
+    <string name="shop_kind_fixed_text">Stays in one place</string>
+    <string name="shop_kind_cart">Moving cart</string>
+    <string name="shop_kind_cart_text">A food cart on wheels; customers can follow it live</string>
+    <string name="shop_name">Shop name</string>
+    <string name="shop_type">Kind of shop</string>
+    <string name="shop_type_restaurant">Restaurant</string>
+    <string name="shop_type_food_truck">Food truck</string>
+    <string name="shop_type_street_food">Street food</string>
+    <string name="shop_type_cafe">Cafe</string>
+    <string name="shop_type_fast_food">Fast food</string>
+    <string name="shop_type_bakery">Bakery</string>
+    <string name="shop_type_sweet_shop">Sweet shop</string>
+    <string name="shop_dishes">Dishes it serves</string>
+    <string name="shop_dishes_hint">e.g. Samosa, Chai, Vada Pav</string>
+    <string name="shop_photos_label">Photos (optional, up to %1$d)</string>
+    <string name="detailed_menu_title">Menu with prices (optional)</string>
+    <string name="detailed_menu_text">Add dishes with prices and veg / non-veg, typed in or read from a photo of the menu.</string>
+    <string name="detailed_menu_add">Add menu with prices</string>
+    <string name="detailed_menu_count">%1$d dishes with prices</string>
+    <string name="edit">Edit</string>
+    <string name="shop_phone">Phone (optional)</string>
+    <string name="shop_email">Email (optional)</string>
+    <string name="shop_address">Full address (optional)</string>
+    <string name="shop_landmark">Landmark (optional)</string>
+    <string name="shop_cuisine">Cuisine (optional)</string>
+    <string name="shop_cost_for_two">Cost for two, ₹ (optional)</string>
+    <string name="shop_place_info">The shop goes on the map where you are now, so add it from the shop.</string>
+    <string name="add_shop_button">Add shop</string>
+    <string name="add_shop_sign_in_reason">Sign in with Google to add a shop, so customers know it's listed by a real person and you can manage it later.</string>
+    <string name="owner_confirm_title">Owner confirmation</string>
+    <string name="owner_confirm_message">Please add a shop only if you are its actual owner.</string>
+    <string name="menu_not_saved_title">Shop added</string>
+    <string name="menu_not_saved_text">Your shop is added, but its menu with prices couldn't be saved. You can add it from the shop's page.</string>
 </resources>

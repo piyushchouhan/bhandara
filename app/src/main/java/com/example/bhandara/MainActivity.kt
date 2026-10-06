@@ -39,7 +39,6 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.example.bhandara.services.CrowdPingManager
 import kotlinx.coroutines.launch
 import com.example.bhandara.managers.UserManager
-import com.example.bhandara.ui.components.OwnerConfirmationDialog
 import com.example.bhandara.ui.shopdetails.ShopDetailsScreen
 import com.example.bhandara.navigation.NavEntries
 import com.example.bhandara.ui.drawer.AppDrawer
@@ -56,7 +55,7 @@ import com.example.bhandara.ui.feasts.FeastDetailsScreen
 import com.example.bhandara.ui.reportfeast.ReportFeastScreen
 import com.example.bhandara.ui.feasts.FeastsMapScreen
 import com.example.bhandara.ui.screens.HomeScreen
-import com.example.bhandara.ui.screens.AddLocalShopScreen
+import com.example.bhandara.ui.addshop.AddShopScreen
 import com.example.bhandara.ui.screens.ClaimShopScreen
 import com.example.bhandara.BuildConfig
 import com.example.bhandara.ui.theme.BhandaraTheme
@@ -107,7 +106,7 @@ class MainActivity : AppCompatActivity() {
         setContent {
             ProvideAppEnvironment {
               CompositionLocalProvider(
-                  LocalAppDependencies provides remember { AppDependencies(AppBackend.client, AppSettings(this), AppAuth.service, BuildConfig.VERSION_NAME, PhotoUploader(AndroidFirebaseStorage())) },
+                  LocalAppDependencies provides remember { AppDependencies(AppBackend.client, AppSettings(this), AppAuth.service, BuildConfig.VERSION_NAME, PhotoUploader(AndroidFirebaseStorage()), BuildConfig.ADMIN_EMAILS.split(",")) },
                   LocalAccountSignIn provides remember { GoogleAccountSignIn(this) },
               ) {
                 BhandaraTheme {
@@ -117,7 +116,6 @@ class MainActivity : AppCompatActivity() {
                     // Lifted home tab state
                     var homeTabIndex by rememberSaveable { mutableIntStateOf(0) }
                 
-                    var showOwnerConfirmDialog by remember { mutableStateOf(false) }
                 
                     // Request permissions on first composition
                     LaunchedEffect(Unit) {
@@ -158,10 +156,7 @@ class MainActivity : AppCompatActivity() {
                                         onHungryClick = { navigateTo(Route.Hungry) },
                                         onReportFeastClick = { navigateTo(Route.ReportFeast) },
                                         onFindShopsClick = { navigateTo(Route.ShopsMap) },
-                                        onAddShopClick = {
-                                            // Admins list shops on behalf of their owners, so the "only add your own shop" warning doesn't apply
-                                            if (isAdminUser()) navigateTo(Route.AddShop) else showOwnerConfirmDialog = true
-                                        }
+                                        onAddShopClick = { navigateTo(Route.AddShop) }
                                     )
                                 }
                             }
@@ -182,8 +177,10 @@ class MainActivity : AppCompatActivity() {
                                 FeastDetailsScreen(feastId = route.feastId, onBack = { navigateBack() })
                             }
                             Route.AddShop -> {
-                                AddLocalShopScreen(
-                                    onNavigateBack = { navigateBack() }
+                                AddShopScreen(
+                                    onBack = { navigateBack() },
+                                    // The new shop's page replaces the form, so back goes home
+                                    onAdded = { shopId -> navigator.replace(Route.ShopDetails(shopId)) },
                                 )
                             }
                             Route.ShopsMap -> {
@@ -237,28 +234,12 @@ class MainActivity : AppCompatActivity() {
                         }
                         }
                     }
-
-                    if (showOwnerConfirmDialog) {
-                        OwnerConfirmationDialog(
-                            onConfirm = {
-                                showOwnerConfirmDialog = false
-                                navigateTo(Route.AddShop)
-                            },
-                            onDismissRequest = {
-                                showOwnerConfirmDialog = false
-                            }
-                        )
-                    }
                 }
               }
             }
         }
     }
     
-    private fun isAdminUser(): Boolean {
-        val email = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.email ?: return false
-        return BuildConfig.ADMIN_EMAILS.split(",").any { it.trim().equals(email, ignoreCase = true) }
-    }
 
     /**
      * Request required permissions

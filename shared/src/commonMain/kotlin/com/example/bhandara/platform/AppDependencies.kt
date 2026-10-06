@@ -10,6 +10,7 @@ import com.example.bhandara.photos.PhotoUploader
 /**
  * @param appVersion    the version users see, e.g. "1.0.3"
  * @param photoUploader uploads the photos users add to reviews, feasts and shops
+ * @param adminEmails   the app's admins, who list shops for their owners (the backend decides for itself too)
  */
 class AppDependencies(
     val apiClient: ApiClient,
@@ -17,6 +18,7 @@ class AppDependencies(
     val auth: AuthService,
     val appVersion: String,
     val photoUploader: PhotoUploader,
+    val adminEmails: List<String> = emptyList(),
 )
 
 val LocalAppDependencies = staticCompositionLocalOf<AppDependencies> {
