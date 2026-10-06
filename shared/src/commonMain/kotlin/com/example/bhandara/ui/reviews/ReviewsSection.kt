@@ -89,6 +89,7 @@ import com.example.bhandara.shared.resources.review_yours
 import com.example.bhandara.shared.resources.reported
 import com.example.bhandara.shared.resources.reviews_count
 import com.example.bhandara.shared.resources.reviews_empty
+import com.example.bhandara.shared.resources.tab_reviews
 import com.example.bhandara.shared.resources.try_again
 import com.example.bhandara.ui.shopdetails.FullScreenPhotos
 import org.jetbrains.compose.resources.stringResource
@@ -130,7 +131,11 @@ fun ReviewsSection(
     Column(modifier.fillMaxWidth().padding(vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                Text(stringResource(Res.string.reviews_count, state.reviews.size), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Text(
+                    state.countToShow?.let { stringResource(Res.string.reviews_count, it) } ?: stringResource(Res.string.tab_reviews),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                )
                 state.averageRating?.let { average ->
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Filled.Star, contentDescription = null, tint = StarColor, modifier = Modifier.size(18.dp))

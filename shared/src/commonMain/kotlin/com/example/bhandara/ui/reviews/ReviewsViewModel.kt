@@ -64,6 +64,9 @@ data class ReviewsState(
     /** The backend allows one review per person per shop */
     val myReview: ReviewResponse? get() = myUid?.let { uid -> reviews.firstOrNull { it.reviewerUid == uid } }
 
+    /** How many reviews to show in the title; null while they first load, so it doesn't say 0 */
+    val countToShow: Int? get() = if (loading && reviews.isEmpty()) null else reviews.size
+
     val averageRating: Double? get() = reviews.takeIf { it.isNotEmpty() }?.map { it.rating }?.average()
 
     val canWrite: Boolean get() = myUid != null && !loading && error == null

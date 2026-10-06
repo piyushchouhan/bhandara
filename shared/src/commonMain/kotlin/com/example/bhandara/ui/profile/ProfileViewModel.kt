@@ -30,6 +30,10 @@ data class ProfileState(
 ) {
     /** Not signed in with an account: the app uses an anonymous one */
     val isGuest: Boolean get() = account == null || account.isAnonymous
+
+    /** The account's name as the title, and its email under it; without a name, the email is the title alone */
+    val accountTitle: String? get() = account?.name ?: account?.email
+    val accountSubtitle: String? get() = account?.email?.takeIf { account.name != null }
 }
 
 /**

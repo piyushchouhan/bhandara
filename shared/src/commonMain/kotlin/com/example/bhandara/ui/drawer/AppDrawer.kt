@@ -205,26 +205,29 @@ private fun LanguageItem() {
     val language = rememberAppLanguage()
     var choosing by remember { mutableStateOf(false) }
     val currentName = APP_LANGUAGES.first { it.first == language.current }.second
-    Box {
-        DrawerItem(
-            Icons.Default.Language,
-            Res.string.language,
-            subtitle = if (language.choosableInApp) null else stringResource(Res.string.language_in_settings),
-            trailing = { Text(currentName, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary) },
-            onClick = { if (language.choosableInApp) choosing = true else language.choose(language.current) },
-        )
-        DropdownMenu(expanded = choosing, onDismissRequest = { choosing = false }) {
-            APP_LANGUAGES.forEach { (tag, name) ->
-                DropdownMenuItem(
-                    text = { Text(name) },
-                    onClick = {
-                        choosing = false
-                        language.choose(tag)
-                    },
-                )
+    DrawerItem(
+        Icons.Default.Language,
+        Res.string.language,
+        subtitle = if (language.choosableInApp) null else stringResource(Res.string.language_in_settings),
+        trailing = {
+            // The menu opens from the current language at the end of the row, over nothing else in the menu
+            Box {
+                Text(currentName, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
+                DropdownMenu(expanded = choosing, onDismissRequest = { choosing = false }) {
+                    APP_LANGUAGES.forEach { (tag, name) ->
+                        DropdownMenuItem(
+                            text = { Text(name) },
+                            onClick = {
+                                choosing = false
+                                language.choose(tag)
+                            },
+                        )
+                    }
+                }
             }
-        }
-    }
+        },
+        onClick = { if (language.choosableInApp) choosing = true else language.choose(language.current) },
+    )
 }
 
 /** "Your profile", with the account's picture when signed in with one */

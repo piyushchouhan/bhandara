@@ -235,4 +235,16 @@ class DrawerViewModelsTest {
         assertEquals("Couldn't sign out. Please try again.", viewModel.state.value.error)
         assertFalse(viewModel.state.value.busy)
     }
+
+    @Test
+    fun theProfileShowsTheNameAndEmailEachOnce() {
+        val named = ProfileViewModel(AuthService(FakeFirebase(google)), signOut = {}).state.value
+        assertEquals("Piyush", named.accountTitle)
+        assertEquals("p@example.com", named.accountSubtitle)
+
+        // Some Google accounts come without a name: the email is shown once, as the title
+        val unnamed = ProfileViewModel(AuthService(FakeFirebase(google.copy(name = null))), signOut = {}).state.value
+        assertEquals("p@example.com", unnamed.accountTitle)
+        assertNull(unnamed.accountSubtitle)
+    }
 }

@@ -125,6 +125,15 @@ class ReviewsViewModelTest {
     }
 
     @Test
+    fun theCountIsNotShownAsZeroWhileReviewsLoad() = runTest(dispatcher) {
+        val viewModel = ReviewsViewModel("5", ReviewApi(client), settings, { signedInUid }, uploader)
+
+        assertNull(viewModel.state.value.countToShow)
+        advanceUntilIdle()
+        assertEquals(2, viewModel.state.value.countToShow)
+    }
+
+    @Test
     fun withoutReviewsThereIsNoAverage() = runTest(dispatcher) {
         reviewsAre()
 

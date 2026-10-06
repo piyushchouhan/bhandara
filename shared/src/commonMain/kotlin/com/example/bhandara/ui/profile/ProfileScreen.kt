@@ -123,14 +123,12 @@ private fun ProfilePage(viewModel: ProfileViewModel, accountSignIn: AccountSignI
                 }
             }
             Text(
-                if (state.isGuest) stringResource(Res.string.profile_dialog_guest_user) else account?.name ?: account?.email.orEmpty(),
+                if (state.isGuest) stringResource(Res.string.profile_dialog_guest_user) else state.accountTitle.orEmpty(),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
             )
-            Text(
-                if (state.isGuest) stringResource(Res.string.profile_dialog_guest_session) else account?.email.orEmpty(),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            val subtitle = if (state.isGuest) stringResource(Res.string.profile_dialog_guest_session) else state.accountSubtitle
+            subtitle?.let { Text(it, color = MaterialTheme.colorScheme.onSurfaceVariant) }
             Surface(
                 color = if (state.isGuest) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.primaryContainer,
                 shape = RoundedCornerShape(8.dp),
