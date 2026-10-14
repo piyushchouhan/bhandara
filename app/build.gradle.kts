@@ -1,3 +1,4 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.util.Properties
 import java.io.FileInputStream
 
@@ -37,7 +38,10 @@ android {
         // Phone must be on same WiFi network OR use USB with ADB reverse port forwarding
 //        buildConfigField("String", "API_BASE_URL", "\"https://tobago-sphere-photo-magnetic.trycloudflare.com/\"")
 //         buildConfigField("String", "API_BASE_URL", "\"http://192.168.1.14:8080/\"")
-        buildConfigField("String", "API_BASE_URL", "\"https://9814-2402-e280-3e17-820-592c-1ff3-b22b-e05.ngrok-free.app/\"")
+//        buildConfigField("String", "API_BASE_URL", "\"https://9814-2402-e280-3e17-820-592c-1ff3-b22b-e05.ngrok-free.app/\"")
+//        buildConfigField("String", "API_BASE_URL", "\"http://192.168.1.4:8080/\"")
+//        buildConfigField("String", "API_BASE_URL", "\"https://fa92-2402-e280-3e17-820-f853-99f8-7fb7-b3dd.ngrok-free.app/\"")
+        buildConfigField("String", "API_BASE_URL", "\"http://192.168.1.5:8080/\"")
 
         // Platform admins (comma-separated). Keep in sync with the backend's app.admin-emails.
         // Only used to skip owner-only prompts in the UI; the backend does the real check from the login token.
@@ -71,9 +75,6 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
-    kotlinOptions {
-        jvmTarget = "11"
-    }
     testOptions {
         unitTests {
             isReturnDefaultValues = true
@@ -82,6 +83,12 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_11)
     }
 }
 
@@ -136,6 +143,6 @@ dependencies {
     implementation("com.google.maps.android:maps-compose:4.3.3")
 
     // STOMP over WebSocket (Krossbow)
-    implementation("org.hildan.krossbow:krossbow-stomp-core:7.0.0")
-    implementation("org.hildan.krossbow:krossbow-websocket-okhttp:7.0.0")
+    implementation(libs.krossbow.stomp.core)
+    implementation("org.hildan.krossbow:krossbow-websocket-okhttp:${libs.versions.krossbow.get()}")
 }

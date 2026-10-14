@@ -19,11 +19,11 @@ class AppNavigatorTest {
     @Test
     fun goingBackReturnsToTheScreenBefore() {
         val navigator = AppNavigator()
-        navigator.navigate(Route.ShopsMap)
+        navigator.navigate(Route.Hungry)
         navigator.navigate(Route.ShopDetails("5"))
 
         assertTrue(navigator.back())
-        assertEquals(Route.ShopsMap, navigator.current)
+        assertEquals(Route.Hungry, navigator.current)
         assertTrue(navigator.back())
         assertEquals(Route.Home, navigator.current)
     }
@@ -40,10 +40,10 @@ class AppNavigatorTest {
     fun aDoubleTapOpensTheScreenOnce() {
         val navigator = AppNavigator()
 
-        navigator.navigate(Route.ShopsMap)
-        navigator.navigate(Route.ShopsMap)
+        navigator.navigate(Route.Hungry)
+        navigator.navigate(Route.Hungry)
 
-        assertEquals(listOf(Route.Home, Route.ShopsMap), navigator.backStack)
+        assertEquals(listOf(Route.Home, Route.Hungry), navigator.backStack)
     }
 
     @Test
@@ -60,7 +60,7 @@ class AppNavigatorTest {
     @Test
     fun theOpenScreensSurviveRotationWithTheirDetails() {
         val navigator = AppNavigator()
-        navigator.navigate(Route.ShopsMap)
+        navigator.navigate(Route.Hungry)
         navigator.navigate(Route.ShopDetails("5"))
         navigator.navigate(Route.ClaimShop("5", "Sharma Chaat"))
 
@@ -94,8 +94,22 @@ class AppNavigatorTest {
     fun homeIsNeverReplaced() {
         val navigator = AppNavigator()
 
-        navigator.replace(Route.ShopsMap)
+        navigator.replace(Route.Hungry)
 
-        assertEquals(listOf(Route.Home, Route.ShopsMap), navigator.backStack)
+        assertEquals(listOf(Route.Home, Route.Hungry), navigator.backStack)
+    }
+
+    @Test
+    fun goingBackToHomeClosesEverythingAboveIt() {
+        val navigator = AppNavigator()
+        navigator.navigate(Route.Profile)
+        navigator.navigate(Route.MyReviews)
+
+        navigator.backToHome()
+
+        assertEquals(listOf(Route.Home), navigator.backStack)
+        // Already home: nothing to close
+        navigator.backToHome()
+        assertEquals(listOf(Route.Home), navigator.backStack)
     }
 }

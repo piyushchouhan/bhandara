@@ -119,6 +119,17 @@ class ShopsMapViewModelTest {
     }
 
     @Test
+    fun shopsAreSearchedWithinTheRadiusPickedInSettings() = runTest(dispatcher) {
+        started()
+        assertEquals("5000.0", feedRequests().single().url.parameters["radius"], "5 km unless the user picks another")
+
+        settings.preferences.updateSearchRadius(500)
+        started()
+
+        assertEquals("500.0", feedRequests().last().url.parameters["radius"])
+    }
+
+    @Test
     fun withoutPermissionTheUserIsAskedAndNothingIsLoadedYet() = runTest(dispatcher) {
         phone.permitted = false
         val viewModel = started()
@@ -266,6 +277,20 @@ class ShopsMapViewModelTest {
     }
 
     @Test
+    fun theTappedPinStandsOutAndTheOthersFadeUntilItIsClosed() = runTest(dispatcher) {
+        feedBody = feed(shops = listOf(shop("1", "Sharma Chaat"), shop("2", "Gupta Sweets")))
+        val viewModel = started()
+
+        viewModel.onPinClick(viewModel.state.value.pins().last())
+
+        val pins = viewModel.state.value.pins()
+        assertEquals(listOf(false, true), pins.map { it.selected })
+        assertEquals(listOf(true, false), pins.map { it.dimmed })
+        viewModel.clearSelection()
+        assertTrue(viewModel.state.value.pins().none { it.selected || it.dimmed })
+    }
+
+    @Test
     fun aSelectedShopThatASearchHidesIsNoLongerShown() = runTest(dispatcher) {
         feedBody = feed(shops = listOf(shop("1", "Sharma Chaat"), shop("2", "Gupta Sweets")))
         val viewModel = started()
@@ -349,6 +374,130 @@ class ShopsMapViewModelTest {
         assertNull(viewModel.state.value.message)
     }
 
+    // ==================== Shop zones ====================
+
+    /** Six chaat stalls standing together (zone z1, "Chaat Gali") and one shop on its own */
+    private fun givenAChaatZone(name: String? = "Chaat Gali") {
+        val stalls = (1..6).map { shop("$it", "Stall $it") }
+        feedBody = feed(
+            shops = stalls + shop("7", "Lonely Chai"),
+            zones = listOf(zone("z1", shopIds = (1..6).map { "$it" }, name = name)),
+        )
+    }
+
+    @Test
+    fun zoomedOutAZonesShopsAreReplacedByOneLabelAndItsShape() = runTest(dispatcher) {
+        givenAChaatZone()
+        val viewModel = started()
+
+        val state = viewModel.state.value
+        val zonePin = state.pins().single { it.zoneCount != null }
+        assertEquals(6, zonePin.zoneCount)
+        assertEquals("Chaat Gali", zonePin.label)
+        assertEquals("🍢", zonePin.emoji)
+        assertEquals(GeoLocation(18.5801, 73.8802), zonePin.position)
+        // The zone's own shops aren't drawn; the shop outside it is
+        assertEquals(listOf("7"), state.pins().filter { it.zoneCount == null }.map { it.id })
+
+        val shape = state.mapZones().single()
+        assertEquals("z1", shape.id)
+        assertEquals(listOf(GeoLocation(18.58, 73.88), GeoLocation(18.5802, 73.88), GeoLocation(18.5802, 73.8804)), shape.outline)
+        assertFalse(shape.faint)
+    }
+
+    @Test
+    fun zoomedInEveryShopHasItsPinAndTheShapeIsFaint() = runTest(dispatcher) {
+        givenAChaatZone()
+        val viewModel = started()
+
+        // Still a flag at 16, where shops metres apart would sit on top of each other
+        viewModel.onZoomChanged(16f)
+        assertEquals(1, viewModel.state.value.pins().count { it.zoneCount != null })
+        assertFalse(viewModel.state.value.mapZones().single().faint)
+
+        viewModel.onZoomChanged(17f)
+
+        val state = viewModel.state.value
+        assertEquals((1..7).map { "$it" }, state.pins().map { it.id })
+        assertTrue(state.pins().none { it.zoneCount != null })
+        assertTrue(state.mapZones().single().faint)
+    }
+
+    @Test
+    fun aTappedShopInsideAZoneKeepsItsPinWhenZoomingOut() = runTest(dispatcher) {
+        givenAChaatZone()
+        val viewModel = started()
+        viewModel.onZoomChanged(17f)
+        viewModel.onPinClick(viewModel.state.value.pins().first { it.id == "3" })
+
+        viewModel.onZoomChanged(14f)
+
+        val state = viewModel.state.value
+        assertTrue(state.pins().single { it.id == "3" }.selected)
+        assertEquals("Stall 3", state.selectedPlace()?.shopName)
+        assertEquals(1, state.pins().count { it.zoneCount != null })
+    }
+
+    @Test
+    fun tappingAZoneOrItsLabelZoomsInOnIt() = runTest(dispatcher) {
+        givenAChaatZone()
+        val viewModel = started()
+
+        viewModel.onZoneClick("z1")
+
+        val camera = viewModel.state.value.camera
+        assertEquals(GeoLocation(18.5801, 73.8802), camera.center)
+        assertEquals(18f, camera.zoom)
+        assertNull(viewModel.state.value.selectedId)
+
+        // The label does the same, and opens no shop card
+        val before = viewModel.state.value.camera.id
+        viewModel.onPinClick(viewModel.state.value.pins().single { it.zoneCount != null })
+        assertNotEquals(before, viewModel.state.value.camera.id)
+        assertEquals(18f, viewModel.state.value.camera.zoom)
+        assertNull(viewModel.state.value.selectedId)
+    }
+
+    @Test
+    fun searchingOrShowingMovingVendorsShowsPlacesOneByOneWithoutZones() = runTest(dispatcher) {
+        givenAChaatZone()
+        val viewModel = started()
+
+        viewModel.onSearchQueryChange("Stall")
+        assertTrue(viewModel.state.value.mapZones().isEmpty())
+        assertTrue(viewModel.state.value.pins().none { it.zoneCount != null })
+        assertEquals(5, viewModel.state.value.pins().size) // the usual zoomed-out limit
+
+        viewModel.onSearchQueryChange("")
+        viewModel.onShowMovingVendorsChange(true)
+        assertTrue(viewModel.state.value.mapZones().isEmpty())
+        assertTrue(viewModel.state.value.pins().none { it.zoneCount != null })
+    }
+
+    @Test
+    fun aZoneIsNamedInTheAppsLanguageAndAnUnnamedOneShowsOnlyItsCount() = runTest(dispatcher) {
+        givenAChaatZone()
+        val viewModel = started()
+
+        assertEquals("चाट गली", viewModel.state.value.pins("hi").single { it.zoneCount != null }.label)
+        assertEquals("चाट गल्ली", viewModel.state.value.pins("mr").single { it.zoneCount != null }.label)
+
+        givenAChaatZone(name = null)
+        val unnamed = started()
+        val pin = unnamed.state.value.pins("hi").single { it.zoneCount != null }
+        assertEquals("", pin.label)
+        assertEquals("🏪", pin.emoji)
+    }
+
+    @Test
+    fun aFeedWithoutZonesStillLoads() = runTest(dispatcher) {
+        val viewModel = started()
+
+        assertEquals(listOf("Sharma Chaat"), viewModel.state.value.shops.map { it.shopName })
+        assertTrue(viewModel.state.value.zones.isEmpty())
+        assertTrue(viewModel.state.value.mapZones().isEmpty())
+    }
+
     // ==================== Test data ====================
 
     private companion object {
@@ -361,7 +510,15 @@ class ShopsMapViewModelTest {
         fun cart(id: String, name: String) =
             """{"id":"$id","shopName":"$name","latitude":18.59,"longitude":73.89,"isMovingCart":true}"""
 
-        fun feed(shops: List<String>, carts: List<String> = emptyList(), prompt: String? = null) =
-            """{"activeShops":[${(shops + carts).joinToString(",")}],"verificationPrompt":${prompt ?: "null"}}"""
+        fun feed(shops: List<String>, carts: List<String> = emptyList(), prompt: String? = null, zones: List<String>? = null) =
+            """{"activeShops":[${(shops + carts).joinToString(",")}],"verificationPrompt":${prompt ?: "null"}""" +
+                (zones?.let { ""","zones":[${it.joinToString(",")}]""" } ?: "") + "}"
+
+        /** A street-food zone centred at 18.5801, 73.8802 with a three-corner outline */
+        fun zone(id: String, shopIds: List<String>, name: String?) =
+            """{"id":"$id","shopIds":[${shopIds.joinToString(",") { "\"$it\"" }}],"shopCount":${shopIds.size},""" +
+                """"centerLatitude":18.5801,"centerLongitude":73.8802,""" +
+                """"outline":[[18.58,73.88],[18.5802,73.88],[18.5802,73.8804]],""" +
+                (name?.let { """"name":"$it","nameHi":"चाट गली","nameMr":"चाट गल्ली","type":"STREET_FOOD"""" } ?: """"name":null""") + "}"
     }
 }

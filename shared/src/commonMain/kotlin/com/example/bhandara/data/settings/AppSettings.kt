@@ -1,7 +1,11 @@
 package com.example.bhandara.data.settings
 
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import com.example.bhandara.data.models.api.MenuItemRequest
 import com.russhwolf.settings.Settings
+import kotlin.time.Clock
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 
@@ -12,7 +16,16 @@ import kotlinx.serialization.json.Json
  * The store names and keys are the ones the Android app has always used, so data saved by older versions is
  * still found after updating. Never rename them without migrating the old values.
  */
-class AppSettings(factory: Settings.Factory) {
+/**
+ * A saved place, or a change to one: [kind] is "SHOP" or "FEAST", [savedAt] ms since 1970 (0 when unsaved)
+ */
+data class SavedChange(val kind: String, val id: String, val saved: Boolean, val savedAt: Long)
+
+class AppSettings(factory: Settings.Factory, private val nowMillis: () -> Long = { Clock.System.now().toEpochMilliseconds() }) {
+
+    /** The user's settings (Settings screen) */
+    val preferences: AppPreferences by lazy { AppPreferences(factory.create(AppPreferences.STORE)) }
+
 
     private val sync = factory.create(USER_SYNC)
     private val vendor = factory.create(VENDOR)
@@ -21,6 +34,8 @@ class AppSettings(factory: Settings.Factory) {
     private val reviewActions = factory.create(REVIEW_ACTIONS)
     private val feastActions = factory.create(FEAST_ACTIONS)
     private val verification = factory.create(VERIFICATION)
+    private val savedPlaces = factory.create(SAVED_PLACES)
+    private val savedSync = factory.create(SAVED_SYNC)
 
     private val json = Json { ignoreUnknownKeys = true }
 
@@ -110,6 +125,107 @@ class AppSettings(factory: Settings.Factory) {
 
     fun markAnsweredVerification(shopId: String) = verification.putBoolean(KEY_VERIFIED + shopId, true)
 
+    // ==================== Places the user saved ====================
+    // Kept on the phone so they work offline; each change is also queued until it reaches the account
+    // (data/saved/SavedPlacesSync), so every phone the user signs in on shows the same places.
+
+    fun isShopSaved(shopId: String): Boolean = savedPlaces.getBoolean(KEY_SAVED_SHOP + shopId, false)
+
+    fun setShopSaved(shopId: String, saved: Boolean) = setSaved(KEY_SAVED_SHOP, shopId, saved)
+
+    fun isFeastSaved(feastId: String): Boolean = savedPlaces.getBoolean(KEY_SAVED_FEAST + feastId, false)
+
+    fun setFeastSaved(feastId: String, saved: Boolean) = setSaved(KEY_SAVED_FEAST, feastId, saved)
+
+    val savedShopIds: List<String> get() = idsWith(KEY_SAVED_SHOP)
+
+    val savedFeastIds: List<String> get() = idsWith(KEY_SAVED_FEAST)
+
+    /** When the shop or feast was saved (ms since 1970); 0 for places saved before this was kept */
+    fun savedAt(key: String, id: String): Long = savedPlaces.getLong(KEY_SAVED_AT + key + id, 0L)
+
+    /** How many shops and feasts the user saved */
+    val savedPlaceCount: Int get() = savedShopIds.size + savedFeastIds.size
+
+    /** Forgets every saved place on this phone, and what was still to be synced (the account was deleted or switched) */
+    fun clearSavedPlaces() {
+        savedPlaces.clear()
+        savedSync.clear()
+        _savedChanges.value++
+    }
+
+    private val _savedChanges = MutableStateFlow(0L)
+
+    /** Goes up each time the user saves or unsaves something, so it can be synced */
+    val savedChanges: StateFlow<Long> = _savedChanges.asStateFlow()
+
+    /** The account the saved places were last synced with, and whether it was a guest (anonymous) one */
+    var savedSyncedUid: String?
+        get() = savedSync.getStringOrNull(KEY_SYNCED_UID)
+        set(value) = if (value == null) savedSync.remove(KEY_SYNCED_UID) else savedSync.putString(KEY_SYNCED_UID, value)
+
+    var savedSyncedAsGuest: Boolean
+        get() = savedSync.getBoolean(KEY_SYNCED_AS_GUEST, true)
+        set(value) = savedSync.putBoolean(KEY_SYNCED_AS_GUEST, value)
+
+    /** Saves and unsaves not yet synced with the account, in no particular order */
+    fun pendingSavedChanges(): List<SavedChange> =
+        savedSync.keys.filter { it.startsWith(KEY_PENDING) }.mapNotNull { key ->
+            val (kind, id) = key.removePrefix(KEY_PENDING).split('_', limit = 2).takeIf { it.size == 2 } ?: return@mapNotNull null
+            val prefix = prefixFor(kind) ?: return@mapNotNull null
+            val saved = savedSync.getBoolean(key, false)
+            SavedChange(kind, id, saved, if (saved) savedAt(prefix, id) else 0L)
+        }
+
+    /** Queues every place saved on this phone, e.g. to bring a guest's places into the account they signed in to */
+    fun queueAllSaved() {
+        savedShopIds.forEach { savedSync.putBoolean(KEY_PENDING + SHOP + "_" + it, true) }
+        savedFeastIds.forEach { savedSync.putBoolean(KEY_PENDING + FEAST + "_" + it, true) }
+    }
+
+    /**
+     * After a sync: the phone shows what the account has, plus anything changed on the phone since [sent] went out
+     * (still queued); [sent] leaves the queue unless it changed again meanwhile
+     */
+    fun applySyncedSaved(account: List<SavedChange>, sent: List<SavedChange>) {
+        sent.forEach { change ->
+            val key = KEY_PENDING + change.kind + "_" + change.id
+            if (savedSync.getBooleanOrNull(key) == change.saved) savedSync.remove(key)
+        }
+        val stillPending = pendingSavedChanges()
+        savedPlaces.clear()
+        account.forEach { place -> prefixFor(place.kind)?.let { write(it, place.id, true, place.savedAt) } }
+        stillPending.forEach { change -> prefixFor(change.kind)?.let { write(it, change.id, change.saved, change.savedAt.takeIf { at -> at > 0 } ?: nowMillis()) } }
+        _savedChanges.value++
+    }
+
+    private fun setSaved(prefix: String, id: String, saved: Boolean) {
+        write(prefix, id, saved, nowMillis())
+        savedSync.putBoolean(KEY_PENDING + kindFor(prefix) + "_" + id, saved)
+        _savedChanges.value++
+    }
+
+    private fun write(prefix: String, id: String, saved: Boolean, at: Long) {
+        if (saved) {
+            savedPlaces.putBoolean(prefix + id, true)
+            savedPlaces.putLong(KEY_SAVED_AT + prefix + id, at)
+        } else {
+            savedPlaces.remove(prefix + id)
+            savedPlaces.remove(KEY_SAVED_AT + prefix + id)
+        }
+    }
+
+    private fun kindFor(prefix: String) = if (prefix == KEY_SAVED_SHOP) SHOP else FEAST
+
+    private fun prefixFor(kind: String) = when (kind) {
+        SHOP -> KEY_SAVED_SHOP
+        FEAST -> KEY_SAVED_FEAST
+        else -> null
+    }
+
+    private fun idsWith(prefix: String): List<String> =
+        savedPlaces.keys.filter { it.startsWith(prefix) }.map { it.removePrefix(prefix) }
+
     companion object {
         // Store names and keys used by the Android app since before this class existed
         const val USER_SYNC = "user_sync_prefs"
@@ -119,6 +235,8 @@ class AppSettings(factory: Settings.Factory) {
         const val REVIEW_ACTIONS = "ReviewActionsPrefs"
         const val VERIFICATION = "VerificationPrefs"
         const val FEAST_ACTIONS = "FeastActionsPrefs"
+        const val SAVED_PLACES = "SavedPlacesPrefs"
+        const val SAVED_SYNC = "SavedSyncPrefs"
 
         const val KEY_BACKEND_SYNCED = "backend_synced_"
         const val KEY_PUSH_TOKEN_SENT = "push_token_sent_"
@@ -132,6 +250,16 @@ class AppSettings(factory: Settings.Factory) {
         const val KEY_REPORTED_REVIEW = "reported_review_"
         const val KEY_VERIFIED = "verified_"
         const val KEY_REPORTED_FEAST = "reported_feast_"
+        const val KEY_SAVED_SHOP = "saved_shop_"
+        const val KEY_SAVED_FEAST = "saved_feast_"
+        const val KEY_SAVED_AT = "saved_at_"
+        private const val KEY_PENDING = "pending_"
+        private const val KEY_SYNCED_UID = "synced_uid"
+        private const val KEY_SYNCED_AS_GUEST = "synced_as_guest"
+
+        /** What the backend calls a saved shop and a saved feast */
+        const val SHOP = "SHOP"
+        const val FEAST = "FEAST"
 
         private const val NO_SHOP = -1L
     }

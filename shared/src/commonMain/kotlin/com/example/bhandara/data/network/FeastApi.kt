@@ -7,7 +7,7 @@ import io.ktor.client.request.parameter
 import io.ktor.client.request.setBody
 import io.ktor.http.HttpMethod
 
-/** Community feasts (bhandaras): posting, finding and flagging fake ones */
+/** Community feasts (bhandaras): posting, finding and flagging fake ones, and the organizer's own feasts */
 class FeastApi(private val client: ApiClient) {
 
     /** Feasts on now or coming up near the user, with their distance; ended ones are left out */
@@ -28,6 +28,25 @@ class FeastApi(private val client: ApiClient) {
 
     suspend fun getFeast(feastId: String): ApiResult<FeastResponse> =
         client.call("api/feasts/$feastId") { method = HttpMethod.Get }
+
+    /** The signed-in user's feasts with their status, latest date first */
+    suspend fun getMyFeasts(): ApiResult<List<FeastResponse>> =
+        client.call("api/feasts/mine") { method = HttpMethod.Get }
+
+    /** The organizer changes a feast that hasn't ended; nobody is notified again */
+    suspend fun updateFeast(feastId: String, feast: FeastRequest): ApiResult<FeastResponse> =
+        client.call("api/feasts/$feastId") {
+            method = HttpMethod.Put
+            setBody(feast)
+        }
+
+    /** The organizer ends a feast now (the food ran out): it leaves the map */
+    suspend fun endFeastEarly(feastId: String): ApiResult<FeastResponse> =
+        client.call("api/feasts/$feastId/end") { method = HttpMethod.Post }
+
+    /** The organizer takes a feast down: it leaves the map and their list */
+    suspend fun takeDownFeast(feastId: String): ApiResult<Unit> =
+        client.callForNothing("api/feasts/$feastId") { method = HttpMethod.Delete }
 
     /** Flags a fake or inappropriate feast; each user counts once, and enough reports take it down */
     suspend fun reportFeast(feastId: String): ApiResult<FeastResponse> =

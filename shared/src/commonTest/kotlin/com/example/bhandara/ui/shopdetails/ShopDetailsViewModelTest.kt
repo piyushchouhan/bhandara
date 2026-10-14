@@ -112,6 +112,22 @@ class ShopDetailsViewModelTest {
     }
 
     @Test
+    fun aSavedShopStaysSavedWhenOpenedAgainUntilItIsUnsaved() = runTest(dispatcher) {
+        val first = opened()
+        assertFalse(first.state.value.isSaved)
+
+        first.toggleSaved()
+        assertTrue(first.state.value.isSaved)
+        assertEquals("Saved to your places", first.state.value.message)
+        assertTrue(opened().state.value.isSaved, "remembered on the phone")
+
+        first.toggleSaved()
+        assertFalse(first.state.value.isSaved)
+        assertFalse(opened().state.value.isSaved)
+        assertTrue(requests.none { it.method != io.ktor.http.HttpMethod.Get }, "saving stays on the phone")
+    }
+
+    @Test
     fun itIsLoadingUntilTheBackendAnswers() = runTest(dispatcher) {
         val viewModel = ShopDetailsViewModel("5", ShopApi(client), settings, { signedInUid }, null)
 

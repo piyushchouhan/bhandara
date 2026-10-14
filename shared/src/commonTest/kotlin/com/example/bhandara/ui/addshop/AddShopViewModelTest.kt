@@ -1,5 +1,6 @@
 package com.example.bhandara.ui.addshop
 
+import kotlinx.datetime.LocalTime
 import com.example.bhandara.data.location.DeviceLocation
 import com.example.bhandara.data.location.GeoLocation
 import com.example.bhandara.data.location.LocationService
@@ -32,6 +33,7 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.double
@@ -124,6 +126,13 @@ class AddShopViewModelTest {
         onMenuInputChange("Pani Puri, Bhel, ")
     }
 
+    private fun AddShopViewModel.fillInCart() {
+        setMovingCart(true)
+        onShopNameChange("Ramesh Bhel")
+        toggleCartSells("Chaat & snacks")
+        setNoFixedRoute(true)
+    }
+
     private fun requestTo(path: String) = requests.single { it.url.encodedPath == path }
 
     private fun HttpRequestData.json(): JsonObject =
@@ -200,6 +209,280 @@ class AddShopViewModelTest {
 
         repeat(3) { assertTrue(viewModel.back()) }
         assertFalse(viewModel.back())
+    }
+
+    @Test
+    fun aMovingCartAlsoHasARouteAndItsMenuIsItsItems() {
+        val viewModel = viewModel()
+        viewModel.setMovingCart(true)
+        assertEquals(listOf(ShopStep.KIND, ShopStep.BASICS, ShopStep.ROUTE, ShopStep.MENU, ShopStep.DETAILS), viewModel.state.value.steps)
+
+        viewModel.next()
+        viewModel.next()
+        assertEquals(ShopStep.BASICS, viewModel.state.value.step)
+        assertEquals("Enter the cart's name", viewModel.state.value.error)
+
+        viewModel.onShopNameChange("Ramesh Bhel")
+        viewModel.next()
+        assertEquals("Pick what it sells", viewModel.state.value.error)
+
+        viewModel.toggleCartSells("Sabzi")
+        viewModel.next()
+        assertEquals(ShopStep.ROUTE, viewModel.state.value.step)
+        viewModel.next()
+        assertEquals("Add a stop, or say it has no fixed route", viewModel.state.value.error)
+
+        viewModel.saveStop(CartStop(1, "Kothrud bus depot"))
+        viewModel.next()
+        assertEquals(ShopStep.MENU, viewModel.state.value.step)
+        viewModel.next()
+        assertTrue(viewModel.state.value.isLastStep)
+        repeat(4) { assertTrue(viewModel.back()) }
+        assertFalse(viewModel.back())
+    }
+
+    @Test
+    fun aShopHasNoRouteStep() {
+        val viewModel = viewModel()
+        viewModel.setMovingCart(false)
+        assertFalse(ShopStep.ROUTE in viewModel.state.value.steps)
+    }
+
+    @Test
+    fun stopsCanBeChangedReorderedAndDroppedForNoFixedRoute() {
+        val viewModel = viewModel()
+        viewModel.setMovingCart(true)
+        viewModel.saveStop(CartStop(1, "Kothrud bus depot"))
+        viewModel.saveStop(CartStop(2, "MIT College gate"))
+        viewModel.saveStop(CartStop(3, "Karve Road signal"))
+
+        viewModel.saveStop(CartStop(2, "MIT gate"))
+        viewModel.moveStop(2, 0)
+        assertEquals(listOf("Karve Road signal", "Kothrud bus depot", "MIT gate"), viewModel.state.value.form.stops.map { it.name })
+
+        viewModel.removeStop(1)
+        assertEquals(listOf("Karve Road signal", "MIT gate"), viewModel.state.value.form.stops.map { it.name })
+
+        viewModel.setNoFixedRoute(true)
+        assertTrue(viewModel.state.value.form.stops.isEmpty())
+        assertNull(viewModel.state.value.form.problem(listOf(ShopStep.ROUTE)))
+
+        // Adding a stop again means it has a route after all
+        viewModel.saveStop(CartStop(4, "Paud Phata"))
+        assertFalse(viewModel.state.value.form.noFixedRoute)
+    }
+
+    @Test
+    fun aRouteNeedsItsDays() {
+        val cart = ShopForm(isMovingCart = true, shopName = "Ramesh Bhel", cartSells = listOf("Sabzi"), stops = listOf(CartStop(1, "Kothrud")))
+        assertNull(cart.problem(listOf(ShopStep.ROUTE)))
+        assertEquals("Pick the days it's out", cart.copy(daysOut = emptySet()).problem(listOf(ShopStep.ROUTE))?.message)
+    }
+
+    @Test
+    fun aCartsTypeRouteDaysPaymentsAndLooksAreSentWithIt() = runTest(dispatcher) {
+        val viewModel = viewModel()
+        viewModel.setMovingCart(true)
+        viewModel.onShopNameChange("Ramesh Bhel")
+        viewModel.setCartType("CYCLE")
+        viewModel.toggleCartSells("Chaat & snacks")
+        viewModel.saveStop(CartStop(1, "Kothrud depot", from = LocalTime(7, 0), to = LocalTime(9, 30)))
+        viewModel.saveStop(CartStop(2, "MIT gate", timesVary = true))
+        viewModel.toggleDay(5) // not on Saturdays (out Monday to Friday)
+        viewModel.togglePayment("CARD")
+        viewModel.setTakesOrders(true)
+        viewModel.onSpotHintChange(" Blue umbrella ")
+        viewModel.setCartOption("Chaat & snacks", OPTION_JAIN, true)
+
+        submitted(viewModel)
+
+        val cart = requestTo("/api/localshops").json()["cartDetails"]!!.jsonObject
+        assertEquals("CYCLE", cart["cartType"]!!.jsonPrimitive.content)
+        assertEquals(listOf("Chaat & snacks"), cart["sells"]!!.jsonArray.map { it.jsonPrimitive.content })
+        val stops = cart["stops"]!!.jsonArray.map { it.jsonObject }
+        assertEquals(listOf("Kothrud depot", "MIT gate"), stops.map { it["name"]!!.jsonPrimitive.content })
+        assertEquals("07:00:00", stops[0]["from"]!!.jsonPrimitive.content)
+        assertEquals("09:30:00", stops[0]["to"]!!.jsonPrimitive.content)
+        assertEquals("true", stops[1]["timesVary"]!!.jsonPrimitive.content)
+        assertTrue(stops[1]["from"].let { it == null || it is JsonNull }, "a stop whose times vary has none")
+        assertEquals(listOf("MON", "TUE", "WED", "THU", "FRI"), cart["daysOut"]!!.jsonArray.map { it.jsonPrimitive.content })
+        assertEquals(listOf("CASH", "UPI", "CARD"), cart["payments"]!!.jsonArray.map { it.jsonPrimitive.content })
+        assertEquals("true", cart["takesOrders"]!!.jsonPrimitive.content)
+        assertEquals("Blue umbrella", cart["spotHint"]!!.jsonPrimitive.content)
+        // Chaat's settings as picked, or as its preset has them
+        val options = cart["options"]!!.jsonObject
+        assertEquals("true", options["Chaat & snacks/$OPTION_JAIN"]!!.jsonPrimitive.content)
+        assertEquals("true", options["Chaat & snacks/$OPTION_PURE_VEG"]!!.jsonPrimitive.content)
+    }
+
+    @Test
+    fun aCartWithNoFixedRouteSendsNoStops() = runTest(dispatcher) {
+        val viewModel = viewModel()
+        viewModel.setMovingCart(true)
+        viewModel.saveStop(CartStop(1, "Kothrud depot"))
+        viewModel.fillInCart() // says it has no fixed route
+
+        submitted(viewModel)
+
+        val cart = requestTo("/api/localshops").json()["cartDetails"]!!.jsonObject
+        assertEquals("true", cart["noFixedRoute"]!!.jsonPrimitive.content)
+        assertTrue(cart["stops"]!!.jsonArray.isEmpty())
+    }
+
+    @Test
+    fun aFixedShopSendsNoCartDetails() = runTest(dispatcher) {
+        val viewModel = viewModel()
+        viewModel.fillIn()
+
+        submitted(viewModel)
+
+        assertTrue(requestTo("/api/localshops").json()["cartDetails"].let { it == null || it is JsonNull })
+    }
+
+    @Test
+    fun whatACartSellsIsListedAsItsDishes() = runTest(dispatcher) {
+        val viewModel = viewModel()
+        viewModel.fillInCart()
+        viewModel.toggleCartSells("Chai & drinks")
+
+        submitted(viewModel)
+
+        val shop = requestTo("/api/localshops").json()
+        assertEquals(listOf("Chaat & snacks", "Chai & drinks"), shop["menuItems"]!!.jsonArray.map { it.jsonPrimitive.content })
+        assertEquals("Street Food", shop["shopType"]!!.jsonPrimitive.content)
+    }
+
+    @Test
+    fun pickingWhatACartSellsSuggestsItsItemsAndDroppingItDropsThem() {
+        val viewModel = viewModel()
+        viewModel.setMovingCart(true)
+
+        viewModel.toggleCartSells("Sabzi")
+        val sabzi = viewModel.state.value.form.cartItems
+        assertEquals(listOf("Tomato", "Onion", "Methi", "Kothimbir"), sabzi.map { it.name })
+        assertEquals(listOf("kg", "kg", "bunch", "bunch"), sabzi.map { it.unit })
+        assertTrue(viewModel.state.value.form.cartOption("Sabzi", OPTION_DAILY_RATES))
+
+        viewModel.toggleCartSells("Sabzi")
+        assertTrue(viewModel.state.value.form.cartItems.isEmpty())
+        assertTrue(viewModel.state.value.form.cartSells.isEmpty())
+    }
+
+    @Test
+    fun itemsCanBeAddedPricedAndRemoved() {
+        val viewModel = viewModel()
+        viewModel.setMovingCart(true)
+        viewModel.toggleCartSells("Milk & dairy")
+        viewModel.addCartItem("Milk & dairy", PresetItem("Ghee", "kg"))
+        viewModel.addCartItem("Milk & dairy")
+        val form = viewModel.state.value.form
+        val own = form.cartItems.last()
+        assertTrue(own.custom)
+        assertEquals("litre", own.unit)
+
+        viewModel.onCartItemName(own.id, "Malai")
+        viewModel.onCartItemPrice(form.cartItems.first().id, "60.505")
+        viewModel.onCartItemUnit(form.cartItems.first().id, "½ L")
+        viewModel.removeCartItem(form.cartItems[1].id)
+
+        val items = viewModel.state.value.form.cartItems
+        assertEquals(listOf("Cow milk", "Dahi", "Ghee", "Malai"), items.map { it.name })
+        assertEquals("60.50", items.first().price)
+        assertEquals("½ L", items.first().unit)
+    }
+
+    @Test
+    fun aCategoryTheOwnerNamesHasNoSuggestions() {
+        val viewModel = viewModel()
+        viewModel.setMovingCart(true)
+        viewModel.addCustomCategory("  Flowers ")
+        viewModel.addCustomCategory("flowers")
+
+        assertEquals(listOf("Flowers"), viewModel.state.value.form.cartSells)
+        assertTrue(viewModel.state.value.form.cartItems.isEmpty())
+    }
+
+    @Test
+    fun aDrinksCartKnowsGanneRasIsSeasonal() {
+        val viewModel = viewModel()
+        viewModel.setMovingCart(true)
+        viewModel.toggleCartSells("Chai & drinks")
+        val form = viewModel.state.value.form
+        assertEquals(2 to 5, form.seasons["Chai & drinks"])
+        assertEquals(listOf("Ganne ras"), form.cartItems.filter { it.id in form.seasonalItems }.map { it.name })
+
+        val naralPani = form.cartItems.single { it.name == "Naral pani" }.id
+        viewModel.setSeason("Chai & drinks", 3, 6, setOf(naralPani))
+        assertEquals(3 to 6, viewModel.state.value.form.seasons["Chai & drinks"])
+        assertEquals(setOf(naralPani), viewModel.state.value.form.seasonalItems)
+    }
+
+    @Test
+    fun aCartsItemsAreSavedAsItsMenuWithTheirUnits() = runTest(dispatcher) {
+        val viewModel = viewModel()
+        viewModel.fillInCart()
+        val items = viewModel.state.value.form.cartItems
+        viewModel.onCartItemPrice(items.first { it.name == "Bhel" }.id, "40")
+        viewModel.addCartItem("Chaat & snacks")
+
+        submitted(viewModel)
+
+        val menu = requestTo("/api/menu-items/manual/shop/42").json()["items"]!!.jsonArray.map { it.jsonObject }
+        assertEquals(listOf("Bhel", "Pani puri", "Vada pav"), menu.map { it["name"]!!.jsonPrimitive.content })
+        assertEquals(listOf("plate", "6 pcs", "piece"), menu.map { it["unit"]!!.jsonPrimitive.content })
+        assertTrue(menu.all { it["category"]!!.jsonPrimitive.content == "Chaat & snacks" })
+        assertEquals(40.0, menu.first()["price"]!!.jsonPrimitive.content.toDouble())
+    }
+
+    @Test
+    fun seasonalItemsAreSavedWithTheirMonthsAndTheRestAllYear() = runTest(dispatcher) {
+        val viewModel = viewModel()
+        viewModel.fillInCart()
+        viewModel.toggleCartSells("Chai & drinks")
+        val drinks = viewModel.state.value.form.cartItems.filter { it.category == "Chai & drinks" }
+        val naralPani = drinks.single { it.name == "Naral pani" }.id
+        // March to June (0 = January on the phone)
+        viewModel.setSeason("Chai & drinks", 2, 5, setOf(naralPani))
+
+        submitted(viewModel)
+
+        val menu = requestTo("/api/menu-items/manual/shop/42").json()["items"]!!.jsonArray.map { it.jsonObject }
+        val naral = menu.single { it["name"]!!.jsonPrimitive.content == "Naral pani" }
+        assertEquals(3, naral["seasonFromMonth"]!!.jsonPrimitive.content.toInt())
+        assertEquals(6, naral["seasonToMonth"]!!.jsonPrimitive.content.toInt())
+        val allYear = menu.filter { it["name"]!!.jsonPrimitive.content != "Naral pani" }
+        assertTrue(allYear.isNotEmpty())
+        assertTrue(allYear.all { (it["seasonFromMonth"] ?: JsonNull) is JsonNull })
+    }
+
+    @Test
+    fun theSameItemByTwoUnitsIsSavedTwice() {
+        val form = ShopForm(
+            isMovingCart = true,
+            cartItems = listOf(
+                CartItem(1, "Eggs", "Eggs", "dozen", "84"),
+                CartItem(2, "Eggs", "Eggs", "tray of 30", "200"),
+                CartItem(3, "Eggs", "eggs", "Dozen", "90"),
+            ),
+        )
+
+        assertEquals(listOf("dozen", "tray of 30"), form.cartMenu.map { it.unit })
+    }
+
+    @Test
+    fun editInRouteGoesBackToTheRoute() {
+        val viewModel = viewModel()
+        viewModel.fillInCart()
+        viewModel.next()
+        viewModel.next()
+        viewModel.next()
+        assertEquals(ShopStep.MENU, viewModel.state.value.step)
+
+        viewModel.goBackTo(ShopStep.ROUTE)
+        assertEquals(ShopStep.ROUTE, viewModel.state.value.step)
+        // Never forward
+        viewModel.goBackTo(ShopStep.DETAILS)
+        assertEquals(ShopStep.ROUTE, viewModel.state.value.step)
     }
 
     @Test
@@ -285,8 +568,7 @@ class AddShopViewModelTest {
     @Test
     fun aMovingCartIsRememberedForVendorMode() = runTest(dispatcher) {
         val viewModel = viewModel()
-        viewModel.fillIn()
-        viewModel.setMovingCart(true)
+        viewModel.fillInCart()
 
         submitted(viewModel)
 

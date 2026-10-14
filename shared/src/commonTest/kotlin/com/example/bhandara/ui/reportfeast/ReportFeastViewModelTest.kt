@@ -17,6 +17,9 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.OutgoingContent
 import io.ktor.http.headersOf
+import io.ktor.http.HttpMethod
+import kotlinx.datetime.DatePeriod
+import kotlinx.datetime.plus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -91,7 +94,7 @@ class ReportFeastViewModelTest {
         }
     }))
 
-    private fun viewModel() = ReportFeastViewModel(
+    private fun viewModel(start: FeastFormStart = FeastFormStart.New) = ReportFeastViewModel(
         FeastApi(client),
         uploadPhotos = { photos, onProgress ->
             uploaded += photos.map { (it as Photo).name }
@@ -102,6 +105,7 @@ class ReportFeastViewModelTest {
         LocationService(phone, nowMillis = { 0 }),
         currentUid = { "me-1" },
         now = { now },
+        start = start,
     )
 
     /** A form filled in correctly: a langar from 6 to 10 PM today */
@@ -402,5 +406,118 @@ class ReportFeastViewModelTest {
         advanceUntilIdle()
 
         assertEquals(listOf("Puri", "Halwa"), requests.single().json()["menuItems"]!!.jsonArray.map { it.jsonPrimitive.content })
+    }
+
+    // ==================== Editing and reposting ====================
+
+    /** One of the user's feasts, tomorrow 12 to 3 PM at Karve Road, with two photos */
+    private val myFeast = """{"id":"50","organizerName":"Ganesh Mandal","contactPhone":"9876543210","menuItems":["Puri","Kheer"],""" +
+        """"foodType":"Vegetarian","description":"All welcome","imageUrls":["https://img.test/old1.webp","https://img.test/old2.webp"],""" +
+        """"feastDate":"2026-10-05","startTime":"12:00:00","endTime":"15:00:00","latitude":18.51,"longitude":73.81,""" +
+        """"address":"Karve Road","landmark":"Near the temple","estimatedCapacity":200,"status":"UPCOMING"}"""
+
+    @Test
+    fun editingStartsFromTheFeastWithItsPhotosAndDate() = runTest(dispatcher) {
+        createBody = myFeast
+        val viewModel = viewModel(FeastFormStart.Edit("50"))
+        assertTrue(viewModel.state.value.loading)
+        advanceUntilIdle()
+
+        val form = viewModel.state.value.form
+        assertFalse(viewModel.state.value.loading)
+        assertTrue(viewModel.state.value.isEditing)
+        assertEquals("/api/feasts/50", requests.single().url.encodedPath)
+        assertEquals(listOf("https://img.test/old1.webp", "https://img.test/old2.webp"), form.photoUrls)
+        assertEquals(listOf("Puri", "Kheer"), form.menuItems)
+        assertEquals(LocalDate(2026, 10, 5), form.date)
+        assertEquals(LocalTime(12, 0), form.startTime)
+        assertEquals("Ganesh Mandal", form.organizerName)
+        assertEquals("Karve Road", form.address)
+        assertEquals("200", form.capacity)
+    }
+
+    @Test
+    fun savingAnEditKeepsThePlaceUploadsOnlyNewPhotosAndChangesTheSameFeast() = runTest(dispatcher) {
+        createBody = myFeast
+        phone.location = null // where the user is doesn't matter for an edit
+        val viewModel = viewModel(FeastFormStart.Edit("50"))
+        advanceUntilIdle()
+        viewModel.removePhotoUrl("https://img.test/old2.webp")
+        viewModel.addPhotos(listOf(Photo("new")))
+        viewModel.onStartTimeChange(LocalTime(18, 0))
+        viewModel.onEndTimeChange(LocalTime(21, 0))
+
+        submitted(viewModel)
+
+        val put = requests.last()
+        assertEquals(HttpMethod.Put, put.method)
+        assertEquals("/api/feasts/50", put.url.encodedPath)
+        val body = put.json()
+        assertEquals(listOf("https://img.test/old1.webp", "https://img.test/new.webp"), body["imageUrls"]!!.jsonArray.map { it.jsonPrimitive.content })
+        assertEquals(listOf(listOf("new")), uploaded)
+        assertEquals(18.51, body["latitude"]!!.jsonPrimitive.content.toDouble())
+        assertEquals(73.81, body["longitude"]!!.jsonPrimitive.content.toDouble())
+        assertEquals("18:00:00", body["startTime"]!!.jsonPrimitive.content)
+        assertEquals("50", viewModel.state.value.postedFeastId)
+    }
+
+    @Test
+    fun anEditWithoutNewPhotosUploadsNothing() = runTest(dispatcher) {
+        createBody = myFeast
+        val viewModel = viewModel(FeastFormStart.Edit("50"))
+        advanceUntilIdle()
+
+        submitted(viewModel)
+
+        assertTrue(uploaded.isEmpty())
+        assertEquals(HttpMethod.Put, requests.last().method)
+    }
+
+    @Test
+    fun aFeastWhosePhotosWereAllRemovedNeedsOne() = runTest(dispatcher) {
+        createBody = myFeast
+        val viewModel = viewModel(FeastFormStart.Edit("50"))
+        advanceUntilIdle()
+        viewModel.removePhotoUrl("https://img.test/old1.webp")
+        viewModel.removePhotoUrl("https://img.test/old2.webp")
+
+        submitted(viewModel)
+
+        assertEquals(FeastStep.FOOD, viewModel.state.value.step)
+        assertEquals("Add at least one photo of the food or the place", viewModel.state.value.error)
+        assertTrue(requests.none { it.method == HttpMethod.Put })
+    }
+
+    @Test
+    fun repostingKeepsTheDetailsButAsksForANewDateAndPostsWhereTheUserIs() = runTest(dispatcher) {
+        createBody = myFeast
+        val viewModel = viewModel(FeastFormStart.Repost("50"))
+        advanceUntilIdle()
+        assertNull(viewModel.state.value.form.date)
+        assertEquals(LocalTime(12, 0), viewModel.state.value.form.startTime)
+        assertFalse(viewModel.state.value.isEditing)
+
+        viewModel.onDateChange(today.plus(DatePeriod(days = 7)))
+        submitted(viewModel)
+
+        val post = requests.last()
+        assertEquals(HttpMethod.Post, post.method)
+        assertEquals("/api/feasts", post.url.encodedPath)
+        val body = post.json()
+        assertEquals("2026-10-11", body["feastDate"]!!.jsonPrimitive.content)
+        assertEquals(18.5823, body["latitude"]!!.jsonPrimitive.content.toDouble())
+        assertEquals(listOf("https://img.test/old1.webp", "https://img.test/old2.webp"), body["imageUrls"]!!.jsonArray.map { it.jsonPrimitive.content })
+        assertEquals("Ganesh Mandal", body["organizerName"]!!.jsonPrimitive.content)
+    }
+
+    @Test
+    fun clearingAllOnlyAppliesToANewFeast() = runTest(dispatcher) {
+        createBody = myFeast
+        val viewModel = viewModel(FeastFormStart.Edit("50"))
+        advanceUntilIdle()
+
+        viewModel.clearAll()
+
+        assertEquals(listOf("Puri", "Kheer"), viewModel.state.value.form.menuItems)
     }
 }

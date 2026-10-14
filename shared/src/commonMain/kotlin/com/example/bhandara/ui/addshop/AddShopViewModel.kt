@@ -12,6 +12,7 @@ import com.example.bhandara.data.network.ShopApi
 import com.example.bhandara.data.settings.AppSettings
 import com.example.bhandara.photos.PhotoUploadException
 import com.example.bhandara.photos.PickedPhoto
+import com.example.bhandara.ui.menu.cleanPrice
 import com.example.bhandara.ui.reportfeast.normalizePhone
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -43,8 +44,10 @@ data class AddShopState(
     val uploadProgress: Int? = null,
     val added: AddedShop? = null,
 ) {
-    val isLastStep: Boolean get() = step == ShopStep.entries.last()
-    val canAddPhotos: Boolean get() = form.photos.size < MAX_SHOP_PHOTOS
+    /** The steps for what's being added: a moving cart also has its Route */
+    val steps: List<ShopStep> get() = stepsFor(form.isMovingCart)
+    val isLastStep: Boolean get() = step == steps.last()
+    val canAddPhotos: Boolean get() = form.photos.size + form.cartPhotos.size < MAX_SHOP_PHOTOS
 }
 
 /**
@@ -89,8 +92,109 @@ class AddShopViewModel(
     fun addMenuInput() = edit { it.copy(menuNames = withNames(it.menuNames, listOf(it.menuInput)), menuInput = "") }
     fun removeMenuName(name: String) = edit { it.copy(menuNames = it.menuNames - name) }
 
-    fun addPhotos(photos: List<PickedPhoto>) = edit { it.copy(photos = it.photos + photos.take(MAX_SHOP_PHOTOS - it.photos.size)) }
+    fun addPhotos(photos: List<PickedPhoto>) =
+        edit { it.copy(photos = it.photos + photos.take(MAX_SHOP_PHOTOS - it.photos.size - it.cartPhotos.size)) }
     fun removePhoto(photo: PickedPhoto) = edit { it.copy(photos = it.photos - photo) }
+
+    // ==================== A moving cart's parts ====================
+
+    fun setCartType(type: String) = edit { it.copy(cartType = type) }
+
+    /** Picks or drops something the cart sells; picking it fills its suggested items, dropping it drops its items */
+    fun toggleCartSells(category: String) = edit { form ->
+        if (category in form.cartSells) form.withoutCategory(category) else form.withCategory(category)
+    }
+
+    /** "Something else": a category the owner names, with no suggestions */
+    fun addCustomCategory(name: String) = edit { form ->
+        val category = name.trim().take(40)
+        if (category.isEmpty() || form.cartSells.any { it.equals(category, ignoreCase = true) }) form else form.withCategory(category)
+    }
+
+    /** Adds a suggested item, or (with no [preset]) an empty row to type one in */
+    fun addCartItem(category: String, preset: PresetItem? = null) = edit { form ->
+        val item = CartItem(
+            id = form.nextItemId(),
+            category = category,
+            name = preset?.name.orEmpty(),
+            unit = preset?.unit ?: presetFor(category).units.first(),
+            custom = preset == null,
+        )
+        form.copy(cartItems = form.cartItems + item)
+    }
+
+    fun onCartItemName(id: Long, name: String) = editItem(id) { it.copy(name = name.take(60)) }
+    fun onCartItemUnit(id: Long, unit: String) = editItem(id) { it.copy(unit = unit) }
+    fun onCartItemPrice(id: Long, price: String) = editItem(id) { it.copy(price = cleanPrice(price).take(7)) }
+    fun removeCartItem(id: Long) = edit { form -> form.copy(cartItems = form.cartItems.filterNot { it.id == id }, seasonalItems = form.seasonalItems - id) }
+
+    fun setCartOption(category: String, option: String, on: Boolean) = edit { it.copy(cartOptions = it.cartOptions + ("$category/$option" to on)) }
+
+    /** The months a category is out, and (for drinks) which of its items only then */
+    fun setSeason(category: String, from: Int, to: Int, seasonalItems: Set<Long>? = null) = edit { form ->
+        val inCategory = form.cartItems.filter { it.category == category }.map { it.id }.toSet()
+        form.copy(
+            seasons = form.seasons + (category to (from to to)),
+            seasonalItems = if (seasonalItems == null) form.seasonalItems else form.seasonalItems - inCategory + seasonalItems,
+        )
+    }
+
+    private fun editItem(id: Long, change: (CartItem) -> CartItem) =
+        edit { form -> form.copy(cartItems = form.cartItems.map { if (it.id == id) change(it) else it }) }
+
+    private fun ShopForm.nextItemId(): Long = (cartItems.maxOfOrNull { it.id } ?: 0L) + 1
+
+    private fun ShopForm.withCategory(category: String): ShopForm {
+        val preset = presetFor(category)
+        var id = nextItemId()
+        val starters = if (cartItems.any { it.category == category }) emptyList() else preset.starters.map { CartItem(id++, category, it.name, it.unit) }
+        val season = if (preset.seasonFrom != null && preset.seasonTo != null) mapOf(category to (preset.seasonFrom to preset.seasonTo)) else emptyMap()
+        return copy(
+            cartSells = cartSells + category,
+            cartItems = cartItems + starters,
+            seasons = season + seasons,
+            seasonalItems = seasonalItems + starters.filter { it.name in SEASONAL_BY_DEFAULT }.map { it.id },
+        )
+    }
+
+    private fun ShopForm.withoutCategory(category: String): ShopForm {
+        val dropped = cartItems.filter { it.category == category }.map { it.id }.toSet()
+        return copy(
+            cartSells = cartSells - category,
+            cartItems = cartItems.filterNot { it.id in dropped },
+            seasonalItems = seasonalItems - dropped,
+            cartOptions = cartOptions.filterKeys { !it.startsWith("$category/") },
+            seasons = seasons - category,
+        )
+    }
+
+    fun addCartPhotos(photos: List<PickedPhoto>) =
+        edit { it.copy(cartPhotos = it.cartPhotos + photos.take(MAX_SHOP_PHOTOS - it.photos.size - it.cartPhotos.size)) }
+
+    fun removeCartPhoto(photo: PickedPhoto) = edit { it.copy(cartPhotos = it.cartPhotos - photo) }
+
+    /** Adds a stop, or changes the one with the same id; the cart then has a route */
+    fun saveStop(stop: CartStop) = edit { form ->
+        val stops = if (form.stops.any { it.id == stop.id }) form.stops.map { if (it.id == stop.id) stop else it } else form.stops + stop
+        form.copy(stops = stops, noFixedRoute = false)
+    }
+
+    fun removeStop(id: Long) = edit { form -> form.copy(stops = form.stops.filterNot { it.id == id }) }
+
+    /** Moves a stop to another place in the round (dragging it in the list) */
+    fun moveStop(from: Int, to: Int) = edit { form ->
+        if (from !in form.stops.indices || to !in form.stops.indices) return@edit form
+        form.copy(stops = form.stops.toMutableList().apply { add(to, removeAt(from)) })
+    }
+
+    /** "It has no fixed route": it goes wherever, so its stops are dropped */
+    fun setNoFixedRoute(on: Boolean) = edit { it.copy(noFixedRoute = on, stops = if (on) emptyList() else it.stops) }
+
+    fun toggleDay(day: Int) = edit { it.copy(daysOut = if (day in it.daysOut) it.daysOut - day else it.daysOut + day) }
+    fun setTakesOrders(on: Boolean) = edit { it.copy(takesOrders = on) }
+    fun togglePayment(way: String) = edit { it.copy(payments = if (way in it.payments) it.payments - way else it.payments + way) }
+    fun onSpotHintChange(text: String) = edit { it.copy(spotHint = text.take(100)) }
+    fun setSeasonal(on: Boolean) = edit { it.copy(seasonal = on) }
 
     /** The detailed menu, from the menu editor (in draft mode) */
     fun setDetailedMenu(items: List<MenuItemRequest>) = edit { it.copy(detailedMenu = items) }
@@ -125,15 +229,22 @@ class AddShopViewModel(
             _state.update { it.copy(error = problem.message) }
             return
         }
-        val next = ShopStep.entries.getOrNull(state.step.ordinal + 1) ?: return
+        val next = state.steps.getOrNull(state.steps.indexOf(state.step) + 1) ?: return
         _state.update { it.copy(step = next, error = null, form = it.form.withTypedNameAdded()) }
+    }
+
+    /** Back to an earlier step, e.g. Route from the bread cart's morning round */
+    fun goBackTo(step: ShopStep) {
+        val state = _state.value
+        if (state.submitting || step !in state.steps || state.steps.indexOf(step) >= state.steps.indexOf(state.step)) return
+        _state.update { it.copy(step = step, error = null) }
     }
 
     /** Back one step; false on the first step, so the screen closes */
     fun back(): Boolean {
         val state = _state.value
         if (state.submitting) return true
-        val previous = ShopStep.entries.getOrNull(state.step.ordinal - 1) ?: return false
+        val previous = state.steps.getOrNull(state.steps.indexOf(state.step) - 1) ?: return false
         _state.update { it.copy(step = previous, error = null) }
         return true
     }
@@ -158,10 +269,12 @@ class AddShopViewModel(
                 "Your location is needed to put the shop on the map. Allow location and make sure it's on.",
                 needsLocation = true,
             )
-            val photoUrls = if (form.photos.isEmpty()) emptyList() else {
+            // A cart's own photo goes first, so it's what people see to spot it
+            val photos = form.cartPhotos + form.photos
+            val photoUrls = if (photos.isEmpty()) emptyList() else {
                 _state.update { it.copy(uploadProgress = 0) }
                 try {
-                    uploadPhotos(form.photos) { progress -> _state.update { it.copy(uploadProgress = progress) } }
+                    uploadPhotos(photos) { progress -> _state.update { it.copy(uploadProgress = progress) } }
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: PhotoUploadException) {
@@ -174,7 +287,8 @@ class AddShopViewModel(
                 ownerPhone = normalizePhone(form.phone),
                 ownerEmail = form.email.trim().ifEmpty { null },
                 shopName = form.shopName.trim(),
-                shopType = form.shopType,
+                // A cart has no kind of shop to pick
+                shopType = form.shopType.ifBlank { if (form.isCart) "Street Food" else form.shopType },
                 cuisineType = form.cuisine.trim().ifEmpty { null },
                 description = form.description.trim().ifEmpty { null },
                 menuItems = form.allMenuNames,
@@ -190,6 +304,7 @@ class AddShopViewModel(
                 wifiAvailable = form.wifi,
                 isMovingCart = form.isMovingCart == true,
                 mapIcon = "default",
+                cartDetails = form.cartDetails,
             )
             val shop = when (val result = shopApi.createShop(request)) {
                 is ApiResult.Success -> result.value
@@ -199,7 +314,9 @@ class AddShopViewModel(
             settings.addShopDraft = null
             settings.draftMenuItems = emptyList()
             if (form.isMovingCart == true) shop.id.toLongOrNull()?.let { settings.rememberVendorCart(it, uid) }
-            val menuSaved = form.detailedMenu.isEmpty() || menuApi.addItems(shop.id, form.detailedMenu) is ApiResult.Success
+            // A cart's items are its menu
+            val menu = if (form.isCart) form.cartMenu else form.detailedMenu
+            val menuSaved = menu.isEmpty() || menuApi.addItems(shop.id, menu) is ApiResult.Success
             _state.update { it.copy(submitting = false, uploadProgress = null, added = AddedShop(shop.id, menuSaved)) }
         }
     }

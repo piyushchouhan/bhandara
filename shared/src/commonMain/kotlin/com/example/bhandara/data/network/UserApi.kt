@@ -43,4 +43,33 @@ class UserApi(private val client: ApiClient) {
         const val UNKNOWN_LATITUDE = -90.0
         const val UNKNOWN_LONGITUDE = -180.0
     }
+
+    /**
+     * Deletes the signed-in user's account and data: reviews, reports, votes, claims, registration and sign-in. Shops
+     * and feasts they added stay, without their name.
+     */
+    suspend fun deleteMyAccount(): ApiResult<Unit> =
+        client.callForNothing("api/users/me") { method = HttpMethod.Delete }
+
+    /**
+     * Which notifications the user wants, as the backend keeps them. On a change, fields left null stay as they are.
+     */
+    @Serializable
+    data class NotificationSettings(
+        val nearbyFeasts: Boolean? = null,
+        val reportUpdates: Boolean? = null,
+        val shopReviews: Boolean? = null,
+        val claimStatus: Boolean? = null,
+        val quietHours: Boolean? = null,
+    )
+
+    /** Changes the notification settings given */
+    suspend fun setNotifications(changes: NotificationSettings): ApiResult<Unit> =
+        client.callForNothing("api/users/notifications") {
+            method = HttpMethod.Put
+            setBody(changes)
+        }
+
+    /** The user's notification settings, e.g. on a phone they just signed in on */
+    suspend fun getNotifications(): ApiResult<NotificationSettings> = client.call("api/users/notifications") { method = HttpMethod.Get }
 }

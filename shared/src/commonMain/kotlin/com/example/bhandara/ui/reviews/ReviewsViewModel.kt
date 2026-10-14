@@ -48,6 +48,7 @@ data class ReviewDraft(
  * @param myUid           the signed-in user, to find their own review
  * @param photosSupported this phone can add photos to a review
  * @param uploadProgress  0-100 while new photos upload
+ * @param submitted       a review was just posted or saved, so the writing screen can close
  */
 data class ReviewsState(
     val loading: Boolean = true,
@@ -60,6 +61,7 @@ data class ReviewsState(
     val uploadProgress: Int? = null,
     val photosSupported: Boolean = false,
     val message: String? = null,
+    val submitted: Boolean = false,
 ) {
     /** The backend allows one review per person per shop */
     val myReview: ReviewResponse? get() = myUid?.let { uid -> reviews.firstOrNull { it.reviewerUid == uid } }
@@ -68,6 +70,9 @@ data class ReviewsState(
     val countToShow: Int? get() = if (loading && reviews.isEmpty()) null else reviews.size
 
     val averageRating: Double? get() = reviews.takeIf { it.isNotEmpty() }?.map { it.rating }?.average()
+
+    /** How many reviews gave each number of stars: index 0 is 1 star, index 4 is 5 stars */
+    val starCounts: List<Int> get() = (1..5).map { stars -> reviews.count { it.rating == stars } }
 
     val canWrite: Boolean get() = myUid != null && !loading && error == null
 
@@ -100,13 +105,17 @@ class ReviewsViewModel(
 
     fun retry() = load()
 
-    /** Opens the editor: the user's own review if they have one, else a new one */
-    fun startWriting() {
+    /**
+     * Opens the editor: the user's own review if they have one, else a new one
+     *
+     * @param rating stars already picked for a new review (e.g. tapped on "No reviews yet"); 0 for none
+     */
+    fun startWriting(rating: Int = 0) {
         if (!_state.value.canWrite) return
         val mine = _state.value.myReview
         val draft = mine?.let {
             ReviewDraft(reviewId = it.id, rating = it.rating, comment = it.comment.orEmpty(), keptImageUrls = it.imageUrls.orEmpty())
-        } ?: ReviewDraft()
+        } ?: ReviewDraft(rating = rating.takeIf { it in 1..5 } ?: 0)
         _state.update { it.copy(draft = draft) }
     }
 
@@ -150,7 +159,7 @@ class ReviewsViewModel(
             when (result) {
                 is ApiResult.Success -> {
                     val thanks = if (draft.reviewId == null) "Thanks for your review!" else "Review updated"
-                    _state.update { it.copy(draft = null, submitting = false, uploadProgress = null, message = thanks) }
+                    _state.update { it.copy(draft = null, submitting = false, uploadProgress = null, message = thanks, submitted = true) }
                     load()
                 }
                 is ApiResult.Failure -> {

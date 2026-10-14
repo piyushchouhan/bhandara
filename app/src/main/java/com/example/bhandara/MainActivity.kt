@@ -1,11 +1,16 @@
 package com.example.bhandara
 
-import com.example.bhandara.ui.shopsmap.ShopsMapScreen
-import com.example.bhandara.ui.components.MovingCartTracker
+import com.example.bhandara.data.crowd.KeepCountingCrowds
+import com.example.bhandara.navigation.NOTIFICATION_DATA_KEYS
+import com.example.bhandara.navigation.routeForNotification
+import com.example.bhandara.data.saved.KeepSavedPlacesSynced
+import com.example.bhandara.ui.privacy.privacyStart
+import com.example.bhandara.ui.settings.SettingsScreen
+import com.example.bhandara.data.settings.StartTab
+import com.example.bhandara.ui.theme.ProvideAppPreferences
 import com.example.bhandara.platform.LocalAppDependencies
 import com.example.bhandara.platform.AppDependencies
 import com.example.bhandara.data.settings.AppSettings
-import com.example.bhandara.data.models.api.LocalShopResponse
 import com.example.bhandara.data.storage.AndroidFirebaseStorage
 import com.example.bhandara.data.auth.AppAuth
 import com.example.bhandara.photos.PhotoUploader
@@ -21,40 +26,44 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
-import com.example.bhandara.services.CrowdPingManager
-import kotlinx.coroutines.launch
 import com.example.bhandara.managers.UserManager
 import com.example.bhandara.ui.shopdetails.ShopDetailsScreen
+import com.example.bhandara.ui.feasts.MyFeastsScreen
+import com.example.bhandara.ui.privacy.PrivacyScreen
+import com.example.bhandara.ui.reports.MyReportsScreen
+import com.example.bhandara.ui.saved.SavedPlacesScreen
+import com.example.bhandara.ui.reportfeast.FeastFormStart
+import com.example.bhandara.ui.reviews.MyPhotosScreen
+import com.example.bhandara.ui.reviews.MyReviewsScreen
+import com.example.bhandara.ui.reviews.ShopReviewsScreen
+import com.example.bhandara.ui.reviews.WriteReviewScreen
 import com.example.bhandara.navigation.NavEntries
-import com.example.bhandara.ui.drawer.AppDrawer
 import com.example.bhandara.ui.drawer.AboutScreen
 import com.example.bhandara.ui.drawer.SupportScreen
+import com.example.bhandara.ui.drawer.ReportIssueScreen
+import com.example.bhandara.ui.drawer.SuggestFeatureScreen
+import com.example.bhandara.ui.drawer.HowToUseScreen
 import com.example.bhandara.ui.drawer.TermsScreen
 import com.example.bhandara.ui.profile.LocalAccountSignIn
 import com.example.bhandara.ui.profile.ProfileScreen
+import com.example.bhandara.ui.shopdetails.ManageShopScreen
 import com.example.bhandara.ui.components.GoogleAccountSignIn
 import com.example.bhandara.ui.components.VendorMode
 import com.example.bhandara.ui.components.VendorModeBanner
 import com.example.bhandara.ui.components.VendorModeItem
+import com.example.bhandara.ui.components.VendorModeProfileCard
 import com.example.bhandara.ui.feasts.FeastDetailsScreen
 import com.example.bhandara.ui.reportfeast.ReportFeastScreen
 import com.example.bhandara.ui.feasts.FeastsMapScreen
-import com.example.bhandara.ui.screens.HomeScreen
+import com.example.bhandara.ui.home.HomeScreen
 import com.example.bhandara.ui.addshop.AddShopScreen
 import com.example.bhandara.ui.claim.ClaimShopScreen
 import com.example.bhandara.BuildConfig
@@ -94,14 +103,6 @@ class MainActivity : AppCompatActivity() {
         // Initialize anonymous user on app start
         userManager.initializeUser()
 
-        // "How busy is it" badges: while the app is visible (any screen), report when the user is at a shop.
-        // Stops automatically when the app goes to the background.
-        val crowdPingManager = CrowdPingManager(this)
-        lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                crowdPingManager.runWhileForeground()
-            }
-        }
         
         setContent {
             ProvideAppEnvironment {
@@ -109,13 +110,22 @@ class MainActivity : AppCompatActivity() {
                   LocalAppDependencies provides remember { AppDependencies(AppBackend.client, AppSettings(this), AppAuth.service, BuildConfig.VERSION_NAME, PhotoUploader(AndroidFirebaseStorage()), BuildConfig.ADMIN_EMAILS.split(",")) },
                   LocalAccountSignIn provides remember { GoogleAccountSignIn(this) },
               ) {
+               val preferences = LocalAppDependencies.current.settings.preferences
+               ProvideAppPreferences(preferences) {
+                KeepSavedPlacesSynced()
+                // "How busy is it" badges: while the app is visible, report when the user is at a shop
+                KeepCountingCrowds()
                 BhandaraTheme {
                     // Which screens are open (shared with iOS); kept across rotation
-                    val navigator = rememberAppNavigator()
-                
-                    // Lifted home tab state
-                    var homeTabIndex by rememberSaveable { mutableIntStateOf(0) }
-                
+                    val navigator = rememberAppNavigator(startOnFeasts = preferences.startTab == StartTab.FEASTS)
+
+                    // Opened from a notification: go to what it's about (only on a fresh start, not after rotation)
+                    LaunchedEffect(Unit) {
+                        if (savedInstanceState == null) {
+                            routeForNotification(NOTIFICATION_DATA_KEYS.associateWith { intent.getStringExtra(it) })?.let(navigator::navigate)
+                        }
+                    }
+
                 
                     // Request permissions on first composition
                     LaunchedEffect(Unit) {
@@ -135,35 +145,32 @@ class MainActivity : AppCompatActivity() {
                         navigator.back()
                     }
                 
-                    Scaffold(
-                        modifier = Modifier.fillMaxSize()
-                    ) { innerPadding ->
-                        NavEntries(navigator) { route ->
+                    // Each screen draws its own bars and keeps clear of the system bars itself
+                    NavEntries(navigator) { route ->
                         when (route) {
                             Route.Home -> {
-                                AppDrawer(
+                                // Shared with iOS, live cart tracking included
+                                HomeScreen(
+                                    onShopClick = { shopId -> navigateTo(Route.ShopDetails(shopId)) },
+                                    onAddShopClick = { navigateTo(Route.AddShop) },
+                                    onFeastsClick = { navigateTo(Route.Hungry) },
                                     onProfileClick = { navigateTo(Route.Profile) },
+                                    onSettingsClick = { navigateTo(Route.Settings) },
                                     onAboutClick = { navigateTo(Route.About) },
                                     onSupportClick = { navigateTo(Route.Support) },
                                     onTermsClick = { navigateTo(Route.Terms) },
-                                    extraItems = { VendorModeItem(vendorMode) },
+                                    onReportIssueClick = { navigateTo(Route.ReportIssue) },
+                                    onSuggestFeatureClick = { navigateTo(Route.SuggestFeature) },
+                                    onHowToUseClick = { navigateTo(Route.HowToUse) },
+                                    drawerExtraItems = { VendorModeItem(vendorMode) },
                                     overlay = { VendorModeBanner(vendorMode, Modifier.align(Alignment.TopCenter)) },
-                                ) {
-                                    HomeScreen(
-                                        modifier = Modifier.padding(innerPadding),
-                                        selectedTabIndex = homeTabIndex,
-                                        onTabSelected = { homeTabIndex = it },
-                                        onHungryClick = { navigateTo(Route.Hungry) },
-                                        onReportFeastClick = { navigateTo(Route.ReportFeast) },
-                                        onFindShopsClick = { navigateTo(Route.ShopsMap) },
-                                        onAddShopClick = { navigateTo(Route.AddShop) }
-                                    )
-                                }
+                                )
                             }
                             Route.Hungry -> {
                                 FeastsMapScreen(
                                     onBack = { navigateBack() },
                                     onFeastClick = { feastId -> navigateTo(Route.FeastDetails(feastId)) },
+                                    onPostFeast = { navigateTo(Route.ReportFeast) },
                                 )
                             }
                             Route.ReportFeast -> {
@@ -174,63 +181,182 @@ class MainActivity : AppCompatActivity() {
                                 )
                             }
                             is Route.FeastDetails -> {
-                                FeastDetailsScreen(feastId = route.feastId, onBack = { navigateBack() })
+                                FeastDetailsScreen(
+                                    feastId = route.feastId,
+                                    onBack = { navigateBack() },
+                                    // Back to the feasts map if it's under this page, else open it in this page's place
+                                    onFindOtherFeasts = {
+                                        if (navigator.backStack.dropLast(1).lastOrNull() == Route.Hungry) navigator.back() else navigator.replace(Route.Hungry)
+                                    },
+                                )
                             }
                             Route.AddShop -> {
                                 AddShopScreen(
                                     onBack = { navigateBack() },
                                     // The new shop's page replaces the form, so back goes home
                                     onAdded = { shopId -> navigator.replace(Route.ShopDetails(shopId)) },
+                                    onGoLive = { shopId ->
+                                        vendorMode.set(true)
+                                        navigator.replace(Route.ShopDetails(shopId))
+                                    },
                                 )
-                            }
-                            Route.ShopsMap -> {
-                                // Shared with iOS; a tapped live cart opens Android's live tracking
-                                var trackedCart by remember { mutableStateOf<LocalShopResponse?>(null) }
-                                ShopsMapScreen(
-                                    onBack = { navigateBack() },
-                                    onShopClick = { shopId -> navigateTo(Route.ShopDetails(shopId)) },
-                                    onCartClick = { cart -> trackedCart = cart },
-                                )
-                                trackedCart?.let { cart ->
-                                    MovingCartTracker(
-                                        shopId = cart.id.toLongOrNull() ?: -1L,
-                                        shopName = cart.shopName,
-                                        initialLat = cart.latitude,
-                                        initialLng = cart.longitude,
-                                        onDismiss = { trackedCart = null },
-                                        onViewDetails = {
-                                            trackedCart = null
-                                            navigateTo(Route.ShopDetails(cart.id))
-                                        },
-                                    )
-                                }
                             }
                             is Route.ShopDetails -> {
                                 ShopDetailsScreen(
                                     shopId = route.shopId,
                                     onBack = { navigateBack() },
+                                    onOpenReviews = { shopName, photoUrl -> navigateTo(Route.ShopReviews(route.shopId, shopName, photoUrl)) },
+                                    onWriteReview = { shopName, photoUrl -> navigateTo(Route.WriteReview(route.shopId, shopName, photoUrl)) },
                                     onClaim = { shopName -> navigateTo(Route.ClaimShop(route.shopId, shopName)) },
+                                )
+                            }
+                            is Route.ShopReviews -> {
+                                ShopReviewsScreen(
+                                    shopId = route.shopId,
+                                    shopName = route.shopName,
+                                    photoUrl = route.photoUrl,
+                                    onBack = { navigateBack() },
+                                    onWriteReview = { rating -> navigateTo(Route.WriteReview(route.shopId, route.shopName, route.photoUrl, rating)) },
+                                )
+                            }
+                            is Route.WriteReview -> {
+                                WriteReviewScreen(
+                                    shopId = route.shopId,
+                                    shopName = route.shopName,
+                                    photoUrl = route.photoUrl,
+                                    rating = route.rating,
+                                    onClose = { navigateBack() },
                                 )
                             }
                             is Route.ClaimShop -> {
                                 ClaimShopScreen(shopId = route.shopId, shopName = route.shopName, onDone = { navigateBack() })
                             }
                             Route.Profile -> {
-                                ProfileScreen(onBack = { navigateBack() })
+                                ProfileScreen(
+                                    onBack = { navigateBack() },
+                                    onManageShop = { shopId -> navigateTo(Route.ManageShop(shopId)) },
+                                    onOpenShop = { shopId -> navigateTo(Route.ShopDetails(shopId)) },
+                                    onAddShop = { navigateTo(Route.AddShop) },
+                                    onMyReviews = { navigateTo(Route.MyReviews) },
+                                    onMyPhotos = { navigateTo(Route.MyPhotos) },
+                                    onMyFeasts = { navigateTo(Route.MyFeasts) },
+                                    onSavedPlaces = { navigateTo(Route.SavedPlaces) },
+                                    onMyReports = { navigateTo(Route.MyReports) },
+                                    onPrivacy = { startAtDelete -> navigateTo(Route.Privacy(startAtDelete)) },
+                                    vendorMode = { VendorModeProfileCard(vendorMode) },
+                                )
+                            }
+                            is Route.Privacy -> {
+                                PrivacyScreen(
+                                    onBack = { navigateBack() },
+                                    onOpenTerms = { navigateTo(Route.Terms) },
+                                    onAccountDeleted = { navigator.backToHome() },
+                                    startAt = privacyStart(route),
+                                    // Vendor Mode (a cart's live location) is Android only
+                                    hasVendorMode = true,
+                                )
+                            }
+                            Route.Settings -> {
+                                SettingsScreen(
+                                    onBack = { navigateBack() },
+                                    onOpenLocation = { navigateTo(Route.Privacy(startAtLocation = true)) },
+                                    onOpenPrivacy = { navigateTo(Route.Privacy()) },
+                                    onDeleteAccount = { navigateTo(Route.Privacy(startAtDelete = true)) },
+                                    appleMaps = false,
+                                )
+                            }
+                            Route.MyReports -> {
+                                MyReportsScreen(
+                                    onBack = { navigateBack() },
+                                    onOpenShop = { shopId -> navigateTo(Route.ShopDetails(shopId)) },
+                                    onOpenFeast = { feastId -> navigateTo(Route.FeastDetails(feastId)) },
+                                )
+                            }
+                            Route.SavedPlaces -> {
+                                SavedPlacesScreen(
+                                    onBack = { navigateBack() },
+                                    onOpenShop = { shopId -> navigateTo(Route.ShopDetails(shopId)) },
+                                    onOpenFeast = { feastId -> navigateTo(Route.FeastDetails(feastId)) },
+                                    onExploreMap = { navigator.backToHome() },
+                                )
+                            }
+                            Route.MyFeasts -> {
+                                MyFeastsScreen(
+                                    onBack = { navigateBack() },
+                                    onOpenFeast = { feastId -> navigateTo(Route.FeastDetails(feastId)) },
+                                    onEdit = { feastId -> navigateTo(Route.EditFeast(feastId)) },
+                                    onRepost = { feastId -> navigateTo(Route.RepostFeast(feastId)) },
+                                    onPostFeast = { navigateTo(Route.ReportFeast) },
+                                    onContactSupport = { navigateTo(Route.Support) },
+                                )
+                            }
+                            is Route.EditFeast -> {
+                                ReportFeastScreen(
+                                    onBack = { navigateBack() },
+                                    // Back to the list, which shows the change
+                                    onPosted = { navigateBack() },
+                                    start = FeastFormStart.Edit(route.feastId),
+                                )
+                            }
+                            is Route.RepostFeast -> {
+                                ReportFeastScreen(
+                                    onBack = { navigateBack() },
+                                    onPosted = { feastId -> navigator.replace(Route.FeastDetails(feastId)) },
+                                    start = FeastFormStart.Repost(route.feastId),
+                                )
+                            }
+                            Route.MyPhotos -> {
+                                MyPhotosScreen(
+                                    onBack = { navigateBack() },
+                                    onOpenShop = { shopId -> navigateTo(Route.ShopDetails(shopId)) },
+                                    onEditReview = { review -> navigateTo(Route.WriteReview(review.shopId, review.shopName.orEmpty(), review.shopImageUrl)) },
+                                    onFindShop = { navigator.backToHome() },
+                                )
+                            }
+                            Route.MyReviews -> {
+                                MyReviewsScreen(
+                                    onBack = { navigateBack() },
+                                    onOpenShop = { shopId -> navigateTo(Route.ShopDetails(shopId)) },
+                                    onEdit = { review -> navigateTo(Route.WriteReview(review.shopId, review.shopName.orEmpty(), review.shopImageUrl)) },
+                                    onFindShop = { navigator.backToHome() },
+                                )
+                            }
+                            is Route.ManageShop -> {
+                                ManageShopScreen(
+                                    shopId = route.shopId,
+                                    onBack = { navigateBack() },
+                                    onViewShop = { navigateTo(Route.ShopDetails(route.shopId)) },
+                                    onOpenReviews = { shopName, photoUrl -> navigateTo(Route.ShopReviews(route.shopId, shopName, photoUrl)) },
+                                    onDeactivated = { navigateBack() },
+                                )
                             }
                             Route.About -> {
                                 AboutScreen(onBack = { navigateBack() })
                             }
                             Route.Support -> {
-                                SupportScreen(onBack = { navigateBack() })
+                                SupportScreen(
+                                    onBack = { navigateBack() },
+                                    onReportIssue = { navigateTo(Route.ReportIssue) },
+                                    onSuggestFeature = { navigateTo(Route.SuggestFeature) },
+                                    onHowToUse = { navigateTo(Route.HowToUse) },
+                                )
+                            }
+                            Route.ReportIssue -> {
+                                ReportIssueScreen(onBack = { navigateBack() })
+                            }
+                            Route.SuggestFeature -> {
+                                SuggestFeatureScreen(onBack = { navigateBack() })
+                            }
+                            Route.HowToUse -> {
+                                HowToUseScreen(onBack = { navigateBack() })
                             }
                             Route.Terms -> {
                                 TermsScreen(onBack = { navigateBack() })
                             }
                         }
-                        }
                     }
                 }
+               }
               }
             }
         }

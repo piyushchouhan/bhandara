@@ -42,7 +42,7 @@ class NavEntriesTest {
     @Test
     fun aScreenKeepsItsKeyWhileOthersOpenAndCloseAboveIt() {
         val navigator = AppNavigator()
-        navigator.navigate(Route.ShopsMap)
+        navigator.navigate(Route.Hungry)
         val mapKey = navigator.entryKeys().last()
 
         navigator.navigate(Route.ShopDetails("5"))
@@ -54,11 +54,11 @@ class NavEntriesTest {
     @Test
     fun goingBackToAScreenFindsItsViewModels() {
         val stores = NavEntryStores()
-        val map = stores.probe("1:ShopsMap")
+        val map = stores.probe("1:Hungry")
 
-        stores.keepOnly(listOf("0:Home", "1:ShopsMap", "2:ShopDetails"))
+        stores.keepOnly(listOf("0:Home", "1:Hungry", "2:ShopDetails"))
 
-        assertSame(map, stores.probe("1:ShopsMap"))
+        assertSame(map, stores.probe("1:Hungry"))
         assertFalse(map.cleared)
     }
 
@@ -67,7 +67,7 @@ class NavEntriesTest {
         val stores = NavEntryStores()
         val details = stores.probe("2:ShopDetails")
 
-        stores.keepOnly(listOf("0:Home", "1:ShopsMap"))
+        stores.keepOnly(listOf("0:Home", "1:Hungry"))
 
         assertTrue(details.cleared)
         assertNotEquals<Any>(details, stores.probe("2:ShopDetails"))

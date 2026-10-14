@@ -131,6 +131,49 @@ class AppSettingsTest {
     }
 
     @Test
+    fun aShopCanBeSavedAndUnsaved() {
+        assertFalse(settings.isShopSaved("6"))
+
+        settings.setShopSaved("6", true)
+        assertTrue(settings.isShopSaved("6"))
+        assertFalse(settings.isShopSaved("7"))
+
+        settings.setShopSaved("6", false)
+        assertFalse(settings.isShopSaved("6"))
+    }
+
+    @Test
+    fun savedShopsAndFeastsAreCountedAndListed() {
+        assertEquals(0, settings.savedPlaceCount)
+        settings.setShopSaved("6", true)
+        settings.setShopSaved("7", true)
+        settings.setShopSaved("6", false)
+        settings.setFeastSaved("6", true)
+
+        assertEquals(2, settings.savedPlaceCount)
+        assertEquals(listOf("7"), settings.savedShopIds)
+        assertEquals(listOf("6"), settings.savedFeastIds)
+        // A shop and a feast can have the same id; they're kept apart
+        assertFalse(settings.isShopSaved("6"))
+        assertTrue(settings.isFeastSaved("6"))
+    }
+
+    @Test
+    fun theTimeAPlaceWasSavedIsKeptUntilItIsUnsaved() {
+        var now = 1_000L
+        val timed = AppSettings(Stores(), nowMillis = { now })
+
+        timed.setShopSaved("6", true)
+        now = 2_000L
+        timed.setFeastSaved("9", true)
+
+        assertEquals(1_000L, timed.savedAt(AppSettings.KEY_SAVED_SHOP, "6"))
+        assertEquals(2_000L, timed.savedAt(AppSettings.KEY_SAVED_FEAST, "9"))
+        timed.setShopSaved("6", false)
+        assertEquals(0L, timed.savedAt(AppSettings.KEY_SAVED_SHOP, "6"))
+    }
+
+    @Test
     fun dataIsStoredWhereOlderVersionsOfTheAndroidAppKeptIt() {
         // Changing any of these names would make updated apps forget what users had saved
         settings.markRegisteredWithBackend("u1")
@@ -144,6 +187,7 @@ class AppSettingsTest {
         settings.markReportedReview("7")
         settings.markAnsweredVerification("8")
         settings.markReportedFeast("9")
+        settings.setShopSaved("6", true)
 
         val keysByStore = stores.byName.mapValues { (_, store) -> store.keys.toSet() }
         assertEquals(
@@ -155,6 +199,9 @@ class AppSettingsTest {
                 "ReviewActionsPrefs" to setOf("reported_review_7"),
                 "VerificationPrefs" to setOf("verified_8"),
                 "FeastActionsPrefs" to setOf("reported_feast_9"),
+                "SavedPlacesPrefs" to setOf("saved_shop_6", "saved_at_saved_shop_6"),
+                // New with syncing saved places: the save waits here until it reaches the account
+                "SavedSyncPrefs" to setOf("pending_SHOP_6"),
             ),
             keysByStore,
         )

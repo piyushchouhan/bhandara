@@ -22,6 +22,7 @@ import kotlinx.datetime.LocalDateTime
  *
  * @param distanceMeters from where the user is now; null without location permission
  * @param message        a one-time message (e.g. "Thanks for reporting"), cleared with onMessageShown()
+ * @param isSaved        the user saved this feast (kept on the phone)
  */
 data class FeastDetailsState(
     val loading: Boolean = true,
@@ -33,6 +34,7 @@ data class FeastDetailsState(
     val hasReported: Boolean = false,
     val reporting: Boolean = false,
     val message: String? = null,
+    val isSaved: Boolean = false,
 ) {
     val isActive: Boolean get() = feast?.isActive == true
 
@@ -53,7 +55,7 @@ class FeastDetailsViewModel(
     private val now: () -> LocalDateTime = ::localNow,
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(FeastDetailsState(hasReported = settings.hasReportedFeast(feastId)))
+    private val _state = MutableStateFlow(FeastDetailsState(hasReported = settings.hasReportedFeast(feastId), isSaved = settings.isFeastSaved(feastId)))
     val state: StateFlow<FeastDetailsState> = _state.asStateFlow()
 
     init {
@@ -61,6 +63,13 @@ class FeastDetailsViewModel(
     }
 
     fun retry() = load()
+
+    /** Saves the feast to the user's places (on the phone), or takes it out */
+    fun toggleSaved() {
+        val saved = !_state.value.isSaved
+        settings.setFeastSaved(feastId, saved)
+        _state.update { it.copy(isSaved = saved, message = if (saved) "Saved to your places" else "Removed from your places") }
+    }
 
     fun report() {
         val state = _state.value

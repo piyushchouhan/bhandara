@@ -1,46 +1,52 @@
 package com.example.bhandara.ui.drawer
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.HelpOutline
-import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.BugReport
-import androidx.compose.material.icons.filled.Description
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Language
-import androidx.compose.material.icons.filled.Lightbulb
-import androidx.compose.material.icons.filled.Mail
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.rounded.AccountCircle
+import androidx.compose.material.icons.rounded.BugReport
+import androidx.compose.material.icons.rounded.ChevronRight
+import androidx.compose.material.icons.rounded.Description
+import androidx.compose.material.icons.automirrored.rounded.Help
+import androidx.compose.material.icons.rounded.Info
+import androidx.compose.material.icons.rounded.Lightbulb
+import androidx.compose.material.icons.rounded.Mail
+import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material.icons.rounded.Share
 import androidx.compose.material3.DrawerValue
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -52,197 +58,338 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
-import com.example.bhandara.platform.APP_LANGUAGES
 import com.example.bhandara.platform.LocalAppDependencies
-import com.example.bhandara.platform.rememberAppLanguage
 import com.example.bhandara.shared.resources.Res
 import com.example.bhandara.shared.resources.about
 import com.example.bhandara.shared.resources.app_name
 import com.example.bhandara.shared.resources.how_to_use
-import com.example.bhandara.shared.resources.language
-import com.example.bhandara.shared.resources.language_in_settings
-import com.example.bhandara.shared.resources.localfeast
-import com.example.bhandara.shared.resources.menu
+import com.example.bhandara.shared.resources.logo_mask
 import com.example.bhandara.shared.resources.profile
 import com.example.bhandara.shared.resources.report_issue
+import com.example.bhandara.shared.resources.settings
 import com.example.bhandara.shared.resources.share_app
 import com.example.bhandara.shared.resources.suggest_feature
 import com.example.bhandara.shared.resources.support
 import com.example.bhandara.shared.resources.terms
+import com.example.bhandara.ui.theme.feastColors
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
-private enum class DrawerDialog { REPORT_ISSUE, SUGGEST_FEATURE, HOW_TO_USE, SHARE_APP }
-
 /**
- * The home screen's side menu, shared by Android and iOS: language, profile, about, support, terms, feedback,
- * help and sharing the app.
+ * The home screen's side menu, shared by Android and iOS (the redesign's side sheet; use inside FeastTheme):
+ * profile, settings (with the language), about, support, terms, feedback, help and sharing the app.
  *
- * @param extraItems platform-only items after the language (Android's vendor mode); gets a way to close the menu
+ * @param extraItems platform-only rows at the top (Android's vendor mode); gets a way to close the menu
  * @param overlay    drawn over the content, e.g. Android's "vendor mode is on" banner
+ * @param content    the screen under the menu; gets a way to open it (the screen has its own menu button)
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppDrawer(
     onProfileClick: () -> Unit,
+    onSettingsClick: () -> Unit,
     onAboutClick: () -> Unit,
     onSupportClick: () -> Unit,
     onTermsClick: () -> Unit,
+    onReportIssueClick: () -> Unit,
+    onSuggestFeatureClick: () -> Unit,
+    onHowToUseClick: () -> Unit,
     extraItems: @Composable ColumnScope.(closeDrawer: () -> Unit) -> Unit = {},
     overlay: @Composable BoxScope.() -> Unit = {},
-    content: @Composable () -> Unit,
+    content: @Composable (openDrawer: () -> Unit) -> Unit,
 ) {
+    val colors = MaterialTheme.feastColors
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val closeDrawer: () -> Unit = { scope.launch { drawerState.close() } }
-    var dialog by rememberSaveable { mutableStateOf<DrawerDialog?>(null) }
+    var sharing by rememberSaveable { mutableStateOf(false) }
 
     ModalNavigationDrawer(
         drawerState = drawerState,
+        // Opens only from the menu button, so dragging the map never pulls it out; once open, a swipe closes it
+        gesturesEnabled = drawerState.isOpen,
+        scrimColor = colors.scrim,
         drawerContent = {
-            ModalDrawerSheet(Modifier.width(300.dp)) {
-                Column(Modifier.fillMaxHeight().verticalScroll(rememberScrollState())) {
-                    DrawerHeader()
-                    HorizontalDivider(Modifier.padding(bottom = 8.dp))
-
-                    LanguageItem()
-                    extraItems(closeDrawer)
-                    ProfileItem(onClick = { closeDrawer(); onProfileClick() })
-                    DrawerItem(Icons.Default.Info, Res.string.about) { closeDrawer(); onAboutClick() }
-                    DrawerItem(Icons.Default.Mail, Res.string.support) { closeDrawer(); onSupportClick() }
-                    DrawerItem(Icons.Default.Description, Res.string.terms) { closeDrawer(); onTermsClick() }
-                    DrawerItem(Icons.Default.BugReport, Res.string.report_issue) { dialog = DrawerDialog.REPORT_ISSUE }
-                    DrawerItem(Icons.Default.Lightbulb, Res.string.suggest_feature) { dialog = DrawerDialog.SUGGEST_FEATURE }
-                    DrawerItem(Icons.AutoMirrored.Filled.HelpOutline, Res.string.how_to_use) { dialog = DrawerDialog.HOW_TO_USE }
-                    DrawerItem(Icons.Default.Share, Res.string.share_app) { dialog = DrawerDialog.SHARE_APP }
-
-                    Spacer(Modifier.weight(1f))
-                    HorizontalDivider(Modifier.padding(top = 16.dp))
-                    Text(
-                        "Upalio",
-                        style = MaterialTheme.typography.labelMedium.copy(letterSpacing = 0.5.sp),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp),
-                    )
+            ModalDrawerSheet(
+                modifier = Modifier.width(306.dp),
+                drawerShape = RoundedCornerShape(topEnd = 30.dp, bottomEnd = 30.dp),
+                drawerContainerColor = colors.surface,
+                drawerContentColor = colors.ink,
+                // The header runs under the status bar; the footer keeps clear of the home indicator
+                windowInsets = WindowInsets(0),
+            ) {
+                Column(Modifier.fillMaxHeight()) {
+                    Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
+                        DrawerHeader()
+                        Column(
+                            Modifier.padding(start = 12.dp, end = 12.dp, top = 14.dp, bottom = 4.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            extraItems(closeDrawer)
+                            ProfileRow(onClick = { closeDrawer(); onProfileClick() })
+                            SheetRow(
+                                Icons.Rounded.Settings, stringResource(Res.string.settings),
+                                border = colors.lavender,
+                                trailing = { Icon(Icons.Rounded.ChevronRight, null, tint = colors.muted, modifier = Modifier.size(20.dp)) },
+                                onClick = { closeDrawer(); onSettingsClick() },
+                            )
+                        }
+                        Column(Modifier.padding(horizontal = 12.dp, vertical = 6.dp)) {
+                            LinkRow(Icons.Rounded.Info, Res.string.about) { closeDrawer(); onAboutClick() }
+                            LinkRow(Icons.Rounded.Mail, Res.string.support) { closeDrawer(); onSupportClick() }
+                            LinkRow(Icons.Rounded.Description, Res.string.terms) { closeDrawer(); onTermsClick() }
+                            LinkRow(Icons.Rounded.BugReport, Res.string.report_issue) { closeDrawer(); onReportIssueClick() }
+                            LinkRow(Icons.Rounded.Lightbulb, Res.string.suggest_feature) { closeDrawer(); onSuggestFeatureClick() }
+                            LinkRow(Icons.AutoMirrored.Rounded.Help, Res.string.how_to_use) { closeDrawer(); onHowToUseClick() }
+                            LinkRow(Icons.Rounded.Share, Res.string.share_app) { sharing = true }
+                        }
+                    }
+                    DrawerFooter()
                 }
             }
         },
     ) {
         Box {
-            Column {
-                TopAppBar(
-                    title = {},
-                    navigationIcon = {
-                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                            Icon(Icons.Default.Menu, contentDescription = stringResource(Res.string.menu))
-                        }
-                    },
-                )
-                content()
-            }
+            content { scope.launch { drawerState.open() } }
             overlay()
         }
     }
 
-    when (dialog) {
-        DrawerDialog.REPORT_ISSUE -> FeedbackDialog(FeedbackKind.BUG, onDismiss = { dialog = null })
-        DrawerDialog.SUGGEST_FEATURE -> FeedbackDialog(FeedbackKind.FEATURE, onDismiss = { dialog = null })
-        DrawerDialog.HOW_TO_USE -> HowToUseDialog(onDismiss = { dialog = null })
-        DrawerDialog.SHARE_APP -> ShareAppDialog(onDismiss = { dialog = null })
-        null -> {}
-    }
+    if (sharing) ShareAppSheet(onDismiss = { sharing = false })
 }
 
+/** Indigo band with the logo on a saffron tile, the app's name and version, and a dotted saffron trail */
 @Composable
 private fun DrawerHeader() {
+    val colors = MaterialTheme.feastColors
     val version = LocalAppDependencies.current.appVersion
-    Row(Modifier.padding(horizontal = 24.dp, vertical = 24.dp), verticalAlignment = Alignment.CenterVertically) {
-        Image(painterResource(Res.drawable.localfeast), contentDescription = null, modifier = Modifier.size(48.dp).clip(CircleShape))
-        Spacer(Modifier.width(16.dp))
-        Column {
-            Text(stringResource(Res.string.app_name), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-            if (version.isNotEmpty()) {
-                Text("v$version", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    Box(Modifier.fillMaxWidth().background(colors.indigo)) {
+        Canvas(Modifier.matchParentSize()) {
+            // The design's trail, drawn for a 306 × 140 header and stretched to this one
+            val sx = size.width / 306f
+            val sy = size.height / 140f
+            fun p(x: Float, y: Float) = Offset(x * sx, y * sy)
+            val trail = Path().apply {
+                p(150f, 140f).let { moveTo(it.x, it.y) }
+                val (a, b, c) = listOf(p(190f, 100f), p(220f, 80f), p(250f, 60f))
+                cubicTo(a.x, a.y, b.x, b.y, c.x, c.y)
+                val (d, e, f) = listOf(p(280f, 40f), p(290f, 30f), p(320f, 20f))
+                cubicTo(d.x, d.y, e.x, e.y, f.x, f.y)
+            }
+            drawPath(
+                trail,
+                colors.saffron.copy(alpha = 0.7f),
+                style = Stroke(
+                    width = 3.dp.toPx(),
+                    cap = StrokeCap.Round,
+                    pathEffect = PathEffect.dashPathEffect(floatArrayOf(2.dp.toPx(), 8.dp.toPx())),
+                ),
+            )
+        }
+        Row(
+            Modifier.windowInsetsPadding(WindowInsets.statusBars).padding(start = 20.dp, end = 20.dp, top = 14.dp, bottom = 20.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            LogoTile(size = 52.dp, logoWidth = 32.dp)
+            Spacer(Modifier.width(14.dp))
+            Column {
+                Text(
+                    stringResource(Res.string.app_name),
+                    color = colors.onIndigo,
+                    fontSize = 21.sp,
+                    lineHeight = 23.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    style = MaterialTheme.typography.titleLarge,
+                )
+                if (version.isNotEmpty()) {
+                    Text(
+                        "v$version",
+                        color = colors.headerSubtext,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(top = 2.dp),
+                    )
+                }
             }
         }
     }
 }
 
-/** One row of the menu: an icon and a label, with optional content at the end */
+/** The logo in indigo on a rounded saffron tile */
 @Composable
-internal fun DrawerItem(
+internal fun LogoTile(size: Dp, logoWidth: Dp) {
+    val colors = MaterialTheme.feastColors
+    Box(Modifier.size(size).background(colors.saffron, RoundedCornerShape(16.dp)), contentAlignment = Alignment.Center) {
+        Image(
+            painterResource(Res.drawable.logo_mask),
+            contentDescription = null,
+            colorFilter = ColorFilter.tint(colors.onSaffron),
+            modifier = Modifier.width(logoWidth).height(logoWidth * 0.9f),
+        )
+    }
+}
+
+/**
+ * A row in the side sheet's top group: an icon, a label and something at the end, on a soft fill or with an
+ * outline
+ */
+@Composable
+fun SheetRow(
     icon: ImageVector,
-    label: StringResource,
+    label: String,
+    modifier: Modifier = Modifier,
+    iconTint: Color = MaterialTheme.feastColors.accent,
+    background: Color = Color.Transparent,
+    border: Color? = null,
     subtitle: String? = null,
-    trailing: @Composable () -> Unit = {},
-    onClick: () -> Unit,
+    onClick: (() -> Unit)? = null,
+    trailing: @Composable RowScope.() -> Unit = {},
 ) {
+    val colors = MaterialTheme.feastColors
+    val shape = RoundedCornerShape(16.dp)
     Row(
-        Modifier.fillMaxWidth().clickable(onClick = onClick).heightIn(min = 56.dp).padding(horizontal = 24.dp, vertical = 8.dp),
+        modifier
+            .fillMaxWidth()
+            .heightIn(min = 52.dp)
+            .clip(shape)
+            .background(background, shape)
+            .then(if (border != null) Modifier.border(1.5.dp, border, shape) else Modifier)
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+            .padding(horizontal = 14.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(24.dp))
-        Spacer(Modifier.width(16.dp))
+        Icon(icon, contentDescription = null, tint = iconTint, modifier = Modifier.size(22.dp))
         Column(Modifier.weight(1f)) {
-            Text(stringResource(label), style = MaterialTheme.typography.bodyLarge)
-            subtitle?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+            Text(label, color = colors.ink, fontSize = 16.sp, fontWeight = FontWeight.Medium, style = MaterialTheme.typography.bodyLarge)
+            subtitle?.let {
+                Text(it, color = colors.muted, fontSize = 12.sp, style = MaterialTheme.typography.bodySmall)
+            }
         }
         trailing()
     }
 }
 
-/** On Android a menu of the app's languages; on iOS it opens Settings, where iOS keeps each app's language */
+/**
+ * An on/off row in saffron, e.g. Android's vendor mode
+ *
+ * @param subtitle under the label, e.g. why it can't be turned on
+ */
 @Composable
-private fun LanguageItem() {
-    val language = rememberAppLanguage()
-    var choosing by remember { mutableStateOf(false) }
-    val currentName = APP_LANGUAGES.first { it.first == language.current }.second
-    DrawerItem(
-        Icons.Default.Language,
-        Res.string.language,
-        subtitle = if (language.choosableInApp) null else stringResource(Res.string.language_in_settings),
-        trailing = {
-            // The menu opens from the current language at the end of the row, over nothing else in the menu
-            Box {
-                Text(currentName, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
-                DropdownMenu(expanded = choosing, onDismissRequest = { choosing = false }) {
-                    APP_LANGUAGES.forEach { (tag, name) ->
-                        DropdownMenuItem(
-                            text = { Text(name) },
-                            onClick = {
-                                choosing = false
-                                language.choose(tag)
-                            },
-                        )
-                    }
-                }
-            }
-        },
-        onClick = { if (language.choosableInApp) choosing = true else language.choose(language.current) },
-    )
+fun SheetToggleRow(
+    icon: ImageVector,
+    label: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    enabled: Boolean = true,
+    subtitle: String? = null,
+) {
+    val colors = MaterialTheme.feastColors
+    val thumb = if (colors.isDark) colors.surface else Color.White
+    SheetRow(
+        icon, label,
+        iconTint = colors.saffronText,
+        background = colors.saffronSoft,
+        subtitle = subtitle,
+        onClick = if (enabled) ({ onCheckedChange(!checked) }) else null,
+    ) {
+        Switch(
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+            enabled = enabled,
+            colors = SwitchDefaults.colors(
+                checkedTrackColor = colors.saffron,
+                checkedThumbColor = thumb,
+                checkedBorderColor = Color.Transparent,
+                uncheckedTrackColor = colors.saffronTrack,
+                uncheckedThumbColor = thumb,
+                uncheckedBorderColor = Color.Transparent,
+                disabledUncheckedTrackColor = colors.saffronTrack.copy(alpha = 0.5f),
+                disabledUncheckedThumbColor = thumb,
+                disabledUncheckedBorderColor = Color.Transparent,
+            ),
+        )
+    }
 }
 
-/** "Your profile", with the account's picture when signed in with one */
+/** The plain rows under the top group: about, support, terms, feedback, help, sharing */
 @Composable
-private fun ProfileItem(onClick: () -> Unit) {
-    val account = LocalAppDependencies.current.auth.account()
-    val photo = account?.photoUrl?.takeIf { !account.isAnonymous }
-    DrawerItem(
-        Icons.Default.AccountCircle,
-        Res.string.profile,
-        trailing = {
-            if (photo != null) {
-                AsyncImage(model = photo, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.size(28.dp).clip(CircleShape))
+private fun LinkRow(icon: ImageVector, label: StringResource, onClick: () -> Unit) {
+    val colors = MaterialTheme.feastColors
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .heightIn(min = 46.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        Icon(icon, contentDescription = null, tint = colors.muted, modifier = Modifier.size(22.dp))
+        Text(stringResource(label), color = colors.ink, fontSize = 16.sp, fontWeight = FontWeight.Medium, style = MaterialTheme.typography.bodyLarge)
+    }
+}
+
+@Composable
+private fun DrawerFooter() {
+    val colors = MaterialTheme.feastColors
+    Column {
+        Box(Modifier.fillMaxWidth().height(1.dp).background(colors.lavender))
+        Row(
+            Modifier.windowInsetsPadding(WindowInsets.navigationBars).padding(start = 26.dp, end = 26.dp, top = 14.dp, bottom = 28.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Box(Modifier.size(7.dp).background(colors.saffron, CircleShape))
+            Text("Upalio", color = colors.muted, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.labelMedium)
+        }
+    }
+}
+
+/** "Your profile", with the account's picture, or its first letter, when signed in with one */
+@Composable
+private fun ProfileRow(onClick: () -> Unit) {
+    val colors = MaterialTheme.feastColors
+    val account = LocalAppDependencies.current.auth.account()?.takeIf { !it.isAnonymous }
+    val photo = account?.photoUrl
+    val initial = (account?.name ?: account?.email)?.trim()?.firstOrNull()?.uppercaseChar()
+    SheetRow(Icons.Rounded.AccountCircle, stringResource(Res.string.profile), border = colors.lavender, onClick = onClick) {
+        when {
+            photo != null -> AsyncImage(
+                model = photo,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.size(30.dp).clip(CircleShape),
+            )
+            initial != null -> Box(Modifier.size(30.dp).background(colors.indigo, CircleShape), contentAlignment = Alignment.Center) {
+                Text(
+                    initial.toString(),
+                    color = colors.saffron,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Clip,
+                    style = MaterialTheme.typography.labelLarge,
+                )
             }
-        },
-        onClick = onClick,
-    )
+        }
+    }
 }

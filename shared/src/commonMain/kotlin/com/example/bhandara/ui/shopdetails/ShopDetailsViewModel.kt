@@ -25,6 +25,7 @@ import kotlinx.coroutines.launch
  *
  * @param menu            the menu with prices; empty for older shops that only have [LocalShopResponse.menuItems]
  * @param distanceMeters  from where the user is now; null without location permission
+ * @param isSaved         the user saved this shop (kept on the phone)
  * @param working         a report, deletion suggestion or deactivation is being sent
  * @param message         a one-time message (e.g. "Thanks for reporting"), cleared with onMessageShown()
  */
@@ -37,6 +38,7 @@ data class ShopDetailsState(
     val isOwner: Boolean = false,
     val hasReported: Boolean = false,
     val hasSuggestedDelete: Boolean = false,
+    val isSaved: Boolean = false,
     val working: Boolean = false,
     val message: String? = null,
 ) {
@@ -66,6 +68,7 @@ class ShopDetailsViewModel(
         ShopDetailsState(
             hasReported = settings.hasReportedShop(shopId),
             hasSuggestedDelete = settings.hasSuggestedDeletingShop(shopId),
+            isSaved = settings.isShopSaved(shopId),
         )
     )
     val state: StateFlow<ShopDetailsState> = _state.asStateFlow()
@@ -112,6 +115,13 @@ class ShopDetailsViewModel(
             call = { shopApi.deactivateShop(shopId) },
             thanks = "Shop deactivated. It's no longer shown to others.",
         ) { state -> state.copy(shop = state.shop?.copy(isActive = false)) }
+    }
+
+    /** Saves the shop to the user's places, or takes it off again */
+    fun toggleSaved() {
+        val saved = !_state.value.isSaved
+        settings.setShopSaved(shopId, saved)
+        _state.update { it.copy(isSaved = saved, message = if (saved) "Saved to your places" else "Removed from your places") }
     }
 
     fun onMessageShown() = _state.update { it.copy(message = null) }

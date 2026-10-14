@@ -334,4 +334,21 @@ class FeastViewModelsTest {
             (organizer?.let { ""","organizerName":"$it"""" } ?: "") +
             (phone?.let { ""","contactPhone":"$it"""" } ?: "") + "}"
     }
+
+    @Test
+    fun aFeastCanBeSavedToTheUsersPlacesAndUnsaved() = runTest(dispatcher) {
+        val viewModel = feastOpened("1")
+        assertFalse(viewModel.state.value.isSaved)
+
+        viewModel.toggleSaved()
+        assertTrue(viewModel.state.value.isSaved)
+        assertTrue(settings.isFeastSaved("1"))
+        assertEquals("Saved to your places", viewModel.state.value.message)
+
+        // Opened again later, it's still saved
+        assertTrue(feastOpened("1").state.value.isSaved)
+
+        viewModel.toggleSaved()
+        assertFalse(settings.isFeastSaved("1"))
+    }
 }

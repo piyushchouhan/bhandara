@@ -9,11 +9,6 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -22,7 +17,6 @@ import kotlinx.coroutines.withTimeoutOrNull
 import org.hildan.krossbow.stomp.StompClient
 import org.hildan.krossbow.stomp.StompSession
 import org.hildan.krossbow.stomp.sendText
-import org.hildan.krossbow.stomp.subscribeText
 import org.hildan.krossbow.websocket.okhttp.OkHttpWebSocketClient
 import okhttp3.OkHttpClient
 import java.util.concurrent.TimeUnit
@@ -30,9 +24,8 @@ import java.util.concurrent.TimeUnit
 /**
  * One STOMP connection for live cart locations, with automatic reconnects.
  *
- * Each user of a connection gets its own instance so that closing one never breaks another:
- * - [vendor] is the single long-lived connection used by the vendor's location stream
- * - [forViewer] creates a fresh connection for one customer screen; [close] it when the screen goes away
+ * Used by Vendor Mode to send the cart's location ([vendor]); customers follow carts with the shared
+ * LiveCartFeed.
  */
 class CartStompClient private constructor(
     private val name: String,
@@ -67,9 +60,6 @@ class CartStompClient private constructor(
          * presence update every 45s, which fails (and reconnects) on its own if the connection has died.
          */
         val vendor = CartStompClient("vendor", pingIntervalSeconds = 60)
-
-        /** A separate connection for one customer screen; pings often so a dead connection is noticed quickly */
-        fun forViewer(): CartStompClient = CartStompClient("viewer", pingIntervalSeconds = 20)
 
         /** 1s, 2s, 4s ... capped at 30s */
         private fun backoffMs(failures: Int): Long =
@@ -136,38 +126,6 @@ class CartStompClient private constructor(
     /** Tells the backend the vendor stopped sharing, so the cart leaves the map immediately */
     suspend fun sendCartOffline(update: CartLocationUpdate) {
         connect().sendText("/app/cart/offline", gson.toJson(update))
-    }
-
-    /**
-     * Live updates for one cart. Keeps resubscribing (with backoff) whenever the connection drops,
-     * until the collector is cancelled.
-     */
-    fun subscribeToCart(
-        shopId: Long,
-        onConnectionChange: (connected: Boolean) -> Unit = {}
-    ): Flow<CartLocationUpdate> = flow {
-        var attempts = 0
-        while (currentCoroutineContext().isActive) {
-            var current: StompSession? = null
-            try {
-                current = connect()
-                val updates = current.subscribeText("/topic/cart/$shopId")
-                attempts = 0
-                onConnectionChange(true)
-                updates.collect { frame ->
-                    emit(gson.fromJson(frame, CartLocationUpdate::class.java))
-                }
-                Log.w(TAG, "[$name] subscription to cart $shopId ended, resubscribing")
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                Log.w(TAG, "[$name] subscription to cart $shopId failed: ${e.message}")
-            }
-            onConnectionChange(false)
-            current?.let { dropSession(it) }
-            attempts++
-            delay(backoffMs(attempts))
-        }
     }
 
     suspend fun disconnect() {

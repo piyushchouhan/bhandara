@@ -1,5 +1,6 @@
 package com.example.bhandara.services
 
+import com.example.bhandara.navigation.NOTIFICATION_DATA_KEYS
 import kotlinx.coroutines.runBlocking
 import com.example.bhandara.data.auth.AppBackend
 import com.example.bhandara.data.auth.AppAuth
@@ -58,23 +59,17 @@ class BhandaraMessagingService : FirebaseMessagingService() {
         val body = message.notification?.body ?: data["body"] ?: "Check out a new bhandara near you"
         
         // Show notification in system tray
-        showNotification(title, body, notificationType, feastId)
+        showNotification(title, body, data)
     }
     
-    private fun showNotification(
-        title: String, 
-        body: String, 
-        type: String = "",
-        feastId: String = ""
-    ) {
+    private fun showNotification(title: String, body: String, data: Map<String, String>) {
         createNotificationChannel()
         
-        // Intent to open MainActivity when notification is tapped
-        // Later you can add feastId as extras to navigate to specific bhandara
+        // Tapping opens the app on what the notification is about; the data goes along as extras under the same
+        // keys Android uses for notifications shown while the app is in the background
         val intent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            putExtra("notification_type", type)
-            putExtra("feast_id", feastId)
+            NOTIFICATION_DATA_KEYS.forEach { key -> data[key]?.let { putExtra(key, it) } }
         }
         
         val pendingIntent = PendingIntent.getActivity(

@@ -18,7 +18,9 @@ struct ComposeView: UIViewControllerRepresentable {
 
 struct ContentView: View {
     var body: some View {
+        // Edge to edge, as on Android: the map and the side menu's header run under the status bar, and each
+        // screen keeps its own content clear of the notch and home indicator
         ComposeView()
-            .ignoresSafeArea(.keyboard)
+            .ignoresSafeArea()
     }
 }

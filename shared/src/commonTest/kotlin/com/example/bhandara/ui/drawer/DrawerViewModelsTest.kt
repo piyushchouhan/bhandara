@@ -4,6 +4,8 @@ import com.example.bhandara.auth.AuthService
 import com.example.bhandara.auth.PlatformAuth
 import com.example.bhandara.auth.UserAccount
 import com.example.bhandara.data.network.ApiClient
+import com.example.bhandara.data.network.ClaimApi
+import com.example.bhandara.data.network.ShopApi
 import com.example.bhandara.data.network.SupportApi
 import com.example.bhandara.ui.profile.ProfileViewModel
 import com.example.bhandara.ui.profile.SignInOutcome
@@ -50,12 +52,19 @@ class DrawerViewModelsTest {
 
     private val requests = mutableListOf<HttpRequestData>()
     private var supportStatus = HttpStatusCode.Created
+    /** Answers for particular paths (e.g. the user's claims); anything else gets the support answer */
+    private val bodies = mutableMapOf<String, String>()
 
     private val client = ApiClient("https://api.test/", { "id-token" }, MockEngine(MockEngineConfig().apply {
         dispatcher = this@DrawerViewModelsTest.dispatcher
         addHandler { request ->
             requests += request
-            respond("{}", supportStatus, headersOf(HttpHeaders.ContentType, "application/json"))
+            val body = bodies[request.url.encodedPath]
+            if (body != null) {
+                respond(body, HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
+            } else {
+                respond("{}", supportStatus, headersOf(HttpHeaders.ContentType, "application/json"))
+            }
         }
     }))
 
@@ -159,6 +168,63 @@ class DrawerViewModelsTest {
         assertEquals(1, requests.size)
     }
 
+    /** A screenshot picked on the phone */
+    private object Screenshot : com.example.bhandara.photos.PickedPhoto {
+        override val preview: Any = "shot"
+        override suspend fun compressed(): com.example.bhandara.photos.CompressedPhoto? = null
+    }
+
+    @Test
+    fun theTopicAndScreenshotGoWithTheReport() = runTest(dispatcher) {
+        val viewModel = FeedbackViewModel(FeedbackKind.BUG, SupportApi(client)) { _, _ -> listOf("https://img.test/shot.webp") }
+
+        viewModel.onTopicClick(FeedbackTopic.MAP)
+        viewModel.onScreenshot(Screenshot)
+        viewModel.onTextChange("Pins don't show")
+        viewModel.send()
+        advanceUntilIdle()
+
+        assertEquals(
+            """{"bug":"[Map] Pins don't show\n\nScreenshot: https://img.test/shot.webp"}""",
+            requests.single().bodyText(),
+        )
+        assertTrue(viewModel.state.value.sent)
+    }
+
+    @Test
+    fun tappingTheSameTopicAgainClearsIt() {
+        val viewModel = FeedbackViewModel(FeedbackKind.BUG, SupportApi(client))
+
+        viewModel.onTopicClick(FeedbackTopic.LOGIN)
+        viewModel.onTopicClick(FeedbackTopic.FEASTS)
+        assertEquals(FeedbackTopic.FEASTS, viewModel.state.value.topic)
+        viewModel.onTopicClick(FeedbackTopic.FEASTS)
+        assertNull(viewModel.state.value.topic)
+    }
+
+    @Test
+    fun aScreenshotThatFailsToUploadStopsTheReportSoItCanBeRetried() = runTest(dispatcher) {
+        val viewModel = FeedbackViewModel(FeedbackKind.BUG, SupportApi(client)) { _, _ -> throw IllegalStateException("offline") }
+        viewModel.onScreenshot(Screenshot)
+        viewModel.onTextChange("Crash")
+
+        viewModel.send()
+        advanceUntilIdle()
+
+        assertTrue(requests.isEmpty(), "no report without the screenshot the user added")
+        assertNotNull(viewModel.state.value.error)
+        assertTrue(viewModel.state.value.canSend)
+    }
+
+    @Test
+    fun aLongReportStillFitsTheBackendWithItsTopicAndLink() {
+        val text = feedbackText("a".repeat(MAX_FEEDBACK_LENGTH), FeedbackTopic.SHOP, "https://img.test/x.webp")
+
+        assertEquals(MAX_FEEDBACK_LENGTH, text.length)
+        assertTrue(text.startsWith("[Shop details] aaa"))
+        assertTrue(text.endsWith("Screenshot: https://img.test/x.webp"))
+    }
+
     // ==================== Profile ====================
 
     @Test
@@ -183,6 +249,78 @@ class DrawerViewModelsTest {
         assertFalse(state.isGuest)
         assertEquals("Piyush", state.account?.name)
         assertEquals("Signed in successfully!", state.message)
+    }
+
+    private fun claim(shopId: Long, status: String, at: String) =
+        """{"id":$shopId,"shopId":$shopId,"status":"$status","createdAt":"$at"}"""
+
+    private fun shop(id: Long, name: String) = """{"id":"$id","shopName":"$name","latitude":18.5,"longitude":73.8}"""
+
+    @Test
+    fun theProfileListsTheShopsWhoseClaimsWereApprovedNewestFirst() = runTest(dispatcher) {
+        bodies["/api/shop-claims/mine"] = "[${claim(1, "APPROVED", "2026-10-01")}, ${claim(2, "REJECTED", "2026-10-02")}, ${claim(3, "APPROVED", "2026-10-05")}, ${claim(4, "PENDING_REVIEW", "2026-10-06")}]"
+        bodies["/api/localshops/1"] = shop(1, "Sharma Chaat")
+        bodies["/api/localshops/3"] = shop(3, "Gupta Snacks")
+
+        val viewModel = ProfileViewModel(AuthService(FakeFirebase(google)), signOut = {}, ClaimApi(client), ShopApi(client))
+        advanceUntilIdle()
+
+        assertEquals(listOf("Gupta Snacks", "Sharma Chaat"), viewModel.state.value.myShops.map { it.shopName })
+        assertTrue(viewModel.state.value.isShopOwner)
+    }
+
+    @Test
+    fun aGuestHasNoShopsAndTheirClaimsAreNotAskedFor() = runTest(dispatcher) {
+        val viewModel = ProfileViewModel(AuthService(FakeFirebase(guest)), signOut = {}, ClaimApi(client), ShopApi(client))
+        advanceUntilIdle()
+
+        assertTrue(viewModel.state.value.myShops.isEmpty())
+        assertTrue(requests.none { it.url.encodedPath == "/api/shop-claims/mine" })
+    }
+
+    @Test
+    fun signingInFindsTheAccountsShops() = runTest(dispatcher) {
+        bodies["/api/shop-claims/mine"] = "[${claim(1, "APPROVED", "2026-10-01")}]"
+        bodies["/api/localshops/1"] = shop(1, "Sharma Chaat")
+        val firebase = FakeFirebase(guest)
+        val viewModel = ProfileViewModel(AuthService(firebase), signOut = {}, ClaimApi(client), ShopApi(client))
+        advanceUntilIdle()
+
+        firebase.account = google
+        viewModel.onSignInResult(SignInOutcome.SignedIn)
+        advanceUntilIdle()
+
+        assertEquals(listOf("Sharma Chaat"), viewModel.state.value.myShops.map { it.shopName })
+    }
+
+    @Test
+    fun aShopThatWasDeactivatedSinceTheLastLookIsAnnouncedOnce() = runTest(dispatcher) {
+        bodies["/api/shop-claims/mine"] = "[${claim(1, "APPROVED", "2026-10-01")}]"
+        bodies["/api/localshops/1"] = shop(1, "Sharma Chaat")
+        val viewModel = ProfileViewModel(AuthService(FakeFirebase(google)), signOut = {}, ClaimApi(client), ShopApi(client))
+        advanceUntilIdle()
+        assertEquals(null, viewModel.state.value.justDeactivated)
+
+        bodies["/api/localshops/1"] = """{"id":"1","shopName":"Sharma Chaat","latitude":18.5,"longitude":73.8,"isActive":false}"""
+        viewModel.loadMyShops()
+        advanceUntilIdle()
+        assertEquals("Sharma Chaat", viewModel.state.value.justDeactivated?.shopName)
+
+        viewModel.onBannerShown()
+        viewModel.loadMyShops()
+        advanceUntilIdle()
+        assertEquals(null, viewModel.state.value.justDeactivated)
+    }
+
+    @Test
+    fun aShopAlreadyHiddenWhenTheProfileOpensIsNotAnnounced() = runTest(dispatcher) {
+        bodies["/api/shop-claims/mine"] = "[${claim(1, "APPROVED", "2026-10-01")}]"
+        bodies["/api/localshops/1"] = """{"id":"1","shopName":"Sharma Chaat","latitude":18.5,"longitude":73.8,"isActive":false}"""
+        val viewModel = ProfileViewModel(AuthService(FakeFirebase(google)), signOut = {}, ClaimApi(client), ShopApi(client))
+        advanceUntilIdle()
+
+        assertEquals(1, viewModel.state.value.myShops.size)
+        assertEquals(null, viewModel.state.value.justDeactivated)
     }
 
     @Test

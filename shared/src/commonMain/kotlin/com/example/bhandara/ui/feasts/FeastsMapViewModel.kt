@@ -19,6 +19,12 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDateTime
 
+/** The groups the feasts list is split into, soonest first */
+enum class FeastGroup { NOW, LATER_TODAY, TOMORROW, COMING_UP }
+
+/** One group of the feasts list, e.g. everything happening now */
+data class FeastSection(val group: FeastGroup, val feasts: List<FeastResponse>)
+
 /**
  * What the "I'm hungry" map shows.
  *
@@ -41,14 +47,46 @@ data class FeastsMapState(
     /** Loaded fine, but nothing is on nearby */
     val noFeastsNearby: Boolean get() = loaded && error == null && visibleFeasts().isEmpty()
 
-    /** @param unnamed the label for feasts without an organizer name, in the user's language */
-    fun pins(unnamed: String): List<MapPin> = visibleFeasts().map {
-        MapPin(id = it.id, position = GeoLocation(it.latitude, it.longitude), label = it.organizerName?.takeIf(String::isNotBlank) ?: unnamed, emoji = FEAST_EMOJI, isLiveCart = false)
+    /**
+     * @param unnamed the label for feasts without an organizer name, in the user's language
+     * @param pill    for the redesign's pins: the text on each feast's pill ("Now", "6 PM"); live ones are on now
+     */
+    fun pins(unnamed: String, pill: ((FeastTiming) -> String)? = null): List<MapPin> = visibleFeasts().map {
+        val timing = timing(it)
+        MapPin(
+            id = it.id,
+            position = GeoLocation(it.latitude, it.longitude),
+            label = it.organizerName?.takeIf(String::isNotBlank) ?: unnamed,
+            emoji = FEAST_EMOJI,
+            isLiveCart = false,
+            feastPill = pill?.invoke(timing),
+            feastLive = timing is FeastTiming.Now,
+        )
     }
 
     fun selectedFeast(): FeastResponse? = selectedId?.let { id -> visibleFeasts().firstOrNull { it.id == id } }
 
     fun timing(feast: FeastResponse): FeastTiming = checkedAt?.let { feastTiming(feast, it) } ?: FeastTiming.Unknown
+
+    /**
+     * The feasts split into happening now, later today, tomorrow and coming up, leaving out empty groups. On now
+     * comes nearest first; the others soonest first, then nearest. Feasts with unreadable times count as coming up.
+     */
+    fun sections(): List<FeastSection> {
+        val grouped = visibleFeasts().groupBy { feast ->
+            when (timing(feast)) {
+                is FeastTiming.Now -> FeastGroup.NOW
+                is FeastTiming.Today -> FeastGroup.LATER_TODAY
+                is FeastTiming.Tomorrow -> FeastGroup.TOMORROW
+                else -> FeastGroup.COMING_UP
+            }
+        }
+        val nearest = compareBy<FeastResponse> { it.distance ?: Double.MAX_VALUE }
+        val soonest = compareBy<FeastResponse> { it.feastDate }.thenBy { it.startTime }.then(nearest)
+        return FeastGroup.entries.mapNotNull { group ->
+            grouped[group]?.sortedWith(if (group == FeastGroup.NOW) nearest else soonest)?.let { FeastSection(group, it) }
+        }
+    }
 
     companion object {
         const val FEAST_EMOJI = "🍲"
@@ -60,6 +98,8 @@ class FeastsMapViewModel(
     private val locationService: LocationService,
     private val feastApi: FeastApi,
     private val now: () -> LocalDateTime = ::localNow,
+    /** How far to look, as chosen in Settings */
+    private val radiusMeters: () -> Int = { 5_000 },
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(FeastsMapState())
@@ -105,7 +145,7 @@ class FeastsMapViewModel(
 
     private suspend fun load(near: GeoLocation) {
         _state.update { it.copy(loading = true, error = null) }
-        when (val result = feastApi.getNearby(near)) {
+        when (val result = feastApi.getNearby(near, radiusMeters().toDouble())) {
             is ApiResult.Success -> _state.update {
                 it.copy(loading = false, loaded = true, feasts = result.value, checkedAt = now())
             }

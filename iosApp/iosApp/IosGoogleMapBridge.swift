@@ -22,9 +22,16 @@ final class IosGoogleMapBridge: IosMapBridge {
         zoom: Float,
         cameraId: Int64,
         showMyLocation: Bool,
-        styleJson: String
+        styleJson: String,
+        topPadding: Double,
+        bottomPadding: Double,
+        zones: [IosMapZone]
     ) {
         guard let map = view as? AppMapView else { return }
+
+        // Before moving the camera, so it centres in the part of the map that isn't covered
+        let padding = UIEdgeInsets(top: topPadding, left: 0, bottom: bottomPadding, right: 0)
+        if map.padding != padding { map.padding = padding }
 
         if map.cameraId != cameraId {
             let target = GMSCameraPosition(latitude: latitude, longitude: longitude, zoom: zoom)
@@ -52,6 +59,41 @@ final class IosGoogleMapBridge: IosMapBridge {
             if marker.map == nil { marker.map = map }
             map.markers[pin.id] = marker
         }
+
+        // Shop zones: the same, for shapes under the pins
+        let zoneIds = Set(zones.map { $0.id })
+        for (id, polygon) in map.polygons where !zoneIds.contains(id) {
+            polygon.map = nil
+            map.polygons[id] = nil
+        }
+        for zone in zones {
+            let path = GMSMutablePath()
+            for i in 0..<min(zone.latitudes.count, zone.longitudes.count) {
+                path.add(CLLocationCoordinate2D(latitude: zone.latitudes[i].doubleValue, longitude: zone.longitudes[i].doubleValue))
+            }
+            let polygon = map.polygons[zone.id] ?? GMSPolygon()
+            polygon.userData = zone.id
+            if polygon.path?.encodedPath() != path.encodedPath() { polygon.path = path }
+            polygon.fillColor = UIColor(argb: zone.fillArgb)
+            polygon.strokeColor = UIColor(argb: zone.strokeArgb)
+            polygon.strokeWidth = zone.strokeWidth
+            polygon.isTappable = true
+            polygon.zIndex = -1 // under the markers
+            if polygon.map == nil { polygon.map = map }
+            map.polygons[zone.id] = polygon
+        }
+    }
+}
+
+private extension UIColor {
+    /// From 0xAARRGGBB
+    convenience init(argb: Int64) {
+        self.init(
+            red: CGFloat((argb >> 16) & 0xFF) / 255,
+            green: CGFloat((argb >> 8) & 0xFF) / 255,
+            blue: CGFloat(argb & 0xFF) / 255,
+            alpha: CGFloat((argb >> 24) & 0xFF) / 255
+        )
     }
 }
 
@@ -59,12 +101,17 @@ final class IosGoogleMapBridge: IosMapBridge {
 private final class AppMapView: GMSMapView, GMSMapViewDelegate {
     var listener: IosMapListener?
     var markers: [String: GMSMarker] = [:]
+    var polygons: [String: GMSPolygon] = [:]
     var cameraId: Int64?
     var styleJson: String?
 
     func mapView(_ mapView: GMSMapView, didTap marker: GMSMarker) -> Bool {
         if let id = marker.userData as? String { listener?.onPinClick(pinId: id) }
         return true // handled: no default info window
+    }
+
+    func mapView(_ mapView: GMSMapView, didTap overlay: GMSOverlay) {
+        if let id = overlay.userData as? String { listener?.onZoneClick(zoneId: id) }
     }
 
     func mapView(_ mapView: GMSMapView, idleAt position: GMSCameraPosition) {

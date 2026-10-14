@@ -31,7 +31,7 @@ expect fun platformHttpEngine(): HttpClientEngine
  *                      "Authorization: Bearer <token>" on every request
  */
 class ApiClient(
-    baseUrl: String,
+    val baseUrl: String,
     private val idTokenProvider: suspend () -> String?,
     engine: HttpClientEngine = platformHttpEngine(),
 ) {

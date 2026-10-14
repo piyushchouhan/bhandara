@@ -6,6 +6,7 @@ import com.example.bhandara.data.location.GeoLocation
 import com.example.bhandara.data.location.LocationResult
 import com.example.bhandara.data.location.LocationService
 import com.example.bhandara.data.models.api.LocalShopResponse
+import com.example.bhandara.data.models.api.ShopZone
 import com.example.bhandara.data.network.ApiError
 import com.example.bhandara.data.network.ApiResult
 import com.example.bhandara.data.network.FeedApi
@@ -13,6 +14,7 @@ import com.example.bhandara.data.network.ShopApi
 import com.example.bhandara.data.settings.AppSettings
 import com.example.bhandara.ui.map.CameraTarget
 import com.example.bhandara.ui.map.MapPin
+import com.example.bhandara.ui.map.MapZone
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -52,6 +54,8 @@ data class ShopsMapState(
     val verificationPrompt: LocalShopResponse? = null,
     /** The pin the user tapped, shown in a card */
     val selectedId: String? = null,
+    /** Groups of fixed shops standing close together */
+    val zones: List<ShopZone> = emptyList(),
 ) {
     /** The tapped place, if its pin is still on the map (a search or mode change can hide it) */
     fun selectedPlace(): LocalShopResponse? {
@@ -62,22 +66,52 @@ data class ShopsMapState(
 
     /** Shops match the search but only some are shown until the user zooms in */
     fun hasMoreShopsWhenZoomedIn(): Boolean =
-        !showMovingVendors && shops.count { it.matches(searchQuery) } > pins().size
+        !showMovingVendors && shops.count { it.matches(searchQuery) } > pins().count { it.zoneCount == null }
+
+    /** Zones are only for browsing shops: a search or the moving-vendor mode shows places one by one */
+    private fun showsZones(): Boolean = !showMovingVendors && searchQuery.isBlank()
+
+    /**
+     * The shapes of the shop zones: clear while zoomed out (where they stand in for their shops), faint from
+     * [ZONE_PINS_ZOOM] on, where the shops' own pins are shown.
+     */
+    fun mapZones(): List<MapZone> {
+        if (!showsZones()) return emptyList()
+        return zones.filter { it.outline.isNotEmpty() }.map { zone ->
+            MapZone(
+                id = zone.id,
+                outline = zone.outline.filter { it.size >= 2 }.map { GeoLocation(it[0], it[1]) },
+                faint = zoom >= ZONE_PINS_ZOOM,
+            )
+        }
+    }
 
     /**
      * The pins to draw: live carts in moving-vendor mode, otherwise shops; both filtered by the search. Shops come
-     * best first, and only the best few are shown until the user zooms in, so the map stays readable.
+     * best first, and only the best few are shown until the user zooms in, so the map stays readable; zoomed out,
+     * each shop zone has one label pin (named in [language]) instead of its shops. The tapped place is marked
+     * selected and the others dimmed.
      */
-    fun pins(): List<MapPin> {
-        if (showMovingVendors) {
-            return carts.filter { it.matches(searchQuery) }.map { it.toPin(emoji = "🚚", isLiveCart = true) }
+    fun pins(language: String = "en"): List<MapPin> {
+        val places = if (showMovingVendors) {
+            carts.filter { it.matches(searchQuery) }.map { it.toPin(emoji = "🚚", isLiveCart = true) }
+        } else {
+            val limit = when {
+                zoom >= 16f -> Int.MAX_VALUE
+                zoom >= 15f -> 10
+                else -> 5
+            }
+            // Zoomed out, a zone's label stands in for its shops (the tapped one stays); the rest compete for the
+            // few places shown
+            val zoned = zoom < ZONE_PINS_ZOOM && showsZones()
+            val inZones = if (zoned) zones.flatMap { it.shopIds }.toSet() else emptySet()
+            val loose = shops.filter { it.matches(searchQuery) && it.id !in inZones }.take(limit)
+            val keptSelected = shops.filter { it.id == selectedId && it.id in inZones }
+            val zonePins = if (zoned) zones.map { it.toPin(language) } else emptyList()
+            zonePins + (loose + keptSelected).map { it.toPin(emoji = "📍", isLiveCart = false) }
         }
-        val limit = when {
-            zoom >= 16f -> Int.MAX_VALUE
-            zoom >= 15f -> 10
-            else -> 5
-        }
-        return shops.filter { it.matches(searchQuery) }.take(limit).map { it.toPin(emoji = "📍", isLiveCart = false) }
+        val selected = selectedId?.takeIf { id -> places.any { it.id == id } } ?: return places
+        return places.map { it.copy(selected = it.id == selected, dimmed = it.id != selected) }
     }
 
     private fun LocalShopResponse.matches(query: String): Boolean {
@@ -89,12 +123,41 @@ data class ShopsMapState(
             menuItems?.any { it.contains(q, ignoreCase = true) } == true
     }
 
+    private fun ShopZone.toPin(language: String) = MapPin(
+        id = ZONE_PIN_PREFIX + id,
+        position = GeoLocation(centerLatitude, centerLongitude),
+        label = nameIn(language).orEmpty(),
+        emoji = zoneEmoji(type),
+        zoneCount = shopCount,
+    )
+
     private fun LocalShopResponse.toPin(emoji: String, isLiveCart: Boolean) =
         MapPin(id = id, position = GeoLocation(latitude, longitude), label = shopName, emoji = emoji, isLiveCart = isLiveCart)
 
     companion object {
         /** Before the user is found the map shows the whole country, never a city they might not be in */
         val CENTRE_OF_INDIA = GeoLocation(22.0, 79.0)
+
+        /**
+         * From this zoom on a zone's shops have their own pins; below it the zone's flag stands in for them. At 17 a
+         * dp is about 1.2 m, so shops 10 m apart no longer sit on each other (at 16 they'd be ~4 dp apart).
+         */
+        const val ZONE_PINS_ZOOM = 17f
+
+        /** Tapping a zone zooms in this far, where its shops' pins are spread apart */
+        const val ZONE_TAP_ZOOM = 18f
+
+        /** Zone labels are pins with this id prefix, so they can't clash with a shop's id */
+        const val ZONE_PIN_PREFIX = "zone:"
+
+        fun zoneEmoji(type: String?): String = when (type) {
+            "STREET_FOOD" -> "🍢"
+            "FISH_MARKET" -> "🐟"
+            "VEG_MARKET" -> "🥬"
+            "SWEETS" -> "🍬"
+            "TEA_SNACKS" -> "☕"
+            else -> "🏪"
+        }
     }
 }
 
@@ -153,7 +216,22 @@ class ShopsMapViewModel(
 
     fun onMessageShown() = _state.update { it.copy(message = null) }
 
-    fun onPinClick(pin: MapPin) = _state.update { it.copy(selectedId = pin.id) }
+    /** A shop or cart opens its card; a zone's label zooms in on the zone */
+    fun onPinClick(pin: MapPin) {
+        if (pin.id.startsWith(ShopsMapState.ZONE_PIN_PREFIX)) {
+            onZoneClick(pin.id.removePrefix(ShopsMapState.ZONE_PIN_PREFIX))
+        } else {
+            _state.update { it.copy(selectedId = pin.id) }
+        }
+    }
+
+    /** Zooms in on the zone, close enough that each of its shops has its own pin */
+    fun onZoneClick(zoneId: String) {
+        val zone = _state.value.zones.firstOrNull { it.id == zoneId } ?: return
+        _state.update {
+            it.copy(camera = CameraTarget(GeoLocation(zone.centerLatitude, zone.centerLongitude), zoom = ShopsMapState.ZONE_TAP_ZOOM))
+        }
+    }
 
     fun clearSelection() = _state.update { it.copy(selectedId = null) }
 
@@ -201,7 +279,8 @@ class ShopsMapViewModel(
 
     private suspend fun loadShops(near: GeoLocation) {
         _state.update { it.copy(loadingShops = true, error = null) }
-        when (val result = feedApi.getFeed(near)) {
+        // As far as the user chose in Settings (5 km unless changed)
+        when (val result = feedApi.getFeed(near, settings.preferences.searchRadiusMeters.toDouble())) {
             is ApiResult.Success -> {
                 val feed = result.value
                 val prompt = feed.verificationPrompt?.takeUnless { settings.hasAnsweredVerification(it.id) }
@@ -211,6 +290,7 @@ class ShopsMapViewModel(
                         shops = feed.activeShops.filter { shop -> shop.isMovingCart != true },
                         carts = feed.activeShops.filter { shop -> shop.isMovingCart == true },
                         verificationPrompt = prompt,
+                        zones = feed.zones,
                     )
                 }
             }

@@ -18,4 +18,8 @@ class ClaimApi(private val client: ApiClient) {
             method = HttpMethod.Post
             setBody(claim)
         }
+
+    /** The current user's claims and how each was decided */
+    suspend fun myClaims(): ApiResult<List<ShopClaimResponse>> =
+        client.call("api/shop-claims/mine") { method = HttpMethod.Get }
 }

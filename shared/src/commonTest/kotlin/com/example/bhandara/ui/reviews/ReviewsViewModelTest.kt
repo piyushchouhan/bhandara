@@ -144,6 +144,13 @@ class ReviewsViewModelTest {
     }
 
     @Test
+    fun theSummaryCountsHowManyReviewsGaveEachNumberOfStars() = runTest(dispatcher) {
+        reviewsAre(review("1", OTHER, 4, null), review("2", "a", 4, null), review("3", "b", 1, null))
+
+        assertEquals(listOf(1, 0, 0, 2, 0), opened().state.value.starCounts)
+    }
+
+    @Test
     fun reviewsThatFailToLoadCanBeRetried() = runTest(dispatcher) {
         answer(HttpMethod.Get, "reviews/shop/5", "", HttpStatusCode.InternalServerError)
         val viewModel = opened()
@@ -178,6 +185,40 @@ class ReviewsViewModelTest {
     }
 
     @Test
+    fun aReviewThatFailsToPostIsNotMarkedSubmitted() = runTest(dispatcher) {
+        answer(HttpMethod.Post, "reviews", "", HttpStatusCode.InternalServerError)
+        val viewModel = opened()
+
+        viewModel.startWriting(rating = 3)
+        viewModel.submit()
+        advanceUntilIdle()
+
+        assertFalse(viewModel.state.value.submitted)
+        assertNotNull(viewModel.state.value.draft, "kept so the user can try again")
+    }
+
+    @Test
+    fun tappingAStarOnAnEmptyShopStartsAReviewWithThoseStars() = runTest(dispatcher) {
+        reviewsAre()
+        val viewModel = opened()
+
+        viewModel.startWriting(rating = 4)
+
+        assertEquals(4, viewModel.state.value.draft?.rating)
+        assertTrue(viewModel.state.value.draft!!.canSubmit)
+    }
+
+    @Test
+    fun editingYourReviewKeepsItsStarsWhateverStarWasTapped() = runTest(dispatcher) {
+        reviewsAre(review("1", ME, 2, "Okay"))
+        val viewModel = opened()
+
+        viewModel.startWriting(rating = 5)
+
+        assertEquals(2, viewModel.state.value.draft?.rating)
+    }
+
+    @Test
     fun aNewReviewIsPostedAndTheListReloaded() = runTest(dispatcher) {
         answer(HttpMethod.Post, "reviews", review("3", ME, 4, "Great chaat"))
         val viewModel = opened()
@@ -195,6 +236,7 @@ class ReviewsViewModelTest {
         assertEquals("Great chaat", body["comment"]?.jsonPrimitive?.content)
         val state = viewModel.state.value
         assertNull(state.draft)
+        assertTrue(state.submitted, "the writing screen can close")
         assertEquals("Thanks for your review!", state.message)
         assertEquals("Great chaat", state.myReview?.comment)
     }

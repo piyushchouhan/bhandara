@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.staticCompositionLocalOf
 
 /**
- * Things screens ask the phone to do with another app: call, get directions, share, open a web page.
+ * Things screens ask the phone to do with another app: call, get directions, share, open a web page, save a photo.
  * Implemented on each platform ([rememberPlatformActions]); shared screens get it from [LocalPlatformActions].
  */
 interface PlatformActions {
@@ -23,6 +23,20 @@ interface PlatformActions {
 
     /** Opens this app's page in the phone's Settings (e.g. to turn location back on) */
     fun openAppSettings()
+
+    /**
+     * Downloads the photo at [url] into the phone's photo gallery. False when it couldn't be downloaded or saved
+     * (e.g. no connection, or on iOS the user didn't allow adding photos).
+     */
+    suspend fun savePhoto(url: String): Boolean
+
+    /** Opens the system share sheet with a file made from [content] (e.g. the user's data as JSON) */
+    fun shareFile(fileName: String, mimeType: String, content: String)
+}
+
+/** Settings the platform actions follow; kept up to date by ProvideAppPreferences */
+object PlatformPreferences {
+    var directionsApp: com.example.bhandara.data.settings.DirectionsApp = com.example.bhandara.data.settings.DirectionsApp.GOOGLE_MAPS
 }
 
 /** The current platform's [PlatformActions]; provided at the root of the app's UI */
@@ -36,6 +50,17 @@ expect fun rememberPlatformActions(): PlatformActions
 
 /** The links [PlatformActions] hands to other apps; kept here so both platforms build them the same way */
 object ExternalLinks {
+
+    /** Apple Maps directions to an exact spot (iPhone's own maps app) */
+    fun appleMapsDirections(latitude: Double, longitude: Double): String =
+        "https://maps.apple.com/?daddr=${coordinate(latitude)},${coordinate(longitude)}"
+
+    /** A geo: link, which Android offers to every maps app installed */
+    fun geo(latitude: Double, longitude: Double): String =
+        "geo:${coordinate(latitude)},${coordinate(longitude)}?q=${coordinate(latitude)},${coordinate(longitude)}"
+
+    /** The privacy policy, a public page on the backend (also the one given to the app stores) */
+    fun privacyPolicy(apiBaseUrl: String): String = apiBaseUrl.trimEnd('/') + "/privacy"
 
     /** Google Maps directions to an exact spot; opens the app when installed, the website otherwise */
     fun directions(latitude: Double, longitude: Double): String =

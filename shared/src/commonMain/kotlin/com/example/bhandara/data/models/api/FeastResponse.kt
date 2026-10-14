@@ -45,6 +45,12 @@ data class FeastResponse(
     val isActive: Boolean = true,
     
     val isVerified: Boolean = false,
+
+    /** In the organizer's own list (api/feasts/mine): UPCOMING, PAST or TAKEN_DOWN (hidden after reports) */
+    val status: String? = null,
+
+    /** When the organizer ended it early (e.g. the food ran out) */
+    val endedEarlyAt: String? = null,
     
     val createdAt: String? = null,
     

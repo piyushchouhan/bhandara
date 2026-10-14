@@ -39,6 +39,11 @@ class AppNavigator(initialBackStack: List<Route> = listOf(Route.Home)) {
         return true
     }
 
+    /** Closes everything above Home, e.g. "Find a shop to review" from deep in the profile */
+    fun backToHome() {
+        backStack = backStack.take(1)
+    }
+
     /**
      * One key per open screen, bottom first. The same screen opened twice (e.g. two shops' pages) gets two keys,
      * and a screen keeps its key while screens open and close above it.
@@ -60,6 +65,12 @@ class AppNavigator(initialBackStack: List<Route> = listOf(Route.Home)) {
     }
 }
 
-/** The app's navigator, kept across rotation and when the system recreates the screen */
+/**
+ * The app's navigator, kept across rotation and when the system recreates the screen
+ *
+ * @param startOnFeasts a fresh start opens on the feasts map (Settings → Open app on), with Home under it
+ */
 @Composable
-fun rememberAppNavigator(): AppNavigator = rememberSaveable(saver = AppNavigator.Saver) { AppNavigator() }
+fun rememberAppNavigator(startOnFeasts: Boolean = false): AppNavigator = rememberSaveable(saver = AppNavigator.Saver) {
+    AppNavigator(if (startOnFeasts) listOf(Route.Home, Route.Hungry) else listOf(Route.Home))
+}

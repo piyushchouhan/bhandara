@@ -36,4 +36,10 @@ class ExternalLinksTest {
         assertNull(ExternalLinks.phoneCall("call me"))
         assertNull(ExternalLinks.phoneCall("12"))
     }
+
+    @Test
+    fun thePrivacyPolicyIsThePageOnTheBackend() {
+        assertEquals("https://api.localfeast.test/privacy", ExternalLinks.privacyPolicy("https://api.localfeast.test/"))
+        assertEquals("http://192.168.1.5:8080/privacy", ExternalLinks.privacyPolicy("http://192.168.1.5:8080"))
+    }
 }

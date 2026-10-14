@@ -3,7 +3,6 @@ package com.example.bhandara.data.auth
 import android.content.Context
 import com.example.bhandara.BuildConfig
 import com.example.bhandara.data.network.ApiClient
-import com.example.bhandara.data.network.CrowdApi
 import com.example.bhandara.data.network.ShopApi
 import com.example.bhandara.data.network.UserApi
 import com.example.bhandara.data.settings.AppSettings
@@ -18,7 +17,6 @@ object AppBackend {
 
     val shopApi: ShopApi by lazy { ShopApi(client) }
 
-    val crowdApi: CrowdApi by lazy { CrowdApi(client) }
 
     fun pushTokenSync(context: Context) = PushTokenSync(userApi, AppSettings(context))
 }

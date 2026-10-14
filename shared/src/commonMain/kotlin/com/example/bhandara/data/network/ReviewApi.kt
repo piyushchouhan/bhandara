@@ -12,6 +12,10 @@ class ReviewApi(private val client: ApiClient) {
     suspend fun getReviews(shopId: String): ApiResult<List<ReviewResponse>> =
         client.call("api/reviews/shop/$shopId") { method = HttpMethod.Get }
 
+    /** The signed-in user's reviews, newest first, including ones a moderator removed */
+    suspend fun getMyReviews(): ApiResult<List<ReviewResponse>> =
+        client.call("api/reviews/mine") { method = HttpMethod.Get }
+
     suspend fun createReview(review: ReviewRequest): ApiResult<ReviewResponse> =
         client.call("api/reviews") {
             method = HttpMethod.Post

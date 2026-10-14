@@ -1,7 +1,7 @@
 package com.example.bhandara.ui.feasts
 
 import com.example.bhandara.data.models.api.FeastResponse
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
@@ -9,6 +9,7 @@ import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atTime
 import kotlinx.datetime.plus
+import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 
 /** When a feast is, compared with now */
@@ -31,13 +32,22 @@ sealed interface FeastTiming {
 /** The phone's current local date and time */
 fun localNow(): LocalDateTime = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
 
-/** A feast that ends before it starts runs past midnight, e.g. 8 PM to 1 AM ends the next day */
-fun feastTiming(feast: FeastResponse, now: LocalDateTime): FeastTiming {
-    val date = runCatching { LocalDate.parse(feast.feastDate) }.getOrNull() ?: return FeastTiming.Unknown
-    val startTime = parseTime(feast.startTime) ?: return FeastTiming.Unknown
-    val endTime = parseTime(feast.endTime) ?: return FeastTiming.Unknown
+/** When a feast starts and ends; a feast that ends before it starts runs past midnight (8 PM to 1 AM) */
+private fun feastSpan(feast: FeastResponse): Pair<LocalDateTime, LocalDateTime>? {
+    val date = runCatching { LocalDate.parse(feast.feastDate) }.getOrNull() ?: return null
+    val startTime = parseTime(feast.startTime) ?: return null
+    val endTime = parseTime(feast.endTime) ?: return null
     val start = date.atTime(startTime)
     val end = (if (endTime < startTime) date.plus(DatePeriod(days = 1)) else date).atTime(endTime)
+    return start to end
+}
+
+/** A feast that ends before it starts runs past midnight, e.g. 8 PM to 1 AM ends the next day */
+fun feastTiming(feast: FeastResponse, now: LocalDateTime): FeastTiming {
+    val (start, end) = feastSpan(feast) ?: return FeastTiming.Unknown
+    val date = start.date
+    val startTime = start.time
+    val endTime = end.time
     return when {
         now > end -> FeastTiming.Ended
         now >= start -> FeastTiming.Now(endTime)
@@ -45,6 +55,25 @@ fun feastTiming(feast: FeastResponse, now: LocalDateTime): FeastTiming {
         date == now.date.plus(DatePeriod(days = 1)) -> FeastTiming.Tomorrow(startTime)
         else -> FeastTiming.Later(date, startTime)
     }
+}
+
+private fun minutesBetween(from: LocalDateTime, to: LocalDateTime): Long =
+    (to.toInstant(TimeZone.UTC) - from.toInstant(TimeZone.UTC)).inWholeMinutes
+
+/** Whole minutes until the feast ends; null once it's over or when its times can't be read */
+fun minutesUntilEnd(feast: FeastResponse, now: LocalDateTime): Long? =
+    feastSpan(feast)?.second?.let { end -> minutesBetween(now, end).takeIf { now <= end } }
+
+/** Whole minutes until the feast starts; null once it has started or when its times can't be read */
+fun minutesUntilStart(feast: FeastResponse, now: LocalDateTime): Long? =
+    feastSpan(feast)?.first?.let { start -> minutesBetween(now, start).takeIf { now < start } }
+
+/** How much of a feast on now has gone by, 0 to 1; null when it isn't on */
+fun feastProgress(feast: FeastResponse, now: LocalDateTime): Float? {
+    val (start, end) = feastSpan(feast) ?: return null
+    if (now < start || now > end) return null
+    val total = minutesBetween(start, end).takeIf { it > 0 } ?: return null
+    return (minutesBetween(start, now).toFloat() / total).coerceIn(0f, 1f)
 }
 
 /** "09:30:00" or "09:30" */

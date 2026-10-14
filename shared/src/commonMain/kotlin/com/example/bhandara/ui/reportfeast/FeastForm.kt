@@ -19,6 +19,8 @@ enum class FeastStep { FOOD, WHEN, WHERE }
 /** What the user has filled in so far */
 data class FeastForm(
     val photos: List<PickedPhoto> = emptyList(),
+    /** Photos already uploaded (editing or reposting a feast); kept as they are */
+    val photoUrls: List<String> = emptyList(),
     val menuItems: List<String> = emptyList(),
     /** An item being typed, not added yet; counts as added when the user goes on */
     val menuInput: String = "",
@@ -33,6 +35,9 @@ data class FeastForm(
     val landmark: String = "",
     val capacity: String = "",
 ) {
+    /** Photos kept plus photos picked */
+    val photoCount: Int get() = photoUrls.size + photos.size
+
     /** The menu with the item still being typed */
     val allMenuItems: List<String>
         get() = (menuItems + menuInput.trim()).filter { it.isNotEmpty() }.distinctBy { it.lowercase() }
@@ -57,7 +62,7 @@ fun normalizePhone(phone: String): String? {
  */
 fun FeastForm.problem(now: LocalDateTime, steps: Collection<FeastStep> = FeastStep.entries): FormProblem? {
     if (FeastStep.FOOD in steps) {
-        if (photos.isEmpty()) return FormProblem(FeastStep.FOOD, "Add at least one photo of the food or the place")
+        if (photoCount == 0) return FormProblem(FeastStep.FOOD, "Add at least one photo of the food or the place")
         if (allMenuItems.isEmpty()) return FormProblem(FeastStep.FOOD, "Add what's being served")
         if (allMenuItems.size > MAX_FEAST_MENU_ITEMS) return FormProblem(FeastStep.FOOD, "A feast can list up to $MAX_FEAST_MENU_ITEMS items")
     }

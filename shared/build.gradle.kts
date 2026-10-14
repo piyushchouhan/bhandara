@@ -38,6 +38,10 @@ kotlin {
             api(libs.ktor.client.core) // ApiClient's constructor takes a Ktor engine
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.ktor.serialization.kotlinx.json)
+            // Live cart locations (STOMP over a Ktor WebSocket)
+            implementation(libs.ktor.client.websockets)
+            implementation(libs.krossbow.stomp.core)
+            implementation(libs.krossbow.websocket.ktor)
             implementation(libs.multiplatform.settings)
             // Screens: ViewModels that survive rotation, and photos loaded from the internet
             implementation(libs.jetbrains.lifecycle.viewmodel.compose)

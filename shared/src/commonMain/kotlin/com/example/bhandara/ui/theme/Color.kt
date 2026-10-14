@@ -12,6 +12,3 @@ val Pink40 = Color(0xFF7D5260)
 
 val Black = Color(0xFF000000)
 val White = Color(0xFFFFFFFF)
-val Magenta80 = Color(0xFFA0319E)
-val Magenta40 = Color(0xFFCE5FCC)
-val Magenta20 = Color(0xFFF5D0FE)
