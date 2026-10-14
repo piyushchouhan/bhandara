@@ -2,11 +2,13 @@ package com.example.bhandara.ui.reviews
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.bhandara.data.models.api.ReportDetails
 import com.example.bhandara.data.models.api.ReviewRequest
 import com.example.bhandara.data.models.api.ReviewResponse
 import com.example.bhandara.data.network.ApiError
 import com.example.bhandara.data.network.ApiResult
 import com.example.bhandara.data.network.ReviewApi
+import com.example.bhandara.data.network.getOrNull
 import com.example.bhandara.data.settings.AppSettings
 import com.example.bhandara.photos.PickedPhoto
 import kotlinx.coroutines.CancellationException
@@ -62,9 +64,14 @@ data class ReviewsState(
     val photosSupported: Boolean = false,
     val message: String? = null,
     val submitted: Boolean = false,
+    /** The user's own review while a moderator checks it (it mentions prices); only they see it */
+    val myReviewInCheck: ReviewResponse? = null,
 ) {
-    /** The backend allows one review per person per shop */
-    val myReview: ReviewResponse? get() = myUid?.let { uid -> reviews.firstOrNull { it.reviewerUid == uid } }
+    /** The backend allows one review per person per shop; one waiting for a check counts too */
+    val myReview: ReviewResponse? get() = myUid?.let { uid -> reviews.firstOrNull { it.reviewerUid == uid } } ?: myReviewInCheck
+
+    /** What the list shows: the user's review waiting for a check first, then everyone's */
+    val shownReviews: List<ReviewResponse> get() = listOfNotNull(myReviewInCheck) + reviews
 
     /** How many reviews to show in the title; null while they first load, so it doesn't say 0 */
     val countToShow: Int? get() = if (loading && reviews.isEmpty()) null else reviews.size
@@ -80,6 +87,9 @@ data class ReviewsState(
 
     /** Signed-in users can report someone else's review, once */
     fun canReport(review: ReviewResponse): Boolean = myUid != null && !isMine(review) && review.id !in reportedIds
+
+    /** Signed-in users can mark someone else's review helpful */
+    fun canMarkHelpful(review: ReviewResponse): Boolean = myUid != null && !isMine(review)
 }
 
 /**
@@ -95,6 +105,9 @@ class ReviewsViewModel(
     private val currentUid: () -> String?,
     private val uploadPhotos: (suspend (photos: List<PickedPhoto>, onProgress: (Int) -> Unit) -> List<String>)?,
 ) : ViewModel() {
+
+    /** Reviews whose "helpful" is being sent, so a quick double tap doesn't send it twice */
+    private val helpfulSending = mutableSetOf<String>()
 
     private val _state = MutableStateFlow(ReviewsState(photosSupported = uploadPhotos != null))
     val state: StateFlow<ReviewsState> = _state.asStateFlow()
@@ -158,7 +171,11 @@ class ReviewsViewModel(
             val result = if (draft.reviewId == null) reviewApi.createReview(request) else reviewApi.updateReview(draft.reviewId, request)
             when (result) {
                 is ApiResult.Success -> {
-                    val thanks = if (draft.reviewId == null) "Thanks for your review!" else "Review updated"
+                    val thanks = when {
+                        result.value.status == REVIEW_IN_REVIEW -> "Thanks! Reviews with prices are checked before going live, usually within 24 hours."
+                        draft.reviewId == null -> "Thanks for your review!"
+                        else -> "Review updated"
+                    }
                     _state.update { it.copy(draft = null, submitting = false, uploadProgress = null, message = thanks, submitted = true) }
                     load()
                 }
@@ -193,12 +210,38 @@ class ReviewsViewModel(
         }
     }
 
-    /** Flags someone else's review for a moderator; remembered only once it's sent */
-    fun report(reviewId: String) {
+    /**
+     * Marks someone else's review helpful, or takes it back. The count changes at once and goes back if sending
+     * fails.
+     */
+    fun toggleHelpful(reviewId: String) {
+        val review = _state.value.reviews.firstOrNull { it.id == reviewId } ?: return
+        if (!_state.value.canMarkHelpful(review) || !helpfulSending.add(reviewId)) return
+        val helpful = !review.helpfulByMe
+        replaceReview(review.copy(helpfulByMe = helpful, helpfulCount = (review.helpfulCount + if (helpful) 1 else -1).coerceAtLeast(0)))
+        viewModelScope.launch {
+            val result = if (helpful) reviewApi.markHelpful(reviewId) else reviewApi.unmarkHelpful(reviewId)
+            helpfulSending.remove(reviewId)
+            when (result) {
+                is ApiResult.Success -> replaceReview(result.value)
+                is ApiResult.Failure -> {
+                    replaceReview(review)
+                    _state.update { it.copy(message = result.error.message) }
+                }
+            }
+        }
+    }
+
+    private fun replaceReview(review: ReviewResponse) =
+        _state.update { state -> state.copy(reviews = state.reviews.map { if (it.id == review.id) review else it }) }
+
+    /** Flags someone else's review for a moderator, with what the user said (optional); remembered once it's sent */
+    fun report(reviewId: String, note: String = "") {
         val review = _state.value.reviews.firstOrNull { it.id == reviewId } ?: return
         if (!_state.value.canReport(review)) return
         viewModelScope.launch {
-            when (val result = reviewApi.reportReview(reviewId)) {
+            val details = note.trim().takeIf { it.isNotEmpty() }?.let { ReportDetails(note = it) }
+            when (val result = reviewApi.reportReview(reviewId, details)) {
                 is ApiResult.Success -> {
                     settings.markReportedReview(reviewId)
                     _state.update {
@@ -238,11 +281,15 @@ class ReviewsViewModel(
             when (val result = reviewApi.getReviews(shopId)) {
                 is ApiResult.Success -> {
                     val reviews = result.value.filter { it.isActive != false }
+                    // The user's own review isn't on the page while a moderator checks it, so find it in theirs
+                    val inCheck = if (uid == null || reviews.any { it.reviewerUid == uid }) null else
+                        reviewApi.getMyReviews().getOrNull()?.firstOrNull { it.shopId == shopId && it.status == REVIEW_IN_REVIEW }
                     _state.update {
                         it.copy(
                             loading = false,
                             reviews = reviews,
                             myUid = uid,
+                            myReviewInCheck = inCheck,
                             reportedIds = reviews.map { review -> review.id }.filter(settings::hasReportedReview).toSet(),
                         )
                     }
@@ -252,6 +299,9 @@ class ReviewsViewModel(
         }
     }
 }
+
+/** A review that mentions prices, waiting for a moderator before customers see it */
+const val REVIEW_IN_REVIEW = "IN_REVIEW"
 
 private val MONTHS = listOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
 

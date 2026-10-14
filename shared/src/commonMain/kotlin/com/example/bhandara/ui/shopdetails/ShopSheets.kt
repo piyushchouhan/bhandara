@@ -10,6 +10,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.selectable
@@ -70,6 +73,9 @@ import com.example.bhandara.shared.resources.report_reason_wrong_location
 import com.example.bhandara.shared.resources.report_submit
 import com.example.bhandara.shared.resources.report_title
 import com.example.bhandara.ui.components.FeastButton
+import com.example.bhandara.ui.components.ReportDetailsFields
+import com.example.bhandara.photos.PickedPhoto
+import androidx.compose.runtime.remember
 import com.example.bhandara.ui.components.FeastButtonStyle
 import com.example.bhandara.ui.theme.feastColors
 import kotlinx.coroutines.launch
@@ -103,17 +109,26 @@ internal fun FeastSheet(onDismiss: () -> Unit, content: @Composable ColumnScope.
             Box(Modifier.padding(top = 10.dp).size(width = 38.dp, height = 5.dp).background(colors.border, RoundedCornerShape(3.dp)))
         },
     ) {
-        Column(Modifier.fillMaxWidth().padding(start = 18.dp, end = 18.dp, top = 14.dp, bottom = 16.dp)) {
+        // Scrolls when a tall sheet (e.g. a report with a note) doesn't fit above the keyboard
+        Column(Modifier.fillMaxWidth().imePadding().verticalScroll(rememberScrollState()).padding(start = 18.dp, end = 18.dp, top = 14.dp, bottom = 16.dp)) {
             content(close)
         }
     }
 }
 
-/** "Report shop": big reason rows to pick one; Report unlocks once one is picked */
+/**
+ * "Report shop": big reason rows to pick one, then an optional note and photos ("What's wrong?"); Report unlocks
+ * once a reason is picked
+ */
 @Composable
-internal fun ReportShopSheet(onReport: (ShopReportReason) -> Unit, onDismiss: () -> Unit) {
+internal fun ReportShopSheet(
+    onReport: (ShopReportReason, note: String, photos: List<PickedPhoto>) -> Unit,
+    onDismiss: () -> Unit,
+) {
     val colors = MaterialTheme.feastColors
     var reason by rememberSaveable { mutableStateOf<ShopReportReason?>(null) }
+    var note by rememberSaveable { mutableStateOf("") }
+    var photos by remember { mutableStateOf(emptyList<PickedPhoto>()) }
     FeastSheet(onDismiss) { close ->
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Box(Modifier.size(44.dp).background(colors.lavender, RoundedCornerShape(14.dp)), contentAlignment = Alignment.Center) {
@@ -129,11 +144,20 @@ internal fun ReportShopSheet(onReport: (ShopReportReason) -> Unit, onDismiss: ()
                 ReasonRow(option.icon, stringResource(option.label), selected = option == reason) { reason = option }
             }
         }
+        ReportDetailsFields(
+            note = note,
+            onNoteChange = { note = it },
+            photos = photos,
+            onAddPhotos = { photos = photos + it },
+            onRemovePhoto = { photos = photos - it },
+            showPhotos = true,
+            modifier = Modifier.padding(top = 16.dp),
+        )
         Row(Modifier.padding(top = 18.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             FeastButton(stringResource(Res.string.cancel), onClick = { close {} }, style = FeastButtonStyle.SOFT, modifier = Modifier.weight(1f))
             FeastButton(
                 stringResource(Res.string.report_submit),
-                onClick = { reason?.let { picked -> close { onReport(picked) } } },
+                onClick = { reason?.let { picked -> close { onReport(picked, note, photos) } } },
                 enabled = reason != null,
                 modifier = Modifier.weight(1.3f),
             )
@@ -142,7 +166,7 @@ internal fun ReportShopSheet(onReport: (ShopReportReason) -> Unit, onDismiss: ()
 }
 
 @Composable
-private fun ReasonRow(icon: ImageVector, label: String, selected: Boolean, onClick: () -> Unit) {
+internal fun ReasonRow(icon: ImageVector, label: String, selected: Boolean, onClick: () -> Unit) {
     val colors = MaterialTheme.feastColors
     val shape = RoundedCornerShape(16.dp)
     Row(

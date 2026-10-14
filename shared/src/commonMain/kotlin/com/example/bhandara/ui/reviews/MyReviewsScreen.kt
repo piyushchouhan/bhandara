@@ -31,6 +31,12 @@ import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.IosShare
 import androidx.compose.material.icons.outlined.RateReview
 import androidx.compose.material.icons.outlined.Storefront
+import androidx.compose.material.icons.outlined.ThumbUp
+import com.example.bhandara.shared.resources.my_reviews_delete_helpful
+import com.example.bhandara.shared.resources.my_reviews_filter_in_review
+import com.example.bhandara.shared.resources.my_reviews_found_helpful
+import com.example.bhandara.shared.resources.review_found_helpful
+import com.example.bhandara.shared.resources.review_in_review_note
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.LocalShipping
@@ -202,7 +208,7 @@ fun MyReviewsScreen(
                             contentPadding = PaddingValues(start = 14.dp, end = 14.dp, bottom = 32.dp),
                             verticalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
-                            item(key = "summary") { Summary(state.reviews.size, state.averageGiven) }
+                            item(key = "summary") { Summary(state.reviews.size, state.averageGiven, state.foundHelpful) }
                             item(key = "filters") { Filters(state, viewModel::onFilter) }
                             items(state.shown(), key = { it.id }) { review ->
                                 MyReviewCard(review, today, onMore = { actionsFor = review })
@@ -245,9 +251,9 @@ fun MyReviewsScreen(
 private fun shareText(review: ReviewResponse): String =
     stringResource(Res.string.my_reviews_share_text, review.shopName.orEmpty(), review.rating, review.comment.orEmpty()).trimEnd()
 
-/** The indigo card: how many reviews, and the average stars given */
+/** The indigo card: how many reviews, the average stars given, and how often people found them helpful */
 @Composable
-private fun Summary(count: Int, average: Double?) {
+private fun Summary(count: Int, average: Double?, foundHelpful: Int) {
     val colors = MaterialTheme.feastColors
     Row(Modifier.fillMaxWidth().background(colors.indigo, RoundedCornerShape(22.dp)).padding(16.dp)) {
         SummaryCell(Modifier.weight(1f), label = stringResource(Res.string.my_reviews_given)) {
@@ -259,6 +265,10 @@ private fun Summary(count: Int, average: Double?) {
                 Text(formatRating(average ?: 0.0), color = colors.onIndigo, fontSize = 22.sp, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.titleLarge)
                 Icon(Icons.Rounded.Star, contentDescription = null, tint = colors.saffron, modifier = Modifier.size(18.dp))
             }
+        }
+        Box(Modifier.width(1.dp).height(44.dp).background(Color.White.copy(alpha = 0.14f)).align(Alignment.CenterVertically))
+        SummaryCell(Modifier.weight(1f), label = stringResource(Res.string.my_reviews_found_helpful)) {
+            Text(foundHelpful.toString(), color = colors.onIndigo, fontSize = 22.sp, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.titleLarge)
         }
     }
 }
@@ -277,6 +287,9 @@ private fun Filters(state: MyReviewsState, onFilter: (MyReviewsFilter) -> Unit) 
     LazyRow(Modifier.padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         item { FilterChip(stringResource(Res.string.my_reviews_filter_all, state.reviews.size), state.activeFilter == MyReviewsFilter.ALL) { onFilter(MyReviewsFilter.ALL) } }
         item { FilterChip(stringResource(Res.string.my_reviews_filter_published, state.publishedCount), state.activeFilter == MyReviewsFilter.PUBLISHED) { onFilter(MyReviewsFilter.PUBLISHED) } }
+        if (state.inReviewCount > 0) {
+            item { FilterChip(stringResource(Res.string.my_reviews_filter_in_review, state.inReviewCount), state.activeFilter == MyReviewsFilter.IN_REVIEW) { onFilter(MyReviewsFilter.IN_REVIEW) } }
+        }
         if (state.removedCount > 0) {
             item { FilterChip(stringResource(Res.string.my_reviews_filter_removed, state.removedCount), state.activeFilter == MyReviewsFilter.REMOVED) { onFilter(MyReviewsFilter.REMOVED) } }
         }
@@ -331,7 +344,7 @@ private fun MyReviewCard(review: ReviewResponse, today: LocalDate, onMore: () ->
         }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Stars(review.rating, 18.dp)
-            StatusBadge(removed = review.isRemoved)
+            if (review.isInReview) InReviewBadge() else StatusBadge(removed = review.isRemoved)
         }
         review.comment?.takeIf { it.isNotBlank() }?.let {
             Text(it, color = colors.ink, fontSize = 14.sp, lineHeight = 20.sp, style = MaterialTheme.typography.bodyMedium)
@@ -353,12 +366,25 @@ private fun MyReviewCard(review: ReviewResponse, today: LocalDate, onMore: () ->
                 }
             }
         }
-        if (review.isRemoved) {
+        if (review.isRemoved || review.isInReview) {
             Text(
-                stringResource(Res.string.my_reviews_removed_note), color = colors.muted, fontSize = 12.sp, lineHeight = 17.sp,
+                stringResource(if (review.isRemoved) Res.string.my_reviews_removed_note else Res.string.review_in_review_note),
+                color = colors.muted, fontSize = 12.sp, lineHeight = 17.sp,
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.fillMaxWidth().background(colors.lavenderSoft, RoundedCornerShape(12.dp)).padding(horizontal = 12.dp, vertical = 10.dp),
             )
+        } else if (review.helpfulCount > 0) {
+            // "👍 12 found this helpful", under a line
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Box(Modifier.fillMaxWidth().height(1.dp).background(colors.lavender))
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Icon(Icons.Outlined.ThumbUp, contentDescription = null, tint = colors.accent, modifier = Modifier.size(16.dp))
+                    Text(
+                        pluralStringResource(Res.plurals.review_found_helpful, review.helpfulCount, review.helpfulCount),
+                        color = colors.muted, fontSize = 12.sp, fontWeight = FontWeight.Medium, style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+            }
         }
     }
     openPhoto?.let { index ->
@@ -501,6 +527,7 @@ private fun DeleteReviewDialog(review: ReviewResponse, onDelete: () -> Unit, onD
                 LostItem(pluralStringResource(Res.plurals.my_reviews_delete_stars, review.rating, review.rating))
                 val photos = review.imageUrls.orEmpty().size
                 if (photos > 0) LostItem(pluralStringResource(Res.plurals.my_reviews_delete_photos, photos, photos))
+                if (review.helpfulCount > 0) LostItem(pluralStringResource(Res.plurals.my_reviews_delete_helpful, review.helpfulCount, review.helpfulCount))
             }
             Column(Modifier.fillMaxWidth().padding(top = 4.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 FeastButton(stringResource(Res.string.review_delete), onClick = onDelete, style = FeastButtonStyle.DANGER, height = 52.dp, modifier = Modifier.fillMaxWidth())

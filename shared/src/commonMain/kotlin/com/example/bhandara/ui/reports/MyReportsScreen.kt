@@ -145,6 +145,20 @@ import com.example.bhandara.ui.reviews.formatReviewDate
 import com.example.bhandara.ui.reviews.reviewAge
 import com.example.bhandara.ui.reviews.reviewAgeText
 import com.example.bhandara.ui.shopdetails.FeastSheet
+import com.example.bhandara.ui.shopdetails.FullScreenPhotos
+import com.example.bhandara.photos.PickedPhoto
+import com.example.bhandara.ui.components.ReportDetailsFields
+import com.example.bhandara.ui.components.ReportPhotoTile
+import androidx.compose.material.icons.outlined.AddComment
+import com.example.bhandara.shared.resources.review_photo
+import com.example.bhandara.shared.resources.my_reports_add_info
+import com.example.bhandara.shared.resources.my_reports_add_info_prompt
+import com.example.bhandara.shared.resources.my_reports_add_info_send
+import com.example.bhandara.shared.resources.my_reports_info_added
+import com.example.bhandara.shared.resources.my_reports_what_you_said
+import com.example.bhandara.shared.resources.feast_report_reason_wrong_time
+import com.example.bhandara.shared.resources.feast_report_reason_not_happening
+import com.example.bhandara.shared.resources.feast_report_reason_money
 import com.example.bhandara.ui.theme.FeastTheme
 import com.example.bhandara.ui.theme.feastColors
 import kotlin.time.Clock
@@ -156,8 +170,8 @@ import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
 
-// My reports (design "My Reports": 1a list, 1b in review, 1c fixed, 1d withdraw, 1e empty; dark 2a–2e). Reports
-// carry only a reason, so "What you said" and "Add more info" are left out.
+// My reports (design "My Reports": 1a list, 1b in review, 1c fixed, 1d withdraw, 1e empty; dark 2a–2e). "What you
+// said" shows the note and photos sent with the report and any added later with "Add more info".
 
 /**
  * The reports the user sent, from Profile → My activity
@@ -167,14 +181,20 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun MyReportsScreen(onBack: () -> Unit, onOpenShop: (shopId: String) -> Unit, onOpenFeast: (feastId: String) -> Unit) {
     val dependencies = LocalAppDependencies.current
-    val viewModel = viewModel { MyReportsViewModel(ReportApi(dependencies.apiClient)) }
+    val viewModel = viewModel { MyReportsViewModel(ReportApi(dependencies.apiClient)) { photos -> dependencies.photoUploader.upload(photos) } }
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
     val today = remember { Clock.System.todayIn(TimeZone.currentSystemDefault()) }
     var confirmWithdraw by remember { mutableStateOf<MyReport?>(null) }
+    var addingInfoTo by remember { mutableStateOf<MyReport?>(null) }
 
-    LaunchedEffect(state.message, state.withdrawn) {
-        val text = state.message ?: if (state.withdrawn) getString(Res.string.my_reports_withdrawn) else null
+    LaunchedEffect(state.message, state.withdrawn, state.infoAdded) {
+        if (state.infoAdded) addingInfoTo = null
+        val text = state.message ?: when {
+            state.withdrawn -> getString(Res.string.my_reports_withdrawn)
+            state.infoAdded -> getString(Res.string.my_reports_info_added)
+            else -> null
+        }
         if (text != null) {
             viewModel.onMessageShown()
             snackbar.showSnackbar(text)
@@ -209,7 +229,14 @@ fun MyReportsScreen(onBack: () -> Unit, onOpenShop: (shopId: String) -> Unit, on
                 }
                 val error = state.error
                 when {
-                    open != null -> ReportDetail(open, today, onOpenTarget = { openTarget(open) }, onWithdraw = { confirmWithdraw = open }, withdrawing = state.withdrawing, modifier = Modifier.weight(1f))
+                    open != null -> ReportDetail(
+                        open, today,
+                        onOpenTarget = { openTarget(open) },
+                        onWithdraw = { confirmWithdraw = open },
+                        onAddInfo = { addingInfoTo = open },
+                        withdrawing = state.withdrawing,
+                        modifier = Modifier.weight(1f),
+                    )
                     state.loading -> Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
                         CircularProgressIndicator(color = colors.indigo)
                     }
@@ -244,6 +271,13 @@ fun MyReportsScreen(onBack: () -> Unit, onOpenShop: (shopId: String) -> Unit, on
             }
             SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter).windowInsetsPadding(WindowInsets.navigationBars).padding(bottom = 16.dp))
         }
+        addingInfoTo?.let { report ->
+            AddInfoSheet(
+                sending = state.addingInfo,
+                onSend = { note, photos -> viewModel.addInfo(report, note, photos) },
+                onDismiss = { if (!state.addingInfo) addingInfoTo = null },
+            )
+        }
         confirmWithdraw?.let { report ->
             WithdrawSheet(
                 report,
@@ -261,7 +295,7 @@ fun MyReportsScreen(onBack: () -> Unit, onOpenShop: (shopId: String) -> Unit, on
 private fun reportTitle(report: MyReport): String = stringResource(
     when (report.kind) {
         "REVIEW" -> Res.string.my_reports_reported_review
-        "FEAST" -> Res.string.my_reports_reported_feast
+        "FEAST" -> reasonText(report.reason) ?: Res.string.my_reports_reported_feast
         else -> reasonText(report.reason) ?: Res.string.my_reports_reported_shop
     },
 )
@@ -272,6 +306,10 @@ private fun reasonText(reason: String?): StringResource? = when (reason) {
     "NOT_FOOD_SHOP" -> Res.string.report_reason_not_food_shop
     "INAPPROPRIATE_CONTENT" -> Res.string.report_reason_inappropriate
     "SUGGEST_DELETE" -> Res.string.my_reports_suggested_removing
+    "WRONG_TIME" -> Res.string.feast_report_reason_wrong_time
+    "NOT_HAPPENING" -> Res.string.feast_report_reason_not_happening
+    "ASKING_FOR_MONEY" -> Res.string.feast_report_reason_money
+    "INAPPROPRIATE" -> Res.string.report_reason_inappropriate
     else -> null
 }
 
@@ -421,7 +459,15 @@ private fun statusNote(report: MyReport): String = stringResource(
 // ==================== A report's page (1b in review, 1c decided) ====================
 
 @Composable
-private fun ReportDetail(report: MyReport, today: LocalDate, onOpenTarget: () -> Unit, onWithdraw: () -> Unit, withdrawing: Boolean, modifier: Modifier) {
+private fun ReportDetail(
+    report: MyReport,
+    today: LocalDate,
+    onOpenTarget: () -> Unit,
+    onWithdraw: () -> Unit,
+    onAddInfo: () -> Unit,
+    withdrawing: Boolean,
+    modifier: Modifier,
+) {
     val colors = MaterialTheme.feastColors
     Column(modifier.fillMaxWidth()) {
         Column(
@@ -442,6 +488,7 @@ private fun ReportDetail(report: MyReport, today: LocalDate, onOpenTarget: () ->
                         Step(StepState.LATER, stringResource(Res.string.my_reports_decision), stringResource(Res.string.my_reports_decision_note), last = true)
                     }
                 }
+                WhatYouSaid(report)
             } else {
                 val fixed = report.status == MyReportsState.STATUS_FIXED
                 val name = report.targetName?.takeIf { it.isNotBlank() } ?: stringResource(Res.string.my_reports_this_place)
@@ -490,16 +537,88 @@ private fun ReportDetail(report: MyReport, today: LocalDate, onOpenTarget: () ->
                     InfoRow(Icons.Outlined.Description, stringResource(Res.string.my_reports_reason, reportTitle(report)))
                     sentText(report.createdAt, today)?.let { InfoRow(Icons.Outlined.CalendarToday, stringResource(Res.string.my_reports_sent_on, it)) }
                 }
+                WhatYouSaid(report)
             }
         }
         if (report.isInReview) {
-            Box(Modifier.fillMaxWidth().windowInsetsPadding(WindowInsets.navigationBars).padding(start = 14.dp, end = 14.dp, top = 12.dp, bottom = 24.dp)) {
+            // "Add more info" leads; "Withdraw" beside it, as in the design
+            Row(
+                Modifier.fillMaxWidth().windowInsetsPadding(WindowInsets.navigationBars).padding(start = 14.dp, end = 14.dp, top = 12.dp, bottom = 24.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                FeastButton(
+                    stringResource(Res.string.my_reports_add_info), onClick = onAddInfo, icon = Icons.Outlined.AddComment,
+                    iconTint = colors.saffron, height = 52.dp, modifier = Modifier.weight(1f),
+                )
                 FeastButton(
                     stringResource(Res.string.my_reports_withdraw), onClick = onWithdraw, style = FeastButtonStyle.SOFT,
-                    icon = Icons.AutoMirrored.Rounded.Undo, enabled = !withdrawing, height = 52.dp, modifier = Modifier.fillMaxWidth(),
+                    enabled = !withdrawing, height = 52.dp,
                 )
             }
         }
+    }
+}
+
+/** "What you said": the note and photos sent with the report, then anything added later; nothing when there's none */
+@Composable
+private fun WhatYouSaid(report: MyReport) {
+    if (report.notes.isEmpty()) return
+    val colors = MaterialTheme.feastColors
+    var openPhotos by remember { mutableStateOf<Pair<List<String>, Int>?>(null) }
+    Card {
+        Text(stringResource(Res.string.my_reports_what_you_said), color = colors.ink, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.titleSmall)
+        report.notes.forEachIndexed { index, note ->
+            if (index > 0) Box(Modifier.fillMaxWidth().height(1.dp).background(colors.lavender))
+            note.text?.takeIf { it.isNotBlank() }?.let {
+                Text(it, color = colors.ink, fontSize = 14.sp, lineHeight = 21.sp, style = MaterialTheme.typography.bodyMedium)
+            }
+            if (note.photoUrls.isNotEmpty()) {
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    note.photoUrls.forEachIndexed { photo, url -> ReportPhotoTile(url, onClick = { openPhotos = note.photoUrls to photo }) }
+                }
+            }
+        }
+    }
+    openPhotos?.let { (urls, index) ->
+        FullScreenPhotos(urls, initialIndex = index, onDismiss = { openPhotos = null }, photoLabel = Res.string.review_photo)
+    }
+}
+
+/** "Add more info": a note, photos or both; Send unlocks once there's something */
+@Composable
+private fun AddInfoSheet(sending: Boolean, onSend: (note: String, photos: List<PickedPhoto>) -> Unit, onDismiss: () -> Unit) {
+    val colors = MaterialTheme.feastColors
+    var note by rememberSaveable { mutableStateOf("") }
+    var photos by remember { mutableStateOf(emptyList<PickedPhoto>()) }
+    FeastSheet(onDismiss) { _ ->
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Box(Modifier.size(44.dp).background(colors.lavender, RoundedCornerShape(14.dp)), contentAlignment = Alignment.Center) {
+                Icon(Icons.Outlined.AddComment, contentDescription = null, tint = colors.accent, modifier = Modifier.size(22.dp))
+            }
+            Column {
+                Text(stringResource(Res.string.my_reports_add_info), color = colors.ink, fontSize = 21.sp, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.titleLarge)
+                Text(stringResource(Res.string.my_reports_add_info_prompt), color = colors.muted, fontSize = 14.sp, style = MaterialTheme.typography.bodyMedium)
+            }
+        }
+        ReportDetailsFields(
+            note = note,
+            onNoteChange = { note = it },
+            photos = photos,
+            onAddPhotos = { photos = photos + it },
+            onRemovePhoto = { photos = photos - it },
+            showPhotos = true,
+            title = null,
+            enabled = !sending,
+            modifier = Modifier.padding(top = 16.dp),
+        )
+        FeastButton(
+            stringResource(Res.string.my_reports_add_info_send),
+            onClick = { onSend(note, photos) },
+            enabled = !sending && (note.isNotBlank() || photos.isNotEmpty()),
+            height = 52.dp,
+            modifier = Modifier.fillMaxWidth().padding(top = 18.dp),
+            content = if (sending) { { CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp, color = colors.muted) } } else null,
+        )
     }
 }
 

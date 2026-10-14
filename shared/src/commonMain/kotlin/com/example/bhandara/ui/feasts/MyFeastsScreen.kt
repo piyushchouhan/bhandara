@@ -31,6 +31,17 @@ import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.IosShare
 import androidx.compose.material.icons.outlined.Schedule
+import androidx.compose.material.icons.outlined.EditLocationAlt
+import org.jetbrains.compose.resources.StringResource
+import com.example.bhandara.shared.resources.my_feasts_fix_resubmit
+import com.example.bhandara.shared.resources.my_feasts_reason_inappropriate
+import com.example.bhandara.shared.resources.my_feasts_reason_money
+import com.example.bhandara.shared.resources.my_feasts_reason_not_happening
+import com.example.bhandara.shared.resources.my_feasts_reason_wrong_location
+import com.example.bhandara.shared.resources.my_feasts_reason_wrong_time
+import com.example.bhandara.shared.resources.my_feasts_rejected_note
+import com.example.bhandara.shared.resources.my_feasts_resubmitted_note
+import com.example.bhandara.shared.resources.my_feasts_waiting_check
 import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Celebration
@@ -135,6 +146,7 @@ import org.jetbrains.compose.resources.stringResource
  *
  * @param onEdit change a feast that hasn't ended (the post form, filled in); also "Change date or time"
  * @param onRepost post a past feast again (the post form with its details and no date)
+ * @param onResubmit "Fix and resubmit" a feast taken down after reports (the post form, filled in)
  */
 @Composable
 fun MyFeastsScreen(
@@ -142,6 +154,7 @@ fun MyFeastsScreen(
     onOpenFeast: (feastId: String) -> Unit,
     onEdit: (feastId: String) -> Unit,
     onRepost: (feastId: String) -> Unit,
+    onResubmit: (feastId: String) -> Unit,
     onPostFeast: () -> Unit,
     onContactSupport: () -> Unit,
 ) {
@@ -206,6 +219,7 @@ fun MyFeastsScreen(
                             onEdit = onEdit,
                             onMore = { moreFor = it },
                             onRepost = onRepost,
+                            onResubmit = onResubmit,
                             onContactSupport = onContactSupport,
                         )
                     }
@@ -290,6 +304,7 @@ private fun FeastList(
     onEdit: (String) -> Unit,
     onMore: (FeastResponse) -> Unit,
     onRepost: (String) -> Unit,
+    onResubmit: (String) -> Unit,
     onContactSupport: () -> Unit,
 ) {
     val colors = MaterialTheme.feastColors
@@ -328,7 +343,7 @@ private fun FeastList(
             }
             MyFeastsTab.TAKEN_DOWN -> {
                 if (state.takenDown.isEmpty()) item { NothingHere(stringResource(Res.string.my_feasts_none_taken_down)) }
-                items(state.takenDown, key = { it.id }) { feast -> TakenDownCard(feast, onContactSupport) }
+                items(state.takenDown, key = { it.id }) { feast -> TakenDownCard(feast, onResubmit = { onResubmit(feast.id) }, onContactSupport = onContactSupport) }
             }
         }
     }
@@ -505,9 +520,13 @@ private fun PastRow(feast: FeastResponse, onOpen: () -> Unit, onRepost: () -> Un
     }
 }
 
-/** A feast hidden after reports (1d): why, and a way to reach support */
+/**
+ * A feast hidden after reports (1d): why (the reason most reporters gave), "Fix and resubmit" while it can still be
+ * sent back, and a way to reach support. Once sent back it says it's waiting for a check; if the check turned it
+ * down, that it stays down.
+ */
 @Composable
-private fun TakenDownCard(feast: FeastResponse, onContactSupport: () -> Unit) {
+private fun TakenDownCard(feast: FeastResponse, onResubmit: () -> Unit, onContactSupport: () -> Unit) {
     val colors = MaterialTheme.feastColors
     Column(
         Modifier.fillMaxWidth().background(colors.surface, RoundedCornerShape(24.dp)).padding(16.dp),
@@ -522,20 +541,54 @@ private fun TakenDownCard(feast: FeastResponse, onContactSupport: () -> Unit) {
                 }
             }
         }
+        val waiting = feast.resubmission == "PENDING"
+        // Hidden from the map; once sent back, waiting for a check
+        val badgeFill = if (waiting) colors.saffronSoft else colors.dangerSoft
+        val badgeInk = if (waiting) colors.saffronText else colors.danger
         Row(
-            Modifier.height(26.dp).background(colors.dangerSoft, RoundedCornerShape(8.dp)).padding(horizontal = 10.dp),
+            Modifier.height(26.dp).background(badgeFill, RoundedCornerShape(8.dp)).padding(horizontal = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            Icon(Icons.Outlined.VisibilityOff, contentDescription = null, tint = colors.danger, modifier = Modifier.size(15.dp))
-            Text(stringResource(Res.string.my_feasts_hidden), color = colors.danger, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.labelMedium)
+            Icon(if (waiting) Icons.Outlined.Schedule else Icons.Outlined.VisibilityOff, contentDescription = null, tint = badgeInk, modifier = Modifier.size(15.dp))
+            Text(
+                stringResource(if (waiting) Res.string.my_feasts_waiting_check else Res.string.my_feasts_hidden),
+                color = badgeInk, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.labelMedium,
+            )
         }
         Column(Modifier.fillMaxWidth().background(colors.page, RoundedCornerShape(16.dp)).padding(horizontal = 14.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(stringResource(Res.string.my_feasts_reason), color = colors.ink, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.labelLarge)
-            Text(stringResource(Res.string.my_feasts_reason_reports), color = colors.muted, fontSize = 13.sp, lineHeight = 19.sp, style = MaterialTheme.typography.bodySmall)
+            Text(stringResource(takedownReasonText(feast)), color = colors.muted, fontSize = 13.sp, lineHeight = 19.sp, style = MaterialTheme.typography.bodySmall)
+        }
+        when {
+            feast.canResubmit -> FeastButton(
+                stringResource(Res.string.my_feasts_fix_resubmit), onClick = onResubmit, icon = Icons.Outlined.EditLocationAlt,
+                iconTint = colors.saffron, height = 50.dp, modifier = Modifier.fillMaxWidth(),
+            )
+            waiting -> StatusNote(stringResource(Res.string.my_feasts_resubmitted_note))
+            feast.resubmission == "REJECTED" -> StatusNote(stringResource(Res.string.my_feasts_rejected_note))
         }
         FeastButton(stringResource(Res.string.my_feasts_contact_support), onClick = onContactSupport, style = FeastButtonStyle.SOFT, height = 50.dp, modifier = Modifier.fillMaxWidth())
     }
+}
+
+@Composable
+private fun StatusNote(text: String) {
+    val colors = MaterialTheme.feastColors
+    Text(
+        text, color = colors.muted, fontSize = 12.sp, lineHeight = 17.sp, style = MaterialTheme.typography.bodySmall,
+        modifier = Modifier.fillMaxWidth().background(colors.lavenderSoft, RoundedCornerShape(12.dp)).padding(horizontal = 12.dp, vertical = 10.dp),
+    )
+}
+
+/** What reporters said was wrong, and what to fix */
+private fun takedownReasonText(feast: FeastResponse): StringResource = when (feast.takedownReason) {
+    "WRONG_LOCATION" -> Res.string.my_feasts_reason_wrong_location
+    "WRONG_TIME" -> Res.string.my_feasts_reason_wrong_time
+    "NOT_HAPPENING" -> Res.string.my_feasts_reason_not_happening
+    "ASKING_FOR_MONEY" -> Res.string.my_feasts_reason_money
+    "INAPPROPRIATE" -> Res.string.my_feasts_reason_inappropriate
+    else -> Res.string.my_feasts_reason_reports
 }
 
 /** 1b: the feast on top, then share, change date or time, end early, take down */

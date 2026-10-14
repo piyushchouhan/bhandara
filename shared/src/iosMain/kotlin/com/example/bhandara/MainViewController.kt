@@ -188,6 +188,7 @@ fun MainViewController(
                         onOpenFeast = { feastId -> navigator.navigate(Route.FeastDetails(feastId)) },
                         onEdit = { feastId -> navigator.navigate(Route.EditFeast(feastId)) },
                         onRepost = { feastId -> navigator.navigate(Route.RepostFeast(feastId)) },
+                        onResubmit = { feastId -> navigator.navigate(Route.ResubmitFeast(feastId)) },
                         onPostFeast = { navigator.navigate(Route.ReportFeast) },
                         onContactSupport = { navigator.navigate(Route.Support) },
                     )
@@ -196,6 +197,12 @@ fun MainViewController(
                         // Back to the list, which shows the change
                         onPosted = { navigator.back() },
                         start = FeastFormStart.Edit(route.feastId),
+                    )
+                    is Route.ResubmitFeast -> ReportFeastScreen(
+                        onBack = { navigator.back() },
+                        // Back to the list, which shows it waiting for a check
+                        onPosted = { navigator.back() },
+                        start = FeastFormStart.Resubmit(route.feastId),
                     )
                     is Route.RepostFeast -> ReportFeastScreen(
                         onBack = { navigator.back() },

@@ -890,4 +890,44 @@
     <string name="live_connecting">Connecting…</string>
     <string name="live_speed">Moving at %1$s km/h</string>
     <string name="live_view_details">View details</string>
+
+    <!-- Part 4: helpful votes, reviews checked for prices, report notes, fixing a taken-down feast -->
+    <string name="report_details_title">Tell us more (optional)</string>
+    <string name="report_details_note_hint">What’s wrong? Anything that helps a moderator check it</string>
+    <string name="report_details_add_photo">Add photo</string>
+    <plurals name="review_found_helpful">
+        <item quantity="one">%1$d found this helpful</item>
+        <item quantity="other">%1$d found this helpful</item>
+    </plurals>
+    <string name="review_helpful">Helpful</string>
+    <string name="review_helpful_count">Helpful · %1$d</string>
+    <string name="review_in_review_note">Reviews with prices are checked before going live. Usually under 24 hours.</string>
+    <string name="review_report_prompt">Spam, fake or rude? Tell us what’s wrong.</string>
+    <string name="review_status_in_review">In review</string>
+    <string name="my_reviews_found_helpful">Found helpful</string>
+    <string name="my_reviews_filter_in_review">In review %1$d</string>
+    <plurals name="my_reviews_delete_helpful">
+        <item quantity="one">%1$d helpful vote</item>
+        <item quantity="other">%1$d helpful votes</item>
+    </plurals>
+    <string name="my_reports_info_added">Added to your report</string>
+    <string name="my_reports_what_you_said">What you said</string>
+    <string name="my_reports_add_info">Add more info</string>
+    <string name="my_reports_add_info_prompt">A note or photos to help the moderator</string>
+    <string name="my_reports_add_info_send">Send</string>
+    <string name="feast_report_prompt">Why are you reporting this feast?</string>
+    <string name="feast_report_reason_wrong_time">Wrong date or time</string>
+    <string name="feast_report_reason_not_happening">Not happening</string>
+    <string name="feast_report_reason_money">Asking for money</string>
+    <string name="resubmit_feast_title">Fix feast</string>
+    <string name="resubmit_feast_send">Send for a check</string>
+    <string name="my_feasts_waiting_check">Waiting for a check</string>
+    <string name="my_feasts_fix_resubmit">Fix and resubmit</string>
+    <string name="my_feasts_resubmitted_note">Thanks for fixing it. A moderator will check it and put it back on the map, usually within 24 hours.</string>
+    <string name="my_feasts_rejected_note">A moderator checked the fix and the feast stays hidden. Contact support if you think that’s a mistake.</string>
+    <string name="my_feasts_reason_wrong_location">Several people reported the address was wrong. Update the location and we’ll review it again.</string>
+    <string name="my_feasts_reason_wrong_time">Several people reported the date or time was wrong. Update it and we’ll review it again.</string>
+    <string name="my_feasts_reason_not_happening">Several people reported this feast wasn’t happening. If it is, check the details and send it back for a review.</string>
+    <string name="my_feasts_reason_money">Several people reported that money was being asked for. Feasts on the map must be free.</string>
+    <string name="my_feasts_reason_inappropriate">Several people reported the photos or details as inappropriate. Change them and we’ll review it again.</string>
 </resources>

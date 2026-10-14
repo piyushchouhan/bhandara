@@ -890,4 +890,44 @@
     <string name="live_connecting">कनेक्ट होत आहे…</string>
     <string name="live_speed">%1$s किमी/तास वेगाने चालत आहे</string>
     <string name="live_view_details">संपूर्ण माहिती पहा</string>
+
+    <!-- Part 4: helpful votes, reviews checked for prices, report notes, fixing a taken-down feast -->
+    <string name="report_details_title">अधिक सांगा (ऐच्छिक)</string>
+    <string name="report_details_note_hint">काय चुकीचे आहे? मॉडरेटरला तपासायला मदत होईल असे काहीही</string>
+    <string name="report_details_add_photo">फोटो जोडा</string>
+    <plurals name="review_found_helpful">
+        <item quantity="one">%1$d जणांना हे उपयुक्त वाटले</item>
+        <item quantity="other">%1$d जणांना हे उपयुक्त वाटले</item>
+    </plurals>
+    <string name="review_helpful">उपयुक्त</string>
+    <string name="review_helpful_count">उपयुक्त · %1$d</string>
+    <string name="review_in_review_note">किंमती असलेली परीक्षणे लाइव्ह होण्यापूर्वी तपासली जातात. सहसा 24 तासांच्या आत.</string>
+    <string name="review_report_prompt">स्पॅम, बनावट की उद्धट? काय चुकीचे आहे ते सांगा.</string>
+    <string name="review_status_in_review">तपासणीत</string>
+    <string name="my_reviews_found_helpful">उपयुक्त वाटले</string>
+    <string name="my_reviews_filter_in_review">तपासणीत %1$d</string>
+    <plurals name="my_reviews_delete_helpful">
+        <item quantity="one">%1$d उपयुक्त मत</item>
+        <item quantity="other">%1$d उपयुक्त मते</item>
+    </plurals>
+    <string name="my_reports_info_added">तुमच्या रिपोर्टमध्ये जोडले</string>
+    <string name="my_reports_what_you_said">तुम्ही काय सांगितले</string>
+    <string name="my_reports_add_info">अधिक माहिती जोडा</string>
+    <string name="my_reports_add_info_prompt">मॉडरेटरच्या मदतीसाठी नोट किंवा फोटो</string>
+    <string name="my_reports_add_info_send">पाठवा</string>
+    <string name="feast_report_prompt">तुम्ही या भंडाऱ्याची तक्रार का करत आहात?</string>
+    <string name="feast_report_reason_wrong_time">चुकीची तारीख किंवा वेळ</string>
+    <string name="feast_report_reason_not_happening">होतच नाही</string>
+    <string name="feast_report_reason_money">पैसे मागितले जात आहेत</string>
+    <string name="resubmit_feast_title">भंडारा दुरुस्त करा</string>
+    <string name="resubmit_feast_send">तपासणीसाठी पाठवा</string>
+    <string name="my_feasts_waiting_check">तपासणीची वाट</string>
+    <string name="my_feasts_fix_resubmit">दुरुस्त करून पुन्हा पाठवा</string>
+    <string name="my_feasts_resubmitted_note">दुरुस्त केल्याबद्दल धन्यवाद. मॉडरेटर तपासून तो नकाशावर परत लावेल, सहसा 24 तासांत.</string>
+    <string name="my_feasts_rejected_note">मॉडरेटरने दुरुस्ती तपासली आणि भंडारा लपलेलाच राहील. ही चूक वाटत असल्यास सपोर्टशी संपर्क साधा.</string>
+    <string name="my_feasts_reason_wrong_location">अनेकांनी पत्ता चुकीचा असल्याचे सांगितले. लोकेशन दुरुस्त करा, आम्ही पुन्हा तपासू.</string>
+    <string name="my_feasts_reason_wrong_time">अनेकांनी तारीख किंवा वेळ चुकीची असल्याचे सांगितले. ती दुरुस्त करा, आम्ही पुन्हा तपासू.</string>
+    <string name="my_feasts_reason_not_happening">अनेकांनी हा भंडारा होत नसल्याचे सांगितले. होत असल्यास माहिती तपासून पुन्हा पाठवा.</string>
+    <string name="my_feasts_reason_money">अनेकांनी पैसे मागितले जात असल्याचे सांगितले. नकाशावरील भंडारे मोफत असले पाहिजेत.</string>
+    <string name="my_feasts_reason_inappropriate">अनेकांनी फोटो किंवा माहिती अयोग्य असल्याचे सांगितले. ते बदला, आम्ही पुन्हा तपासू.</string>
 </resources>

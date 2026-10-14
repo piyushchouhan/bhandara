@@ -51,6 +51,15 @@ data class FeastResponse(
 
     /** When the organizer ended it early (e.g. the food ran out) */
     val endedEarlyAt: String? = null,
+
+    /** TAKEN_DOWN only: the reason most reporters gave (a FeastReportReason name), or REPORTED when none said */
+    val takedownReason: String? = null,
+
+    /** TAKEN_DOWN only: PENDING (fixed and sent back, a moderator checks it) or REJECTED (it stays down) */
+    val resubmission: String? = null,
+
+    /** Whether the organizer can still fix it and send it back */
+    val canResubmit: Boolean = false,
     
     val createdAt: String? = null,
     

@@ -132,6 +132,8 @@ import com.example.bhandara.shared.resources.post_feast
 import com.example.bhandara.shared.resources.report_feast_title
 import com.example.bhandara.shared.resources.edit_feast_save
 import com.example.bhandara.shared.resources.edit_feast_title
+import com.example.bhandara.shared.resources.resubmit_feast_send
+import com.example.bhandara.shared.resources.resubmit_feast_title
 import com.example.bhandara.shared.resources.review_remove_photo
 import com.example.bhandara.shared.resources.review_uploading
 import com.example.bhandara.shared.resources.section_description
@@ -212,7 +214,11 @@ fun ReportFeastScreen(onBack: () -> Unit, onPosted: (feastId: String) -> Unit, s
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 SquareIconButton(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(Res.string.back), { if (!viewModel.back()) onBack() }, enabled = !state.submitting)
-                Text(stringResource(if (state.isEditing) Res.string.edit_feast_title else Res.string.report_feast_title), color = colors.ink, fontSize = 20.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
+                Text(stringResource(when {
+                    state.isResubmitting -> Res.string.resubmit_feast_title
+                    state.isEditing -> Res.string.edit_feast_title
+                    else -> Res.string.report_feast_title
+                }), color = colors.ink, fontSize = 20.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
                 // Editing or reposting starts from a feast; there's nothing to clear
                 if (state.start == FeastFormStart.New) {
                     Text(
@@ -303,7 +309,11 @@ private fun BottomBar(
             }
             if (state.isLastStep) {
                 FeastButton(
-                    label = stringResource(if (state.isEditing) Res.string.edit_feast_save else Res.string.post_feast),
+                    label = stringResource(when {
+                        state.isResubmitting -> Res.string.resubmit_feast_send
+                        state.isEditing -> Res.string.edit_feast_save
+                        else -> Res.string.post_feast
+                    }),
                     onClick = onPost,
                     style = FeastButtonStyle.SAFFRON,
                     icon = Icons.Rounded.VolunteerActivism,

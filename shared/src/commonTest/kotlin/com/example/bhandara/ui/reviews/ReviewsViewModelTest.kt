@@ -539,12 +539,133 @@ class ReviewsViewModelTest {
         assertNull(viewModel.state.value.message)
     }
 
+    // ==================== Helpful votes ====================
+
+    @Test
+    fun markingAReviewHelpfulShowsAtOnceAndKeepsTheBackendsCount() = runTest(dispatcher) {
+        reviewsAre(review("1", OTHER, 4, "Tasty", helpful = 2))
+        answer(HttpMethod.Put, "reviews/1/helpful", review("1", OTHER, 4, "Tasty", helpful = 5, helpfulByMe = true))
+        val viewModel = opened()
+
+        viewModel.toggleHelpful("1")
+        // Before the backend answers, the count goes up by one
+        assertEquals(3, viewModel.state.value.reviews.single().helpfulCount)
+        assertTrue(viewModel.state.value.reviews.single().helpfulByMe)
+        advanceUntilIdle()
+
+        // Then it shows the backend's count (others voted meanwhile)
+        assertEquals(5, viewModel.state.value.reviews.single().helpfulCount)
+        assertEquals(1, requestsTo(HttpMethod.Put, "reviews/1/helpful").size)
+    }
+
+    @Test
+    fun aHelpfulVoteCanBeTakenBack() = runTest(dispatcher) {
+        reviewsAre(review("1", OTHER, 4, "Tasty", helpful = 3, helpfulByMe = true))
+        answer(HttpMethod.Delete, "reviews/1/helpful", review("1", OTHER, 4, "Tasty", helpful = 2))
+        val viewModel = opened()
+
+        viewModel.toggleHelpful("1")
+        advanceUntilIdle()
+
+        assertEquals(2, viewModel.state.value.reviews.single().helpfulCount)
+        assertFalse(viewModel.state.value.reviews.single().helpfulByMe)
+        assertEquals(1, requestsTo(HttpMethod.Delete, "reviews/1/helpful").size)
+    }
+
+    @Test
+    fun aFailedHelpfulVoteGoesBackAndSaysWhy() = runTest(dispatcher) {
+        reviewsAre(review("1", OTHER, 4, "Tasty", helpful = 2))
+        answer(HttpMethod.Put, "reviews/1/helpful", "", HttpStatusCode.TooManyRequests)
+        val viewModel = opened()
+
+        viewModel.toggleHelpful("1")
+        advanceUntilIdle()
+
+        assertEquals(2, viewModel.state.value.reviews.single().helpfulCount)
+        assertFalse(viewModel.state.value.reviews.single().helpfulByMe)
+        assertNotNull(viewModel.state.value.message)
+    }
+
+    @Test
+    fun tappingHelpfulTwiceQuicklySendsOneVote() = runTest(dispatcher) {
+        reviewsAre(review("1", OTHER, 4, "Tasty"))
+        answer(HttpMethod.Put, "reviews/1/helpful", review("1", OTHER, 4, "Tasty", helpful = 1, helpfulByMe = true))
+        val viewModel = opened()
+
+        viewModel.toggleHelpful("1")
+        viewModel.toggleHelpful("1")
+        advanceUntilIdle()
+
+        assertEquals(1, requests.count { it.url.encodedPath == "/api/reviews/1/helpful" })
+        assertTrue(viewModel.state.value.reviews.single().helpfulByMe)
+    }
+
+    @Test
+    fun nobodyMarksTheirOwnReviewHelpfulAndSignedOutUsersCannotVote() = runTest(dispatcher) {
+        reviewsAre(review("7", ME, 3, "Okay"), review("1", OTHER, 4, "Tasty"))
+        val viewModel = opened()
+
+        viewModel.toggleHelpful("7")
+        advanceUntilIdle()
+        assertTrue(requestsTo(HttpMethod.Put, "reviews/7/helpful").isEmpty())
+
+        signedInUid = null
+        val signedOut = opened()
+        assertFalse(signedOut.state.value.canMarkHelpful(signedOut.state.value.reviews.first { it.id == "1" }))
+    }
+
+    // ==================== A review waiting for a check ====================
+
+    @Test
+    fun yourReviewWaitingForACheckIsShownToYouAndOpensToEdit() = runTest(dispatcher) {
+        // The shop page doesn't list it yet; the user's own reviews have it, in review
+        answer(HttpMethod.Get, "reviews/mine", "[${review("9", ME, 3, "Chai is ₹20 now", status = "IN_REVIEW")}]")
+        val viewModel = opened()
+
+        val state = viewModel.state.value
+        assertEquals("9", state.myReviewInCheck?.id)
+        assertEquals(listOf("9", "1", "2"), state.shownReviews.map { it.id })
+        // The rating summary only counts what customers see
+        assertEquals(2, state.countToShow)
+
+        viewModel.startWriting()
+        assertEquals("9", viewModel.state.value.draft?.reviewId)
+    }
+
+    @Test
+    fun aNewReviewWithPricesSaysItWillBeChecked() = runTest(dispatcher) {
+        answer(HttpMethod.Post, "reviews", review("9", ME, 3, "Chai is ₹20 now", status = "IN_REVIEW"))
+        val viewModel = opened()
+
+        viewModel.startWriting(3)
+        viewModel.setComment("Chai is ₹20 now")
+        viewModel.submit()
+        advanceUntilIdle()
+
+        assertEquals("Thanks! Reviews with prices are checked before going live, usually within 24 hours.", viewModel.state.value.message)
+    }
+
+    @Test
+    fun aReportCanSayWhatsWrong() = runTest(dispatcher) {
+        answer(HttpMethod.Put, "reviews/1/report", review("1", OTHER, 4, "Tasty"))
+        val viewModel = opened()
+
+        viewModel.report("1", "  Advertising another shop  ")
+        advanceUntilIdle()
+
+        assertEquals("Advertising another shop", requestsTo(HttpMethod.Put, "reviews/1/report").single().json()["note"]?.jsonPrimitive?.content)
+    }
+
     private companion object {
         const val ME = "me-1"
         const val OTHER = "other-1"
 
-        fun review(id: String, author: String, rating: Int, comment: String?, images: List<String> = emptyList()) =
+        fun review(
+            id: String, author: String, rating: Int, comment: String?, images: List<String> = emptyList(),
+            helpful: Int = 0, helpfulByMe: Boolean = false, status: String = "PUBLISHED",
+        ) =
             """{"id":"$id","shopId":"5","reviewerUid":"$author","rating":$rating,"isActive":true""" +
+                ""","helpfulCount":$helpful,"helpfulByMe":$helpfulByMe,"status":"$status"""" +
                 (comment?.let { ""","comment":"$it"""" } ?: "") +
                 ""","imageUrls":[${images.joinToString(",") { "\"$it\"" }}],"createdAt":"2026-10-03T16:42:24"}"""
 

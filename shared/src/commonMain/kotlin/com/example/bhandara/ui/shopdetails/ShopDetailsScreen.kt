@@ -131,6 +131,7 @@ fun ShopDetailsScreen(
             dependencies.settings,
             { dependencies.auth.currentUid },
             LocationService(deviceLocation),
+            { photos -> dependencies.photoUploader.upload(photos) },
         )
     }
     var addingMenuItems by rememberSaveable { mutableStateOf(false) }

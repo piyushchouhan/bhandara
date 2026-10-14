@@ -204,11 +204,48 @@ class MyReviewsViewModelTest {
         assertNull(reviewAge("not a date", today))
     }
 
+    // ==================== In review and helpful ====================
+
+    @Test
+    fun reviewsWaitingForACheckHaveTheirOwnFilterAndAreNotCountedAsPublished() = runTest(dispatcher) {
+        myReviewsAre(
+            review("1", 5, "Sharma Chaat", helpful = 12),
+            review("2", 3, "Sai Amruttulya", status = "IN_REVIEW"),
+            review("3", 1, "Hidden Snacks", removed = true),
+            review("4", 4, "Annapurna Misal", helpful = 6),
+        )
+        val viewModel = opened()
+
+        val state = viewModel.state.value
+        assertEquals(2, state.publishedCount)
+        assertEquals(1, state.inReviewCount)
+        assertEquals(1, state.removedCount)
+        // "Found helpful" adds up every review's votes
+        assertEquals(18, state.foundHelpful)
+
+        viewModel.onFilter(MyReviewsFilter.IN_REVIEW)
+        assertEquals(listOf("2"), viewModel.state.value.shown().map { it.id })
+        viewModel.onFilter(MyReviewsFilter.PUBLISHED)
+        assertEquals(listOf("1", "4"), viewModel.state.value.shown().map { it.id })
+    }
+
+    @Test
+    fun theInReviewFilterFallsBackToAllOnceNothingIsWaiting() = runTest(dispatcher) {
+        myReviewsAre(review("1", 5, "Sharma Chaat"))
+        val viewModel = opened()
+
+        viewModel.onFilter(MyReviewsFilter.IN_REVIEW)
+
+        assertEquals(MyReviewsFilter.ALL, viewModel.state.value.activeFilter)
+        assertEquals(listOf("1"), viewModel.state.value.shown().map { it.id })
+    }
+
     // ==================== Test data ====================
 
     private companion object {
-        fun review(id: String, rating: Int, shopName: String, removed: Boolean = false) =
+        fun review(id: String, rating: Int, shopName: String, removed: Boolean = false, status: String? = null, helpful: Int = 0) =
             """{"id":"$id","shopId":"s$id","reviewerUid":"me","rating":$rating,"comment":"Nice","shopName":"$shopName",""" +
+                """"status":"${status ?: if (removed) "REMOVED" else "PUBLISHED"}","helpfulCount":$helpful,""" +
                 """"shopArea":"Kothrud","removedByModerator":$removed,"isActive":${!removed},"createdAt":"2026-10-0${id}T10:00:00"}"""
     }
 }

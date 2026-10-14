@@ -520,4 +520,44 @@ class ReportFeastViewModelTest {
 
         assertEquals(listOf("Puri", "Kheer"), viewModel.state.value.form.menuItems)
     }
+
+    // ==================== Fix and resubmit ====================
+
+    private fun takenDown(reason: String) = myFeast.replace(""""status":"UPCOMING"}""", """"status":"TAKEN_DOWN","takedownReason":"$reason","canResubmit":true}""")
+
+    @Test
+    fun aFixedFeastKeepsItsPlaceAndIsSentBackForACheck() = runTest(dispatcher) {
+        createBody = takenDown("WRONG_TIME")
+        phone.location = null // where the user is doesn't matter: the place wasn't the problem
+        val viewModel = viewModel(FeastFormStart.Resubmit("50"))
+        advanceUntilIdle()
+        assertTrue(viewModel.state.value.isResubmitting)
+        assertEquals(LocalDate(2026, 10, 5), viewModel.state.value.form.date)
+        viewModel.onStartTimeChange(LocalTime(18, 0))
+        viewModel.onEndTimeChange(LocalTime(21, 0))
+
+        submitted(viewModel)
+
+        val put = requests.last()
+        assertEquals(HttpMethod.Put, put.method)
+        assertEquals("/api/feasts/50/resubmit", put.url.encodedPath)
+        val body = put.json()
+        assertEquals(18.51, body["latitude"]!!.jsonPrimitive.content.toDouble())
+        assertEquals("18:00:00", body["startTime"]!!.jsonPrimitive.content)
+        assertEquals("50", viewModel.state.value.postedFeastId)
+    }
+
+    @Test
+    fun aFeastTakenDownForTheWrongPlaceGoesWhereTheUserIsNow() = runTest(dispatcher) {
+        createBody = takenDown("WRONG_LOCATION")
+        val viewModel = viewModel(FeastFormStart.Resubmit("50"))
+        advanceUntilIdle()
+
+        submitted(viewModel)
+
+        val body = requests.last().json()
+        assertEquals("/api/feasts/50/resubmit", requests.last().url.encodedPath)
+        assertEquals(18.5823, body["latitude"]!!.jsonPrimitive.content.toDouble())
+        assertEquals(73.8845, body["longitude"]!!.jsonPrimitive.content.toDouble())
+    }
 }

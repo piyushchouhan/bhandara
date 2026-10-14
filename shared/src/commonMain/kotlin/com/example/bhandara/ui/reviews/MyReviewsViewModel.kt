@@ -13,7 +13,7 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 
 /** Which of the user's reviews are listed */
-enum class MyReviewsFilter { ALL, PUBLISHED, REMOVED }
+enum class MyReviewsFilter { ALL, PUBLISHED, IN_REVIEW, REMOVED }
 
 /** The order they're listed in */
 enum class MyReviewsSort { NEWEST, HIGHEST, LOWEST }
@@ -37,20 +37,29 @@ data class MyReviewsState(
     val deleted: Boolean = false,
 ) {
     val removedCount: Int get() = reviews.count { it.isRemoved }
-    val publishedCount: Int get() = reviews.size - removedCount
+    val inReviewCount: Int get() = reviews.count { it.isInReview }
+    val publishedCount: Int get() = reviews.size - removedCount - inReviewCount
+
+    /** How many times people found the user's reviews helpful, all together */
+    val foundHelpful: Int get() = reviews.sumOf { it.helpfulCount }
 
     /** The average of the stars the user gave; null with no reviews */
     val averageGiven: Double? get() = reviews.takeIf { it.isNotEmpty() }?.map { it.rating }?.average()
 
-    /** The filter in use: "Removed" falls back to all once nothing is removed */
+    /** The filter in use: "In review" and "Removed" fall back to all once there's none of them */
     val activeFilter: MyReviewsFilter
-        get() = if (filter == MyReviewsFilter.REMOVED && removedCount == 0) MyReviewsFilter.ALL else filter
+        get() = when {
+            filter == MyReviewsFilter.REMOVED && removedCount == 0 -> MyReviewsFilter.ALL
+            filter == MyReviewsFilter.IN_REVIEW && inReviewCount == 0 -> MyReviewsFilter.ALL
+            else -> filter
+        }
 
     /** The reviews to list, filtered and sorted (the backend's order, newest first, breaks ties) */
     fun shown(): List<ReviewResponse> {
         val filtered = when (activeFilter) {
             MyReviewsFilter.ALL -> reviews
-            MyReviewsFilter.PUBLISHED -> reviews.filterNot { it.isRemoved }
+            MyReviewsFilter.PUBLISHED -> reviews.filterNot { it.isRemoved || it.isInReview }
+            MyReviewsFilter.IN_REVIEW -> reviews.filter { it.isInReview }
             MyReviewsFilter.REMOVED -> reviews.filter { it.isRemoved }
         }
         return when (sort) {
@@ -63,6 +72,9 @@ data class MyReviewsState(
 
 /** Removed by a moderator: still listed for its author, but no longer on the shop's page */
 val ReviewResponse.isRemoved: Boolean get() = removedByModerator == true
+
+/** Mentions prices, so a moderator checks it before it goes live; only its author sees it until then */
+val ReviewResponse.isInReview: Boolean get() = status == REVIEW_IN_REVIEW && !isRemoved
 
 class MyReviewsViewModel(private val reviewApi: ReviewApi) : ViewModel() {
 

@@ -890,4 +890,44 @@
     <string name="live_connecting">कनेक्ट हो रहा है…</string>
     <string name="live_speed">%1$s किमी/घंटा की रफ़्तार से चल रहा है</string>
     <string name="live_view_details">पूरी जानकारी देखें</string>
+
+    <!-- Part 4: helpful votes, reviews checked for prices, report notes, fixing a taken-down feast -->
+    <string name="report_details_title">और बताएं (ज़रूरी नहीं)</string>
+    <string name="report_details_note_hint">क्या गलत है? कुछ भी जो मॉडरेटर को जाँचने में मदद करे</string>
+    <string name="report_details_add_photo">फ़ोटो जोड़ें</string>
+    <plurals name="review_found_helpful">
+        <item quantity="one">%1$d को यह मददगार लगा</item>
+        <item quantity="other">%1$d को यह मददगार लगा</item>
+    </plurals>
+    <string name="review_helpful">मददगार</string>
+    <string name="review_helpful_count">मददगार · %1$d</string>
+    <string name="review_in_review_note">दाम वाले रिव्यू लाइव होने से पहले जाँचे जाते हैं। आमतौर पर 24 घंटे से कम में।</string>
+    <string name="review_report_prompt">स्पैम, नकली या बदतमीज़ी? बताएं क्या गलत है।</string>
+    <string name="review_status_in_review">जाँच में</string>
+    <string name="my_reviews_found_helpful">मददगार लगे</string>
+    <string name="my_reviews_filter_in_review">जाँच में %1$d</string>
+    <plurals name="my_reviews_delete_helpful">
+        <item quantity="one">%1$d मददगार वोट</item>
+        <item quantity="other">%1$d मददगार वोट</item>
+    </plurals>
+    <string name="my_reports_info_added">आपकी रिपोर्ट में जोड़ दिया गया</string>
+    <string name="my_reports_what_you_said">आपने क्या कहा</string>
+    <string name="my_reports_add_info">और जानकारी जोड़ें</string>
+    <string name="my_reports_add_info_prompt">मॉडरेटर की मदद के लिए नोट या फ़ोटो</string>
+    <string name="my_reports_add_info_send">भेजें</string>
+    <string name="feast_report_prompt">आप इस भंडारे की रिपोर्ट क्यों कर रहे हैं?</string>
+    <string name="feast_report_reason_wrong_time">गलत तारीख या समय</string>
+    <string name="feast_report_reason_not_happening">हो ही नहीं रहा</string>
+    <string name="feast_report_reason_money">पैसे माँगे जा रहे हैं</string>
+    <string name="resubmit_feast_title">भंडारा ठीक करें</string>
+    <string name="resubmit_feast_send">जाँच के लिए भेजें</string>
+    <string name="my_feasts_waiting_check">जाँच का इंतज़ार</string>
+    <string name="my_feasts_fix_resubmit">ठीक करके दोबारा भेजें</string>
+    <string name="my_feasts_resubmitted_note">ठीक करने के लिए धन्यवाद। मॉडरेटर इसे जाँचकर नक्शे पर वापस लगाएगा, आमतौर पर 24 घंटे में।</string>
+    <string name="my_feasts_rejected_note">मॉडरेटर ने सुधार जाँचा और भंडारा छिपा ही रहेगा। अगर आपको लगता है यह गलती है तो सपोर्ट से संपर्क करें।</string>
+    <string name="my_feasts_reason_wrong_location">कई लोगों ने बताया कि पता गलत था। लोकेशन ठीक करें, हम इसे फिर से जाँचेंगे।</string>
+    <string name="my_feasts_reason_wrong_time">कई लोगों ने बताया कि तारीख या समय गलत था। इसे ठीक करें, हम फिर से जाँचेंगे।</string>
+    <string name="my_feasts_reason_not_happening">कई लोगों ने बताया कि यह भंडारा हो ही नहीं रहा था। अगर हो रहा है तो जानकारी जाँचकर दोबारा भेजें।</string>
+    <string name="my_feasts_reason_money">कई लोगों ने बताया कि पैसे माँगे जा रहे थे। नक्शे पर भंडारे मुफ़्त होने चाहिए।</string>
+    <string name="my_feasts_reason_inappropriate">कई लोगों ने फ़ोटो या जानकारी को अनुचित बताया। इन्हें बदलें, हम फिर से जाँचेंगे।</string>
 </resources>

@@ -5,6 +5,10 @@ import androidx.lifecycle.viewModelScope
 import com.example.bhandara.data.models.api.MyReport
 import com.example.bhandara.data.network.ApiResult
 import com.example.bhandara.data.network.ReportApi
+import com.example.bhandara.data.models.api.ReportDetails
+import com.example.bhandara.photos.PickedPhoto
+import com.example.bhandara.ui.components.PHOTOS_FAILED
+import com.example.bhandara.ui.components.uploadReportPhotos
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -30,6 +34,10 @@ data class MyReportsState(
     val withdrawing: Boolean = false,
     val withdrawn: Boolean = false,
     val message: String? = null,
+    /** "Add more info" is being sent */
+    val addingInfo: Boolean = false,
+    /** More info was just added (the sheet closes, the screen says so); cleared with onMessageShown */
+    val infoAdded: Boolean = false,
 ) {
     val inReviewCount: Int get() = reports.count { it.isInReview }
     val closedCount: Int get() = reports.size - inReviewCount
@@ -55,7 +63,14 @@ val MyReport.key: String get() = "$kind:$reportId"
 
 val MyReport.isInReview: Boolean get() = status == MyReportsState.STATUS_IN_REVIEW
 
-class MyReportsViewModel(private val reportApi: ReportApi) : ViewModel() {
+/**
+ * @param uploadPhotos uploads photos added with "Add more info" and returns their URLs (throws if any fails); null
+ *                     where photos aren't supported
+ */
+class MyReportsViewModel(
+    private val reportApi: ReportApi,
+    private val uploadPhotos: (suspend (List<PickedPhoto>) -> List<String>)? = null,
+) : ViewModel() {
 
     private val _state = MutableStateFlow(MyReportsState())
     val state: StateFlow<MyReportsState> = _state.asStateFlow()
@@ -102,5 +117,29 @@ class MyReportsViewModel(private val reportApi: ReportApi) : ViewModel() {
         }
     }
 
-    fun onMessageShown() = _state.update { it.copy(message = null, withdrawn = false) }
+    /** "Add more info": a note, photos or both on a report still in review; the report shows them once sent */
+    fun addInfo(report: MyReport, note: String, photos: List<PickedPhoto>) {
+        val text = note.trim()
+        if (_state.value.addingInfo || !report.isInReview || (text.isEmpty() && photos.isEmpty())) return
+        _state.update { it.copy(addingInfo = true) }
+        viewModelScope.launch {
+            val photoUrls = uploadReportPhotos(uploadPhotos, photos) ?: run {
+                _state.update { it.copy(addingInfo = false, message = PHOTOS_FAILED) }
+                return@launch
+            }
+            val details = ReportDetails(note = text.ifEmpty { null }, photoUrls = photoUrls.ifEmpty { null })
+            when (val result = reportApi.addInfo(report, details)) {
+                is ApiResult.Success -> _state.update { state ->
+                    state.copy(
+                        addingInfo = false,
+                        infoAdded = true,
+                        reports = state.reports.map { if (it.key == report.key) result.value else it },
+                    )
+                }
+                is ApiResult.Failure -> _state.update { it.copy(addingInfo = false, message = result.error.message) }
+            }
+        }
+    }
+
+    fun onMessageShown() = _state.update { it.copy(message = null, withdrawn = false, infoAdded = false) }
 }

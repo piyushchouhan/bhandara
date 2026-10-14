@@ -9,7 +9,11 @@ import com.example.bhandara.data.location.distanceMeters
 import com.example.bhandara.data.models.api.LocalShopResponse
 import com.example.bhandara.data.models.api.MenuItemResponse
 import com.example.bhandara.data.models.api.ShopReportReason
+import com.example.bhandara.data.network.ApiError
 import com.example.bhandara.data.network.ApiResult
+import com.example.bhandara.photos.PickedPhoto
+import com.example.bhandara.ui.components.PHOTOS_FAILED
+import com.example.bhandara.ui.components.uploadReportPhotos
 import com.example.bhandara.data.network.ShopApi
 import com.example.bhandara.data.network.getOrNull
 import com.example.bhandara.data.settings.AppSettings
@@ -62,6 +66,8 @@ class ShopDetailsViewModel(
     private val settings: AppSettings,
     private val currentUid: () -> String?,
     private val locationService: LocationService?,
+    /** Uploads photos sent with a report and returns their URLs (throws if any fails); null where not supported */
+    private val uploadPhotos: (suspend (List<PickedPhoto>) -> List<String>)? = null,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(
@@ -86,10 +92,15 @@ class ShopDetailsViewModel(
         }
     }
 
-    fun report(reason: ShopReportReason) {
+    /** Reports the shop, with what the user said about it (a note and photos, both optional) */
+    fun report(reason: ShopReportReason, note: String = "", photos: List<PickedPhoto> = emptyList()) {
         if (!_state.value.canReport) return
         send(
-            call = { shopApi.reportShop(shopId, reason) },
+            call = {
+                val photoUrls = uploadReportPhotos(uploadPhotos, photos)
+                    ?: return@send ApiResult.Failure(ApiError(ApiError.Kind.NETWORK, PHOTOS_FAILED))
+                shopApi.reportShop(shopId, reason, note, photoUrls)
+            },
             thanks = "Thanks for reporting. A moderator will take a look.",
         ) {
             settings.markReportedShop(shopId)

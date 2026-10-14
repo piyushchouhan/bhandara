@@ -286,6 +286,7 @@ class MainActivity : AppCompatActivity() {
                                     onOpenFeast = { feastId -> navigateTo(Route.FeastDetails(feastId)) },
                                     onEdit = { feastId -> navigateTo(Route.EditFeast(feastId)) },
                                     onRepost = { feastId -> navigateTo(Route.RepostFeast(feastId)) },
+                                    onResubmit = { feastId -> navigateTo(Route.ResubmitFeast(feastId)) },
                                     onPostFeast = { navigateTo(Route.ReportFeast) },
                                     onContactSupport = { navigateTo(Route.Support) },
                                 )
@@ -296,6 +297,14 @@ class MainActivity : AppCompatActivity() {
                                     // Back to the list, which shows the change
                                     onPosted = { navigateBack() },
                                     start = FeastFormStart.Edit(route.feastId),
+                                )
+                            }
+                            is Route.ResubmitFeast -> {
+                                ReportFeastScreen(
+                                    onBack = { navigateBack() },
+                                    // Back to the list, which shows it waiting for a check
+                                    onPosted = { navigateBack() },
+                                    start = FeastFormStart.Resubmit(route.feastId),
                                 )
                             }
                             is Route.RepostFeast -> {

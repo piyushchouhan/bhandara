@@ -8,6 +8,11 @@ import com.example.bhandara.data.location.LocationService
 import com.example.bhandara.data.location.distanceMeters
 import com.example.bhandara.data.models.api.FeastResponse
 import com.example.bhandara.data.network.ApiResult
+import com.example.bhandara.data.models.api.FeastReportReason
+import com.example.bhandara.data.models.api.FeastReportRequest
+import com.example.bhandara.photos.PickedPhoto
+import com.example.bhandara.ui.components.PHOTOS_FAILED
+import com.example.bhandara.ui.components.uploadReportPhotos
 import com.example.bhandara.data.network.FeastApi
 import com.example.bhandara.data.settings.AppSettings
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -53,6 +58,8 @@ class FeastDetailsViewModel(
     private val currentUid: () -> String?,
     private val locationService: LocationService?,
     private val now: () -> LocalDateTime = ::localNow,
+    /** Uploads photos sent with a report and returns their URLs (throws if any fails); null where not supported */
+    private val uploadPhotos: (suspend (List<PickedPhoto>) -> List<String>)? = null,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(FeastDetailsState(hasReported = settings.hasReportedFeast(feastId), isSaved = settings.isFeastSaved(feastId)))
@@ -71,12 +78,18 @@ class FeastDetailsViewModel(
         _state.update { it.copy(isSaved = saved, message = if (saved) "Saved to your places" else "Removed from your places") }
     }
 
-    fun report() {
+    /** Reports the feast, saying why, with an optional note and photos */
+    fun report(reason: FeastReportReason, note: String = "", photos: List<PickedPhoto> = emptyList()) {
         val state = _state.value
         if (!state.canReport || state.reporting) return
         _state.update { it.copy(reporting = true) }
         viewModelScope.launch {
-            when (val result = feastApi.reportFeast(feastId)) {
+            val photoUrls = uploadReportPhotos(uploadPhotos, photos) ?: run {
+                _state.update { it.copy(reporting = false, message = PHOTOS_FAILED) }
+                return@launch
+            }
+            val request = FeastReportRequest(reason.name, note.trim().ifEmpty { null }, photoUrls.ifEmpty { null })
+            when (val result = feastApi.reportFeast(feastId, request)) {
                 is ApiResult.Success -> {
                     settings.markReportedFeast(feastId)
                     // Enough reports take a feast down straight away

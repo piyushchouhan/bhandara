@@ -38,11 +38,16 @@ class ShopApi(private val client: ApiClient) {
     suspend fun getMenu(shopId: String): ApiResult<List<MenuItemResponse>> =
         client.call("api/menu-items/shop/$shopId") { method = HttpMethod.Get }
 
-    /** Flag wrong or inappropriate information, saying why; a moderator decides. Each user counts once. */
-    suspend fun reportShop(shopId: String, reason: ShopReportReason): ApiResult<LocalShopResponse> =
+    /** Flag wrong or inappropriate information, saying why (and optionally more); a moderator decides. Each user counts once. */
+    suspend fun reportShop(
+        shopId: String,
+        reason: ShopReportReason,
+        note: String? = null,
+        photoUrls: List<String> = emptyList(),
+    ): ApiResult<LocalShopResponse> =
         client.call("api/localshops/$shopId/report") {
             method = HttpMethod.Put
-            setBody(ReportShopRequest(reason.name))
+            setBody(ReportShopRequest(reason.name, note?.trim()?.ifEmpty { null }, photoUrls.ifEmpty { null }))
         }
 
     /** Suggest the shop no longer exists; a moderator decides. Each user counts once. */

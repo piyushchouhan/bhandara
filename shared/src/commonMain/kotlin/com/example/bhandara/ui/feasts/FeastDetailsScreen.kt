@@ -166,6 +166,7 @@ fun FeastDetailsScreen(feastId: String, onBack: () -> Unit, onFindOtherFeasts: (
             dependencies.settings,
             { dependencies.auth.currentUid },
             LocationService(deviceLocation),
+            uploadPhotos = { photos -> dependencies.photoUploader.upload(photos) },
         )
     }
     FeastTheme { FeastDetailsPage(viewModel, onBack, onFindOtherFeasts) }
@@ -333,21 +334,7 @@ private fun FeastDetailsPage(viewModel: FeastDetailsViewModel, onBack: () -> Uni
     }
 
     if (confirmingReport) {
-        AlertDialog(
-            onDismissRequest = { confirmingReport = false },
-            title = { Text(stringResource(Res.string.feast_report_title)) },
-            text = { Text(stringResource(Res.string.feast_report_text)) },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        confirmingReport = false
-                        viewModel.report()
-                    },
-                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
-                ) { Text(stringResource(Res.string.report_submit)) }
-            },
-            dismissButton = { TextButton(onClick = { confirmingReport = false }) { Text(stringResource(Res.string.cancel)) } },
-        )
+        ReportFeastSheet(onReport = viewModel::report, onDismiss = { confirmingReport = false })
     }
 }
 

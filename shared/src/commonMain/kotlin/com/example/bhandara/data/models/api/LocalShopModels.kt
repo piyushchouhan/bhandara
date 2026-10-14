@@ -143,6 +143,12 @@ data class ReviewResponse(
     val isActive: Boolean? = null,
     /** A moderator removed it after reports; only its author still sees it (in My reviews) */
     val removedByModerator: Boolean? = null,
+    /** PUBLISHED, IN_REVIEW (mentions prices, a moderator checks it first; only its author sees it) or REMOVED */
+    val status: String? = null,
+    /** How many people found it helpful */
+    val helpfulCount: Int = 0,
+    /** Whether the signed-in user marked it helpful */
+    val helpfulByMe: Boolean = false,
     /** The reviewed shop, for lists of one person's reviews */
     val shopName: String? = null,
     val shopArea: String? = null,
@@ -255,8 +261,13 @@ data class VerifyShopRequest(
 /** Why a user reports a shop; sent as the code (e.g. WRONG_LOCATION) so moderators see it in any language */
 enum class ShopReportReason { NOT_FOOD_SHOP, WRONG_LOCATION, INAPPROPRIATE_CONTENT, PERMANENTLY_CLOSED }
 
+/** Why the user reports a shop, with an optional note and photos */
 @Serializable
-data class ReportShopRequest(val reason: String)
+data class ReportShopRequest(
+    val reason: String,
+    val note: String? = null,
+    val photoUrls: List<String>? = null,
+)
 
 /** Outcome of a verification vote */
 @Serializable

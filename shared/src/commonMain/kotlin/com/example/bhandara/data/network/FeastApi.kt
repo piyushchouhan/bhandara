@@ -1,6 +1,7 @@
 package com.example.bhandara.data.network
 
 import com.example.bhandara.data.location.GeoLocation
+import com.example.bhandara.data.models.api.FeastReportRequest
 import com.example.bhandara.data.models.api.FeastRequest
 import com.example.bhandara.data.models.api.FeastResponse
 import io.ktor.client.request.parameter
@@ -48,7 +49,17 @@ class FeastApi(private val client: ApiClient) {
     suspend fun takeDownFeast(feastId: String): ApiResult<Unit> =
         client.callForNothing("api/feasts/$feastId") { method = HttpMethod.Delete }
 
-    /** Flags a fake or inappropriate feast; each user counts once, and enough reports take it down */
-    suspend fun reportFeast(feastId: String): ApiResult<FeastResponse> =
-        client.call("api/feasts/$feastId/report") { method = HttpMethod.Put }
+    /** Flags a fake or inappropriate feast, saying why; each user counts once, and enough reports take it down */
+    suspend fun reportFeast(feastId: String, report: FeastReportRequest): ApiResult<FeastResponse> =
+        client.call("api/feasts/$feastId/report") {
+            method = HttpMethod.Put
+            setBody(report)
+        }
+
+    /** The organizer fixes a feast taken down after reports and sends it back once; it stays off the map until checked */
+    suspend fun resubmitFeast(feastId: String, feast: FeastRequest): ApiResult<FeastResponse> =
+        client.call("api/feasts/$feastId/resubmit") {
+            method = HttpMethod.Put
+            setBody(feast)
+        }
 }

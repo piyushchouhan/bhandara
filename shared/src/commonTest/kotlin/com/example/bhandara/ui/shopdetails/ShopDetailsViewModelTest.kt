@@ -1,5 +1,8 @@
 package com.example.bhandara.ui.shopdetails
 
+import com.example.bhandara.photos.CompressedPhoto
+import com.example.bhandara.photos.PhotoUploadException
+import com.example.bhandara.photos.PickedPhoto
 import com.example.bhandara.data.location.DeviceLocation
 import com.example.bhandara.data.location.GeoLocation
 import com.example.bhandara.data.location.LocationService
@@ -278,6 +281,42 @@ class ShopDetailsViewModelTest {
     }
 
     // ==================== Reporting and suggesting deletion ====================
+
+    @Test
+    fun aReportCanCarryANoteAndPhotos() = runTest(dispatcher) {
+        answer("localshops/5/report", shop())
+        val viewModel = ShopDetailsViewModel("5", ShopApi(client), settings, { signedInUid }, null) { photos ->
+            photos.map { "https://img.test/${it.preview}.webp" }
+        }
+        advanceUntilIdle()
+
+        viewModel.report(ShopReportReason.WRONG_LOCATION, " Opposite the petrol pump ", listOf(Photo("pin")))
+        advanceUntilIdle()
+
+        assertEquals(
+            """{"reason":"WRONG_LOCATION","note":"Opposite the petrol pump","photoUrls":["https://img.test/pin.webp"]}""",
+            requestsTo("localshops/5/report").single().bodyText(),
+        )
+    }
+
+    @Test
+    fun ifAReportsPhotosFailToUploadItIsNotSent() = runTest(dispatcher) {
+        answer("localshops/5/report", shop())
+        val viewModel = ShopDetailsViewModel("5", ShopApi(client), settings, { signedInUid }, null) { throw PhotoUploadException("Upload failed") }
+        advanceUntilIdle()
+
+        viewModel.report(ShopReportReason.WRONG_LOCATION, "", listOf(Photo("pin")))
+        advanceUntilIdle()
+
+        assertTrue(requestsTo("localshops/5/report").isEmpty())
+        assertEquals("Couldn't upload the photos. Please try again.", viewModel.state.value.message)
+        assertTrue(viewModel.state.value.canReport)
+    }
+
+    private data class Photo(val name: String) : PickedPhoto {
+        override val preview: Any = name
+        override suspend fun compressed(): CompressedPhoto? = null
+    }
 
     @Test
     fun reportingSendsTheReasonAndIsRememberedForThisShop() = runTest(dispatcher) {

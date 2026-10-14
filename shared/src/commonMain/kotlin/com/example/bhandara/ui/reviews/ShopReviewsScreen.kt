@@ -1,6 +1,23 @@
 package com.example.bhandara.ui.reviews
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.material.icons.outlined.ThumbUp
+import androidx.compose.material.icons.rounded.Schedule
+import androidx.compose.material.icons.rounded.ThumbUp
+import com.example.bhandara.shared.resources.report_submit
+import com.example.bhandara.shared.resources.review_found_helpful
+import com.example.bhandara.shared.resources.review_helpful
+import com.example.bhandara.shared.resources.review_helpful_count
+import com.example.bhandara.shared.resources.review_in_review_note
+import com.example.bhandara.shared.resources.review_report_prompt
+import com.example.bhandara.shared.resources.review_status_in_review
+import com.example.bhandara.ui.components.FeastButton
+import com.example.bhandara.ui.components.FeastButtonStyle
+import com.example.bhandara.ui.components.ReportDetailsFields
+import com.example.bhandara.ui.shopdetails.FeastSheet
+import org.jetbrains.compose.resources.pluralStringResource
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -140,6 +157,7 @@ fun ShopReviewsScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
     var deleting by rememberSaveable { mutableStateOf<String?>(null) }
+    var reporting by rememberSaveable { mutableStateOf<String?>(null) }
 
     LaunchedEffect(state.message) {
         state.message?.let {
@@ -174,7 +192,7 @@ fun ShopReviewsScreen(
                             TextButton(onClick = viewModel::retry) { Text(stringResource(Res.string.try_again)) }
                         }
 
-                        state.reviews.isEmpty() -> NoReviewsYet(
+                        state.shownReviews.isEmpty() -> NoReviewsYet(
                             canRate = state.canWrite,
                             onRate = onWriteReview,
                             modifier = Modifier.align(Alignment.Center),
@@ -184,16 +202,18 @@ fun ShopReviewsScreen(
                             Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(start = 18.dp, end = 18.dp, top = 14.dp, bottom = 16.dp),
                             verticalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
-                            RatingSummary(state.averageRating ?: 0.0, state.reviews.size, state.starCounts)
+                            if (state.reviews.isNotEmpty()) RatingSummary(state.averageRating ?: 0.0, state.reviews.size, state.starCounts)
                             // Your own review first, then everyone else's (newest first, as the backend sends them)
-                            state.reviews.sortedByDescending { state.isMine(it) }.forEach { review ->
+                            state.shownReviews.sortedByDescending { state.isMine(it) }.forEach { review ->
                                 ReviewCard(
                                     review = review,
                                     isMine = state.isMine(review),
                                     canReport = state.canReport(review),
                                     reported = review.id in state.reportedIds,
+                                    canMarkHelpful = state.canMarkHelpful(review),
                                     onDelete = { deleting = review.id },
-                                    onReport = { viewModel.report(review.id) },
+                                    onReport = { reporting = review.id },
+                                    onHelpful = { viewModel.toggleHelpful(review.id) },
                                 )
                             }
                         }
@@ -210,6 +230,13 @@ fun ShopReviewsScreen(
                 }
             }
             SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter).windowInsetsPadding(WindowInsets.navigationBars).padding(bottom = 84.dp))
+        }
+
+        reporting?.let { reviewId ->
+            ReportReviewSheet(
+                onReport = { note -> viewModel.report(reviewId, note) },
+                onDismiss = { reporting = null },
+            )
         }
 
         deleting?.let { reviewId ->
@@ -312,8 +339,10 @@ private fun ReviewCard(
     isMine: Boolean,
     canReport: Boolean,
     reported: Boolean,
+    canMarkHelpful: Boolean,
     onDelete: () -> Unit,
     onReport: () -> Unit,
+    onHelpful: () -> Unit,
 ) {
     val colors = MaterialTheme.feastColors
     var openPhoto by remember { mutableStateOf<Int?>(null) }
@@ -344,6 +373,7 @@ private fun ReviewCard(
                     Text(label, color = colors.muted, fontSize = 12.sp, fontWeight = FontWeight.Medium, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 2.dp))
                 }
             }
+            if (review.status == REVIEW_IN_REVIEW) InReviewBadge()
             when {
                 // One quiet icon at the end, like the design's flag; editing your own is the button at the bottom
                 isMine -> IconButton(onClick = onDelete, modifier = Modifier.size(40.dp)) {
@@ -374,9 +404,91 @@ private fun ReviewCard(
                 }
             }
         }
+        if (review.status == REVIEW_IN_REVIEW) {
+            Text(
+                stringResource(Res.string.review_in_review_note), color = colors.muted, fontSize = 12.sp, lineHeight = 17.sp,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(end = 8.dp).fillMaxWidth().background(colors.lavenderSoft, RoundedCornerShape(12.dp)).padding(horizontal = 12.dp, vertical = 10.dp),
+            )
+        } else if (canMarkHelpful || review.helpfulCount > 0) {
+            HelpfulButton(count = review.helpfulCount, marked = review.helpfulByMe, enabled = canMarkHelpful, onClick = onHelpful)
+        }
     }
     openPhoto?.let { index ->
         FullScreenPhotos(review.imageUrls.orEmpty(), initialIndex = index, onDismiss = { openPhoto = null }, photoLabel = Res.string.review_photo)
+    }
+}
+
+/** "👍 Helpful · 12": a pill to mark the review helpful, filled once you have; just the count on your own review */
+@Composable
+private fun HelpfulButton(count: Int, marked: Boolean, enabled: Boolean, onClick: () -> Unit) {
+    val colors = MaterialTheme.feastColors
+    val shape = RoundedCornerShape(999.dp)
+    Row(
+        Modifier
+            .clip(shape)
+            .background(if (marked) colors.lavender else colors.surface)
+            .border(1.5.dp, if (marked) colors.selectedOutline else colors.border, shape)
+            .then(if (enabled) Modifier.toggleable(value = marked, role = Role.Checkbox, onValueChange = { onClick() }) else Modifier)
+            .padding(horizontal = 12.dp, vertical = 7.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Icon(
+            if (marked) Icons.Rounded.ThumbUp else Icons.Outlined.ThumbUp, contentDescription = null,
+            tint = if (marked) colors.accent else colors.muted, modifier = Modifier.size(16.dp),
+        )
+        val label = when {
+            !enabled -> pluralStringResource(Res.plurals.review_found_helpful, count, count)
+            count > 0 -> stringResource(Res.string.review_helpful_count, count)
+            else -> stringResource(Res.string.review_helpful)
+        }
+        Text(label, color = if (marked) colors.accent else colors.muted, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.labelMedium)
+    }
+}
+
+/** The amber "In review" badge for a review a moderator checks before it goes live */
+@Composable
+internal fun InReviewBadge() {
+    val colors = MaterialTheme.feastColors
+    Row(
+        Modifier.background(colors.saffronSoft, RoundedCornerShape(7.dp)).padding(horizontal = 8.dp, vertical = 3.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Icon(Icons.Rounded.Schedule, contentDescription = null, tint = colors.saffronText, modifier = Modifier.size(13.dp))
+        Text(stringResource(Res.string.review_status_in_review), color = colors.saffronText, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.labelSmall)
+    }
+}
+
+/** "Report review": what's wrong with it, in the reporter's words (optional) */
+@Composable
+private fun ReportReviewSheet(onReport: (note: String) -> Unit, onDismiss: () -> Unit) {
+    val colors = MaterialTheme.feastColors
+    var note by rememberSaveable { mutableStateOf("") }
+    FeastSheet(onDismiss) { close ->
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Box(Modifier.size(44.dp).background(colors.lavender, RoundedCornerShape(14.dp)), contentAlignment = Alignment.Center) {
+                Icon(Icons.Rounded.Flag, contentDescription = null, tint = colors.accent, modifier = Modifier.size(22.dp))
+            }
+            Column {
+                Text(stringResource(Res.string.review_report), color = colors.ink, fontSize = 21.sp, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.titleLarge)
+                Text(stringResource(Res.string.review_report_prompt), color = colors.muted, fontSize = 14.sp, style = MaterialTheme.typography.bodyMedium)
+            }
+        }
+        ReportDetailsFields(
+            note = note,
+            onNoteChange = { note = it },
+            photos = emptyList(),
+            onAddPhotos = {},
+            onRemovePhoto = {},
+            showPhotos = false,
+            modifier = Modifier.padding(top = 16.dp),
+        )
+        Row(Modifier.padding(top = 18.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            FeastButton(stringResource(Res.string.cancel), onClick = { close {} }, style = FeastButtonStyle.SOFT, modifier = Modifier.weight(1f))
+            FeastButton(stringResource(Res.string.report_submit), onClick = { close { onReport(note) } }, modifier = Modifier.weight(1.3f))
+        }
     }
 }
 

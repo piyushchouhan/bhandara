@@ -6,6 +6,11 @@ import com.example.bhandara.data.location.LocationService
 import com.example.bhandara.data.location.TimedLocation
 import com.example.bhandara.data.network.ApiClient
 import com.example.bhandara.data.network.FeastApi
+import com.example.bhandara.data.models.api.FeastReportReason
+import com.example.bhandara.photos.CompressedPhoto
+import com.example.bhandara.photos.PhotoUploadException
+import com.example.bhandara.photos.PickedPhoto
+import io.ktor.http.content.OutgoingContent
 import com.example.bhandara.data.settings.AppSettings
 import com.example.bhandara.ui.shopsmap.MapLocationState
 import com.russhwolf.settings.MapSettings
@@ -246,14 +251,14 @@ class FeastViewModelsTest {
         answer(HttpMethod.Put, "feasts/1/report", "", HttpStatusCode.TooManyRequests)
         val viewModel = feastOpened()
 
-        viewModel.report()
+        viewModel.report(FeastReportReason.WRONG_LOCATION)
         advanceUntilIdle()
 
         assertTrue(viewModel.state.value.canReport)
         assertFalse(settings.hasReportedFeast("1"))
 
         answer(HttpMethod.Put, "feasts/1/report", feast("1", "Gurudwara langar"))
-        viewModel.report()
+        viewModel.report(FeastReportReason.WRONG_LOCATION)
         advanceUntilIdle()
 
         assertFalse(viewModel.state.value.canReport)
@@ -264,11 +269,48 @@ class FeastViewModelsTest {
     }
 
     @Test
+    fun aReportSaysWhyAndCarriesTheNoteAndPhotos() = runTest(dispatcher) {
+        answer(HttpMethod.Put, "feasts/1/report", feast("1", "Gurudwara langar"))
+        val viewModel = FeastDetailsViewModel(
+            "1", FeastApi(client), settings, { signedInUid }, LocationService(phone, nowMillis = { 0 }), { now },
+            uploadPhotos = { photos -> photos.map { "https://img.test/${it.preview}.webp" } },
+        )
+        advanceUntilIdle()
+
+        viewModel.report(FeastReportReason.NOT_HAPPENING, "  Nobody here  ", listOf(Photo("gate")))
+        advanceUntilIdle()
+
+        val body = (requestsTo(HttpMethod.Put, "feasts/1/report").single().body as OutgoingContent.ByteArrayContent).bytes().decodeToString()
+        assertEquals("""{"reason":"NOT_HAPPENING","note":"Nobody here","photoUrls":["https://img.test/gate.webp"]}""", body)
+    }
+
+    @Test
+    fun ifTheReportsPhotosFailToUploadNothingIsSent() = runTest(dispatcher) {
+        val viewModel = FeastDetailsViewModel(
+            "1", FeastApi(client), settings, { signedInUid }, LocationService(phone, nowMillis = { 0 }), { now },
+            uploadPhotos = { throw PhotoUploadException("Upload failed") },
+        )
+        advanceUntilIdle()
+
+        viewModel.report(FeastReportReason.NOT_HAPPENING, "", listOf(Photo("gate")))
+        advanceUntilIdle()
+
+        assertTrue(requestsTo(HttpMethod.Put, "feasts/1/report").isEmpty())
+        assertEquals("Couldn't upload the photos. Please try again.", viewModel.state.value.message)
+        assertTrue(viewModel.state.value.canReport)
+    }
+
+    private data class Photo(val name: String) : PickedPhoto {
+        override val preview: Any = name
+        override suspend fun compressed(): CompressedPhoto? = null
+    }
+
+    @Test
     fun whenEnoughReportsTakeTheFeastDownThePageSaysSo() = runTest(dispatcher) {
         answer(HttpMethod.Put, "feasts/1/report", feast("1", "Gurudwara langar", active = false))
         val viewModel = feastOpened()
 
-        viewModel.report()
+        viewModel.report(FeastReportReason.WRONG_LOCATION)
         advanceUntilIdle()
 
         assertEquals(false, viewModel.state.value.feast?.isActive)
@@ -280,8 +322,8 @@ class FeastViewModelsTest {
         answer(HttpMethod.Put, "feasts/1/report", feast("1", "Gurudwara langar"))
         val viewModel = feastOpened()
 
-        viewModel.report()
-        viewModel.report()
+        viewModel.report(FeastReportReason.WRONG_LOCATION)
+        viewModel.report(FeastReportReason.WRONG_LOCATION)
         advanceUntilIdle()
 
         assertEquals(1, requestsTo(HttpMethod.Put, "feasts/1/report").size)
@@ -294,7 +336,7 @@ class FeastViewModelsTest {
 
         assertTrue(viewModel.state.value.isOrganizer)
         assertFalse(viewModel.state.value.canReport)
-        viewModel.report()
+        viewModel.report(FeastReportReason.WRONG_LOCATION)
         advanceUntilIdle()
 
         assertTrue(requestsTo(HttpMethod.Put, "feasts/1/report").isEmpty())

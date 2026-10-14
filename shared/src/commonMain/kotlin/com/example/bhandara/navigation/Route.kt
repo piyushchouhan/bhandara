@@ -90,6 +90,10 @@ sealed interface Route {
     @Serializable
     data class RepostFeast(val feastId: String) : Route
 
+    /** "Fix and resubmit": fixing a feast taken down after reports, then sending it back for a check */
+    @Serializable
+    data class ResubmitFeast(val feastId: String) : Route
+
     /** The owner manages a shop of theirs, from the profile */
     @Serializable
     data class ManageShop(val shopId: String) : Route

@@ -30,6 +30,12 @@ sealed interface FeastFormStart {
 
     /** A new feast from a past one: same food, photos, organizer and place details, a new date */
     data class Repost(val feastId: String) : FeastFormStart
+
+    /**
+     * "Fix and resubmit": a feast taken down after reports, fixed and sent back for a moderator to check. It keeps its
+     * place, unless it was taken down for being in the wrong place: then it goes where the user is now.
+     */
+    data class Resubmit(val feastId: String) : FeastFormStart
 }
 
 /**
@@ -53,6 +59,7 @@ data class ReportFeastState(
     val isLastStep: Boolean get() = step == FeastStep.entries.last()
     val canAddPhotos: Boolean get() = form.photoCount < MAX_FEAST_PHOTOS
     val isEditing: Boolean get() = start is FeastFormStart.Edit
+    val isResubmitting: Boolean get() = start is FeastFormStart.Resubmit
 }
 
 /**
@@ -81,6 +88,7 @@ class ReportFeastViewModel(
         val feastId = when (start) {
             is FeastFormStart.Edit -> start.feastId
             is FeastFormStart.Repost -> start.feastId
+            is FeastFormStart.Resubmit -> start.feastId
             FeastFormStart.New -> null
         }
         if (feastId != null) load(feastId)
@@ -93,8 +101,9 @@ class ReportFeastViewModel(
             when (val result = feastApi.getFeast(feastId)) {
                 is ApiResult.Success -> {
                     val feast = result.value
-                    val editing = start is FeastFormStart.Edit
-                    if (editing) editedPlace = feast.latitude to feast.longitude
+                    val editing = start is FeastFormStart.Edit || start is FeastFormStart.Resubmit
+                    val wrongPlace = start is FeastFormStart.Resubmit && feast.takedownReason == "WRONG_LOCATION"
+                    if (editing && !wrongPlace) editedPlace = feast.latitude to feast.longitude
                     _state.update { it.copy(loading = false, form = feast.toForm(keepDate = editing)) }
                 }
                 is ApiResult.Failure -> _state.update { it.copy(loading = false, error = result.error.message) }
@@ -221,6 +230,7 @@ class ReportFeastViewModel(
             )
             val result = when (start) {
                 is FeastFormStart.Edit -> feastApi.updateFeast(start.feastId, request)
+                is FeastFormStart.Resubmit -> feastApi.resubmitFeast(start.feastId, request)
                 else -> feastApi.createFeast(request)
             }
             when (result) {
