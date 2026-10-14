@@ -1,67 +1,69 @@
-# Backend Integration
+# Mobile–Backend Integration
 
-## Scope and ownership
+## Source locations
 
-The mobile applications use a custom REST backend and STOMP/WebSocket service. This repository contains the client integration, not the server implementation, database migrations, moderator console, or deployment configuration.
+The mobile REST wrappers live in `shared/src/commonMain/kotlin/com/example/bhandara/data/network/`. The companion `be-bhandara` repository implements the service under `src/main/java/com/localfeast/backend/`.
 
-The descriptions below reflect the client contract as reviewed on **14 October 2026**. Confirm authorization, retention, moderation, rate limits, and operational guarantees against the actual backend before making production claims.
+This page explains how the apps use the service. For server implementation, use the [backend overview](backend/index.md), [controller reference](backend/api-reference.md), and [authorization rules](backend/security.md).
 
-## REST transport
+## Transport and identity
 
-`shared/.../data/network/ApiClient.kt` uses Ktor with kotlinx.serialization. Android uses an OkHttp engine; iOS uses Darwin. The client sets JSON content type by default, ignores unknown response fields, and maps unsuccessful responses to structured `ApiError` values.
+`ApiClient` uses Ktor and kotlinx.serialization, with OkHttp on Android and Darwin on iOS. It sets JSON content type by default, ignores unknown response fields, and returns `ApiResult` values. Connection timeout is 15 seconds; request timeout is 60 seconds.
 
-- Connection timeout: **15 seconds**.
-- Request timeout: **60 seconds**, including menu-photo extraction.
-- Authentication: `Authorization: Bearer <Firebase ID token>` when available.
-- Android base URL: `BuildConfig.API_BASE_URL` from `app/build.gradle.kts`.
-- iOS base URL: `ApiBaseUrl` from the generated `Info.plist`, populated through `Secrets.xcconfig`.
+Android reads `BuildConfig.API_BASE_URL` from `app/build.gradle.kts`. iOS reads `ApiBaseUrl` from generated `Info.plist`, populated through `Secrets.xcconfig`. Use a backend URL reachable from the device and preserve the trailing slash expected by client configuration.
 
-Anonymous Firebase users also have an authenticated identity. The client may send a request without a token when token retrieval is unavailable; the backend must reject protected operations appropriately.
+Requests attach a Firebase ID token when available. Anonymous Firebase sign-in provides an authenticated UID; a Google sign-in gate is an additional mobile interface rule. The server verifies tokens and checks ownership independently. Configured administrator emails in the mobile app affect prompts, while server `AdminAccess` checks verified Firebase email claims.
 
-## Main data flows
+## Discovery and location
 
-### Discovery
+The home map requests `api/feed` with `lat`, `lon`, and `radius`. The backend sources stationary shops, live carts, and verification candidates, hydrates records from PostgreSQL, filters and ranks them, then returns `activeShops`, optional `verificationPrompt`, and `zones`.
 
-The shops map requests `api/feed` using `lat`, `lon`, and `radius` query parameters. The response supplies active shops/carts, an optional verification prompt, and optional shop zones. Zones include shop IDs, center coordinates, outlines, and localized names.
+The mobile map searches within returned data. Server zones provide membership, outlines, centers, and localized names. Moving feed candidates use live Redis positions rather than their original listing coordinates. The server's feed time filter hides moving candidates at or after 21:00 in the configured app time zone.
 
-Feast discovery uses `api/feasts/nearby` with `lat`, `lon`, and radius. Search radii are expressed in meters; the user's default is 5 km.
+Feasts use `api/feasts/nearby` with `lat`, `lon`, and `radius`. Mobile defaults to the selected search radius, initially 5 km; the controller default when radius is omitted is 500 m. Do not rely on matching defaults across endpoints.
 
-### Contributions and media
+## Photos and AI extraction
 
-Photos are compressed and uploaded through platform Firebase Storage adapters. The client submits resulting URLs with shops, feasts, reviews, claims, or report evidence. `PhotoUploader` reports progress and attempts cleanup of completed uploads when a batch fails.
+Ordinary contribution photos are compressed and uploaded through platform Firebase Storage adapters. The backend receives download URLs with shops, feasts, reviews, claims, and report evidence. `PhotoUploader` reports batch progress and attempts cleanup of completed uploads on failure.
 
-Menu extraction is different: compressed photos go directly to `api/menu-items/image/extract` as multipart data under the `images` field. Returned draft items are checked and edited before menu submission.
+Menu extraction sends compressed image bytes directly to `api/menu-items/image/extract` as multipart `images` parts. The server allows up to ten image parts and returns draft items; the client lets the user inspect them before a separate save. Gemini assessment for ownership claims fetches permitted Firebase Storage URLs rather than arbitrary remote image hosts.
 
-### Saved places
+The mobile request timeout and upstream AI timeout are independent. A timeout does not mean every upstream operation was canceled; the client must not infer that a record was saved from an extraction result alone.
 
-`api/saved/sync` accepts queued saves and removals and returns the account's saved places. The client persists changes locally until synchronization succeeds. Account switching and guest migration are coordinated by `SavedPlacesSync`.
+## Saved-place synchronization
 
-### Accounts and notifications
+`SavedPlacesSync` keeps local saves/removals queued and submits them to `api/saved/sync`. The server processes removals before additions and returns its full list, capped at 500 places. Guest saves can carry into a signed-in account; established account switches clear local state before loading that account's saves.
 
-Android registers users and FCM tokens, synchronizes replacement tokens, and submits location for nearby notification targeting. Notification preferences have a backend record and a local copy. The source includes notification routing for new feasts, report updates, shop reviews, and claim outcomes.
+Keep the existing queue/merge logic when modifying this flow. It protects changes made during a request and avoids transferring one account's saved places to another.
 
-The account deletion client expects personal account data to be removed while shops and feasts remain without the person's name. This is an integration expectation; backend execution and retention need independent verification.
+## Live-cart protocol
 
-## WebSocket integration
-
-The base URL is converted from HTTP(S) to WS(S), with `/ws/websocket` appended. Firebase tokens are supplied in STOMP connection headers.
+Native STOMP clients connect to `/ws/websocket` and provide the bearer token in CONNECT headers when publishing.
 
 | Destination | Direction | Purpose |
 | --- | --- | --- |
-| `/app/cart/location` | Android vendor → server | Publish position and presence |
-| `/app/cart/offline` | Android vendor → server | Signal that sharing stopped |
-| `/topic/cart/{shopId}` | Server → customer | Deliver cart position updates |
+| `/app/cart/location` | Android vendor → server | Publish position/presence |
+| `/app/cart/offline` | Android vendor → server | Remove live cart immediately |
+| `/topic/cart/{shopId}` | Server → customer | Stream accepted positions |
 
-Shared `LiveCartFeed` reconnects with increasing delays capped at 30 seconds and skips unreadable messages. The Android vendor publisher has its own connection and retry handling. The server must authorize publishing against actual ownership rather than trusting identity fields in a message.
+The server authorizes the stored cart owner, refreshes presence for 120 seconds, and broadcasts updates. Shared `LiveCartFeed` reconnects with increasing delays capped at 30 seconds. Its subscription closes when the tracking sheet is dismissed. Android vendor mode has a separate foreground publishing service; iOS implements customer viewing only.
 
-## Trust and moderation boundaries
+The server also implements REST follow-once registrations and a `cart_proximity` push. Those endpoints and notification routing are not integrated into the inspected shared mobile client.
 
-The client supports ownership claim outcomes, verification votes with coordinates, report evidence, report status, review visibility states, and feast takedown/resubmission states. It does not prove how the server reaches those decisions.
+## Notifications
 
-Server responsibilities include token validation, owner/admin authorization, proximity enforcement, duplicate prevention, rate limiting, claim decisions, moderation actions, and notification fan-out. Configured client administrator email lists are for interface behavior only.
+Android registers and synchronizes FCM tokens, submits location for nearby alerts, and routes `new_localfeast`, `report_update`, `shop_review`, and `claim_status` messages. New-feast targeting uses 500 m around the feast. Server `UserNotifier` enforces category preferences and optional 22:00–07:00 quiet hours for its supported categories.
 
-## Failure handling
+The one-time cart proximity processor uses a different direct send path and currently bypasses that preference gate. iOS lacks equivalent push-delivery integration in the inspected host.
 
-The client maps validation errors, unauthorized access, forbidden operations, missing resources, conflicts, rate limits, service failures, network failures, and unreadable responses. Validation messages can be shown to the user; internal failures receive generic messages. Cancellation propagates when a screen or operation is stopped.
+## Privacy and deletion
 
-For exact paths and payload families, continue to the [API reference](api-reference.md).
+Mobile JSON export combines the current account details, selected API responses, and local saves. It is generated in the client, not through a dedicated backend export endpoint.
+
+Account deletion invokes `DELETE api/users/me`. The backend transaction deletes database personal records and retains shops/feasts under `deleted-user` with specified contact/audit fields cleared. It then attempts Firebase identity deletion after commit. `Feast.organizerName`, stored media objects, and Redis follow registrations are not explicitly cleared by that service. See [data cleanup boundaries](roadmap.md#data-cleanup-boundaries) before changing the interface's deletion description.
+
+## Error handling
+
+The server advice returns `message`, `statusCode`, and optional field `errors` for many failures. Some controller and security paths return other shapes or empty bodies. `ApiClient` maps network failures, validation, authentication/authorization, missing resources, conflicts, rate limits, server failures, and unreadable successful responses. Coroutine cancellation propagates.
+
+For route coverage, compare the [mobile wrappers](api-reference.md) with the [server route inventory](backend/api-reference.md). Existing server-only capabilities include shop updates, detailed menu item update/deletion, heatmap reads, one-time follows, and administrator operations.

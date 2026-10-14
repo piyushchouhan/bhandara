@@ -1,8 +1,8 @@
-# API Reference
+# Mobile API Reference
 
 ## Reading this reference
 
-This is the REST and real-time contract consumed by the mobile source, reviewed on **14 October 2026**. Paths are relative to the configured backend URL. It is not a server-generated OpenAPI specification or a guarantee that every endpoint is deployed.
+This is the REST and real-time contract consumed by the mobile source, reviewed on **14 October 2026**. Paths are relative to the configured backend URL. For additional routes and controller implementations, see the [backend API reference](backend/api-reference.md).
 
 Wrappers live under `shared/src/commonMain/kotlin/com/example/bhandara/data/network/`. Serializable domain payloads live under `data/models/api/`, with synchronization and preference payloads also defined beside their API wrappers.
 
@@ -102,4 +102,4 @@ The shared `CartLocationUpdate` model carries numeric `shopId`, `ownerUid`, `lat
 | Network or timeout | Connectivity or timeout failure |
 | Unreadable successful response | Unexpected response |
 
-Exact ownership rules, rate limits, moderation thresholds, and schema constraints need confirmation from server documentation. The client must not be treated as the authority for those policies.
+Server ownership checks, rate limits, and moderation thresholds are documented in [authentication and moderation](backend/security.md). Storage and schema details are in the [backend data model](backend/data-model.md).

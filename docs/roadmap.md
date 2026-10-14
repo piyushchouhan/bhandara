@@ -1,54 +1,40 @@
-# Roadmap and Readiness
+# Implementation Gaps
 
-## Current baseline
+This page records incomplete interfaces and integration boundaries identified in the source review on **14 October 2026**. It is a developer reference, not a delivery schedule.
 
-The repository contains a broad mobile implementation covering shops, carts, community feasts, reviews, saved places, ownership claims, reporting, preferences, and data controls. Most product code is shared between Android and iOS.
+## Mobile implementation
 
-The priorities below are proposed from the source review on **14 October 2026**. They are not delivery commitments or evidence of a publicly launched service.
+| Area | Current behavior | Development boundary |
+| --- | --- | --- |
+| Owner operations | Timing and manual open/closed controls show “Coming soon” | The backend supports full shop updates, including opening/closing times; the mobile editor is incomplete. A dedicated manual open/closed override is not established by that API. |
+| Shop lifecycle | Owners can deactivate a shop | Permanent deletion and reactivation controls are incomplete |
+| Menu management | Mobile supports adding detailed menu items | The backend also has item update/delete endpoints that are not exposed through the inspected shared `MenuApi` |
+| Profile | Google account details are displayed | In-app profile name/photo editing remains a placeholder |
+| Owner statistics | Weekly statistics are displayed without a connected analytics implementation | Do not use these controls as a source of measured activity |
+| iOS native services | Shared discovery and cart viewing work through native bridges | Vendor publishing, push delivery, and periodic user-location synchronization lack Android equivalents |
+| Offline behavior | Listing drafts and saved-place changes persist locally | Discovery still requires backend access |
+| One-time cart alerts | The server has follow-once endpoints and a `cart_proximity` payload | The inspected mobile clients do not wrap these endpoints or route this notification type |
 
-## Known implementation gaps
+## Backend integration and operations
 
-| Area | Current boundary |
+| Area | Detail |
 | --- | --- |
-| Owner operations | Manual open/closed switching and timing changes show “Coming soon” |
-| Shop lifecycle | Deactivation exists; permanent deletion and reactivation are not completed |
-| Owner analytics | Weekly statistics lack a connected analytics implementation |
-| Profile editing | Name/profile editing and photo changes show “Coming soon” |
-| iOS services | Vendor publishing, push delivery, and periodic location synchronization lack Android-equivalent integrations |
-| Offline experience | Local saved places and listing drafts are supported; discovery still depends on network services |
-| Backend verification | Server implementation, moderator tooling, infrastructure, and deployment status are outside this repository |
-| Release configuration | Android points to a local development backend and uses debug signing for the release build configuration |
+| API defaults | Feed defaults to 5 km; nearby feast and cart controllers default to 500 m. Mobile clients may pass a different radius explicitly. |
+| Time rules | The feed hides moving candidates at or after 21:00 in the configured app time zone; the nearby-cart endpoint is a separate service path. |
+| Event durability | Search synchronization and notifications use in-process events. There is no durable event outbox or active Kafka transport. |
+| WebSocket distribution | Spring's simple broker is local to one instance. Shared Redis state does not distribute subscriptions across instances. |
+| CORS | The MVC configuration hardcodes a localhost origin; changing `CORS_ALLOWED_ORIGINS` alone does not activate the commented security configuration. |
+| Migrations | Profiles use Hibernate schema update. A SQL file exists under `db/migration`, but the POM does not configure Flyway or Liquibase. |
+| Local Compose | The older Compose file omits Redis/Meilisearch services and does not supply the `DB_*` variables required by the Docker profile. It is not a complete one-command development stack. |
+| Release gating | The backend test workflow and image-publishing workflow are separate; image publishing skips tests and does not depend on the test job. |
+| Credentials | Some profile files contain literal credential values. Use environment-backed configuration and review those files before distribution; values are intentionally omitted from this site. |
 
-## Proposed development priorities
+## Data cleanup boundaries
 
-### 1. Establish a release baseline
+`AccountDeletionService` removes database account records and related personal contributions, reassigns retained shops/feasts to `deleted-user`, clears specified contact/audit fields, and attempts Firebase identity deletion after commit. It does not clear every descriptive field: for example, `Feast.organizerName` is not explicitly cleared. Firebase identity deletion can fail after database deletion has committed.
 
-Complete a device-based walkthrough of discovery, posting, ownership, contribution, and privacy flows against the intended backend. Verify permission behavior, notification routing, location accuracy, network recovery, account switching, and moderation outcomes.
+Firebase Storage objects and Redis follow registrations are not explicitly removed by that service. Follow-once registrations have no explicit TTL in `OneTimeFollowService`. Document and test the required cleanup behavior before treating account deletion as complete across every storage system.
 
-Configure production endpoints and signing, review transport settings, and confirm Maps, Firebase, storage, and backend access controls. Document supported OS versions and a tested device matrix; the current Android minimum is API 35, and the iOS project declares iOS 16.0, subject to dependency compatibility validation.
+## Validation when changing these areas
 
-**Evidence to collect:** acceptance results, reproducible builds, deployed service inventory, and release ownership.
-
-### 2. Complete essential provider controls
-
-Prioritize opening-time updates, operational status, and an appropriate reactivation flow. Replace placeholder statistics only when real measurement is available. Decide whether iOS vendor publishing and push delivery are required for the initial target audience.
-
-**Evidence to collect:** completed owner tasks, vendor feedback, field reliability, and support workload.
-
-### 3. Validate a concentrated local pilot
-
-Select a manageable area and build accurate coverage with participating shops, vendors, and organizers. Establish responsibility for listing quality, claim decisions, and report resolution.
-
-**Evidence to collect:** discovery usefulness, listing freshness, repeat use, vendor participation, and moderation response times.
-
-### 4. Test commercial demand
-
-Interview participating merchants, assess willingness to pay, and test a narrow commercial offering after the core discovery experience is reliable. Track Maps, storage, AI, infrastructure, onboarding, and support costs alongside engagement.
-
-**Evidence to collect:** paid-pilot results, cost drivers, retention, and repeatable onboarding economics.
-
-## Scope of readiness claims
-
-Automated tests exist across shared features, but their presence alone is not a production-readiness certification. This documentation update does not represent a new app test run, security audit, legal review, backend audit, or deployment verification.
-
-A complete readiness decision should combine mobile validation with backend evidence, operational processes, and verified business metrics. The [investor brief](investor-brief.md) identifies the business evidence needed for a funding discussion.
+Verify the affected mobile flow against the server, including permission denial, expired credentials, ownership rejection, upload failure, network recovery, and account switching. For server rules, add focused service or integration tests; see [backend testing](backend/testing.md). For deployment changes, confirm profile resolution, credentials, schema state, and service connectivity in the intended environment.

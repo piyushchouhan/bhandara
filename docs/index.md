@@ -1,44 +1,34 @@
-# Local Feast
+# Developer Documentation
 
-## Discover the food around you
+Local Feast is a location-based application for discovering food shops, moving vendors, and community feasts. This site documents the Android and iOS applications in `bhandara` and the Java service in the companion `be-bhandara` repository.
 
-Local Feast brings nearby food shops, moving vendors, and community feasts into one location-based experience. People can explore what is available, inspect menus and reviews, follow a live cart, or find a bhandara happening nearby. Shop owners and organizers can contribute information directly, while community verification and reporting help surface inaccurate listings.
+## System components
 
-The product is developed in the **Bhandara** repository. Its interface uses the **Local Feast** name.
-
-## One product, three discovery needs
-
-| Experience | What people need | Product response |
+| Component | Source | Responsibility |
 | --- | --- | --- |
-| Local shops | Find food nearby and decide where to go | Searchable map, shop details, menus, prices, reviews, photos, and crowd indicators |
-| Moving vendors | Find a vendor whose location changes | Cart profiles, usual stops, and live location viewing; Android vendor mode publishes location |
-| Community feasts | Discover food that is available at a particular place and time | Nearby map and list, event timings, menus, organizer details, and feast lifecycle controls |
+| Android host | `bhandara/app` | App entry point, native authentication/storage adapters, FCM, periodic work, and vendor tracking |
+| Shared mobile layer | `bhandara/shared` | Compose screens, ViewModels, navigation, REST clients, models, preferences, and synchronization |
+| iOS host | `bhandara/iosApp` | SwiftUI host and native SDK bridges |
+| Backend | `be-bhandara/src/main/java/com/localfeast/backend` | REST endpoints, domain services, authorization, discovery, moderation, and real-time cart updates |
+| PostgreSQL/PostGIS | Backend runtime dependency | Persistent records and spatial queries |
+| Redis | Backend runtime dependency | Live cart positions, crowd pings, follows, and rate limiting |
+| Meilisearch | Backend runtime dependency | Nearby shop candidate search, synchronized from PostgreSQL |
+| Firebase and Gemini | External integrations | Authentication, mobile media storage, push delivery, menu extraction, claim assessment, and zone naming |
 
-## Who the product serves
+## Start here
 
-**People looking for food** can browse nearby options without first completing an account signup, save places, and use directions or contact actions where available.
+- [Mobile setup](getting-started.md): platform prerequisites, local configuration, and builds.
+- [Backend setup and operations](backend/operations.md): dependencies, environment variables, profiles, and startup.
+- [Mobile architecture](architecture.md) and [backend architecture](backend/architecture.md): code organization and request processing.
+- [Features](features.md): implemented workflows and platform coverage.
+- [Mobile API reference](api-reference.md): endpoints consumed by shared clients.
+- [Backend API reference](backend/api-reference.md): controller routes, including server-only and administrative operations.
+- [Data model](backend/data-model.md): persistent entities, Redis structures, and synchronization.
+- [Authentication and moderation](backend/security.md): identity, ownership, reports, and claim rules.
+- [Development](development.md), [backend testing](backend/testing.md), and [implementation gaps](roadmap.md): maintenance and validation.
 
-**Shop owners and mobile vendors** can create listings, describe their offering, add menus, and establish ownership through a claim flow. Moving-cart profiles include practical details such as usual stops, payment methods, and how to recognize the cart.
+## Documentation scope
 
-**Community organizers** can publish feasts with photos, location, timings, and food details, then edit, end, remove, or repost them as circumstances change.
+Reviewed on **14 October 2026** against the mobile working tree and backend revision `f3751bf`. Backend source was inspected locally; the backend repository was not modified. Configuration and implemented behavior are documented separately from deployment state. Application tests were not rerun for this documentation update.
 
-**Community contributors** can review shops, share photos, verify nearby places, report problems, and follow the status of their reports.
-
-## Product foundations
-
-- Shared Kotlin Multiplatform and Compose code supports Android and iOS experiences.
-- Google Maps provides map presentation on both platforms through native integrations.
-- Firebase supports authentication and photo storage; Android also integrates push notifications.
-- REST APIs provide product data, and STOMP over WebSockets delivers live cart positions.
-- English, Hindi, and Marathi resources support a locally relevant interface.
-- Saved places have local persistence and account synchronization; privacy screens include data export and account deletion requests.
-
-## Current status
-
-The repository contains implemented client flows across discovery, contribution, ownership, and personal account management. Some owner and profile controls remain placeholders. Android supports vendor location publishing and push notification handling; equivalent iOS services are not implemented in the inspected source.
-
-This documentation describes the mobile implementation reviewed on **14 October 2026**. Backend behavior is described through the client contract, since server source and deployment evidence are outside this repository. Public availability, user adoption, revenue, and operating performance require separate evidence.
-
-## Continue reading
-
-Start with the [investor brief](investor-brief.md) for the product thesis and validation priorities, the [feature catalogue](features.md) for implementation scope, or the [roadmap and readiness assessment](roadmap.md) for remaining work. Technical readers can continue to the [architecture](architecture.md) and [setup guide](getting-started.md).
+Use Java controller annotations and service implementations as the authority when older comments disagree with code. In particular, user registration requires authentication, the discovery route is `/api/feed`, and shop crowd levels use a 50 m radius.

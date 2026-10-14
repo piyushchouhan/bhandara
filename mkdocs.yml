@@ -1,5 +1,5 @@
 site_name: Local Feast
-site_description: Product, investor, and technical documentation for Local Feast, developed in the Bhandara repository.
+site_description: Developer documentation for the Local Feast mobile applications and backend.
 site_url: https://piyushchouhan.github.io/bhandara/
 
 theme:
@@ -31,16 +31,23 @@ theme:
     - content.code.annotate
 
 nav:
-  - Product:
+  - Project:
       - Overview: index.md
-      - Investor Brief: investor-brief.md
       - Feature Catalogue: features.md
-      - Roadmap and Readiness: roadmap.md
+      - Implementation Gaps: roadmap.md
   - Technology:
       - Architecture: architecture.md
       - Backend Integration: backend-integration.md
-      - API Reference: api-reference.md
+      - Mobile API Reference: api-reference.md
       - Firebase and Platform Services: firebase-setup.md
+  - Backend:
+      - Overview: backend/index.md
+      - Architecture and Flows: backend/architecture.md
+      - Data Model: backend/data-model.md
+      - API Reference: backend/api-reference.md
+      - Authentication and Moderation: backend/security.md
+      - Setup and Operations: backend/operations.md
+      - Development and Testing: backend/testing.md
   - Development:
       - Getting Started: getting-started.md
       - Development Guide: development.md

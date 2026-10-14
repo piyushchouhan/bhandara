@@ -1,6 +1,6 @@
 # Feature Catalogue
 
-This catalogue describes client capabilities present in the repository as reviewed on **14 October 2026**. “Implemented” means that a client flow exists; it does not establish that its backend is currently deployed or that the feature has completed release acceptance testing.
+This catalogue describes mobile workflows and platform coverage as reviewed on **14 October 2026**. For server behavior, routes, and state rules, use the [backend documentation](backend/index.md).
 
 ## Food discovery
 
@@ -34,7 +34,7 @@ Listing creation is a multi-step flow with local draft persistence. Adding a sho
 
 Fixed-shop fields include name, type, menu, photos, address, contact details, and amenities. Moving carts have a dedicated flow for cart type, goods sold, categories and units, usual stops, days out, payment options, seasonal items, and visual identification hints.
 
-Detailed menu items can be entered manually or extracted from menu photos by a backend AI service. Extracted items are editable before saving. The client handles scan failures and rate limits; it does not establish extraction accuracy or operating cost.
+Detailed menu items can be entered manually or extracted from menu photos by a backend AI service. Extracted items are editable before saving. The client handles scan failures and rate limits; extraction returns draft items for review before saving.
 
 ## Live carts
 
@@ -46,7 +46,7 @@ Android vendor mode publishes location through a foreground service with an ongo
 
 Owners can claim eligible platform-listed shops using photos, current location, and optional phone information. The client displays approved, in-review, and rejected outcomes from the backend.
 
-Owner flows include viewing claimed shops, opening the public listing, adding menu items, inspecting reviews, and deactivating an active shop. Manual open/closed control, opening-time editing, permanent shop deletion, reactivation, and owner analytics are not complete; see [roadmap and readiness](roadmap.md).
+Owner flows include viewing claimed shops, opening the public listing, adding menu items, inspecting reviews, and deactivating an active shop. Manual open/closed control, opening-time editing, permanent shop deletion, reactivation, and owner analytics are not complete; see [implementation gaps](roadmap.md).
 
 ## Reviews, photos, and trust
 
@@ -57,7 +57,7 @@ Owner flows include viewing claimed shops, opening the public listing, adding me
 - Nearby verification prompts ask whether a place is real, including the user's current position with a vote.
 - Shop, review, and feast reports support follow-up through **My reports**, including additional evidence and withdrawal where eligible.
 
-These are contribution and status-management interfaces. Moderator administration and enforcement are backend responsibilities outside this repository.
+The backend exposes administrator APIs for claims, flagged shops, reported/pending reviews, feast resubmissions, and report evidence. See [authentication and moderation](backend/security.md).
 
 ## Accounts, saved places, and privacy
 
@@ -65,7 +65,7 @@ Anonymous authentication supports entry without an account signup. Google sign-i
 
 Saved shops and feasts persist locally, support filtering and sorting, and synchronize with an account through a queued change mechanism. Guest saves can carry into a signed-in account; switching between established accounts avoids copying one account's saves to another. This is targeted offline support, not a fully offline product.
 
-Privacy screens include location information, selective JSON data export, and an account deletion request. The client contract describes deletion of personal account data while retaining contributed shops and feasts without the person's name; actual server retention and deletion need backend verification.
+Privacy screens include location information, selective JSON data export, and an account deletion request. The backend removes database account data and retains shops/feasts under a deleted-user identity, with cleanup boundaries documented in [the data model](backend/data-model.md#account-deletion).
 
 ## Preferences and assistance
 

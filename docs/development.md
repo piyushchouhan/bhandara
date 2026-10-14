@@ -79,4 +79,4 @@ Install the documentation dependency version recorded in `requirements-docs.txt`
 
 Do not edit generated HTML or publish manually with `mkdocs gh-deploy` after switching to the Actions source.
 
-When product behavior changes, update the feature catalogue, platform coverage, and known limitations as well as technical details. Investor-facing statements must distinguish verified product facts, proposed priorities, and business hypotheses. Add commercial metrics only from verified records, with dates and definitions.
+When product behavior changes, update the feature catalogue, platform coverage, and known limitations as well as technical details. Describe the implemented behavior, request and response contracts, configuration requirements, failure handling, and known limitations. Update both mobile and backend references when an integration changes.

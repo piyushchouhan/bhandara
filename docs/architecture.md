@@ -17,7 +17,7 @@ Firebase, FCM, tracking             SwiftUI, Firebase, Google SDK bridges
                  Firebase photo storage
 ```
 
-Backend services and their deployment are external to this repository. The architecture below describes the mobile implementation reviewed on 14 October 2026.
+Backend source lives in the companion `be-bhandara` repository. See [backend architecture](backend/architecture.md) for its Spring Boot services, PostgreSQL/PostGIS records, Redis live state, Meilisearch sourcing, and event flows. This page covers the mobile architecture reviewed on 14 October 2026.
 
 ## Modules and responsibilities
 

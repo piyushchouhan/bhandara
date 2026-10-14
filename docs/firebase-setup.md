@@ -10,7 +10,7 @@
 | Firebase Analytics | Dependency included | Not configured in the inspected host |
 | Google Maps | Native SDK through Maps Compose | Native SDK through `IosGoogleMapBridge` |
 
-Firestore is not part of the current mobile persistence implementation. Product records and synchronization use the custom backend; local preferences and saved-place state use multiplatform settings. An Analytics dependency alone does not establish a validated event or business metrics programme.
+Firestore is not part of the current mobile persistence implementation. Product records and synchronization use the custom backend; local preferences and saved-place state use multiplatform settings. The inspected Android host does not define a custom analytics event catalogue.
 
 ## Configure authentication
 
@@ -47,7 +47,7 @@ Shared crowd pings run only while the app is visible and only when a permitted l
 
 `BhandaraMessagingService` handles incoming FCM messages and token changes. `PushTokenSync` records successful token synchronization so a failed send can be retried at a later app start.
 
-Notification payloads support `new_localfeast`, `report_update`, `shop_review`, and `claim_status`. The Android host maps these to the corresponding app routes. Backend delivery must respect the user's notification preferences and quiet-hours settings; the mobile settings interface alone does not verify that enforcement.
+Notification payloads support `new_localfeast`, `report_update`, `shop_review`, and `claim_status`. The Android host maps these to the corresponding app routes. Server `UserNotifier` applies category preferences and optional quiet hours to feast, report, review, and claim alerts. The separate one-time cart proximity path sends directly; see [backend architecture](backend/architecture.md).
 
 ## iOS permissions and limits
 
@@ -59,4 +59,4 @@ There is no equivalent iOS FCM delivery setup, periodic user-location worker, or
 
 Anonymous authentication is pseudonymous: account IDs, location, push tokens, and contributions can still be sensitive. Google sign-in also provides account information. Do not describe these flows as collecting no personal data or as automatically satisfying a legal standard.
 
-The app includes selective JSON export and an account deletion request. Verify the backend's actual deletion, retained contributions, storage cleanup, and retention behavior before publishing binding privacy promises. See [feature catalogue](features.md) for user-facing scope and [backend integration](backend-integration.md) for service responsibilities.
+The app includes selective JSON export and an account deletion request. See the [backend data model](backend/data-model.md#account-deletion) for transaction behavior, retained content, Firebase identity deletion, and media/Redis cleanup boundaries. See [feature catalogue](features.md) for screen coverage.
