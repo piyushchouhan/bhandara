@@ -1,5 +1,7 @@
 package com.example.bhandara.ui.profile
 
+import com.example.bhandara.data.network.UserStats
+import com.example.bhandara.data.network.ActivityApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.bhandara.auth.AuthService
@@ -40,6 +42,8 @@ data class ProfileState(
     /** A one-time note (e.g. "Signed in"), cleared with onMessageShown() */
     val message: String? = null,
     val error: String? = null,
+    /** Reviews, photos, feasts and shops verified; null until known (the card shows "–") */
+    val stats: UserStats? = null,
 ) {
     /** Not signed in with an account: the app uses an anonymous one */
     val isGuest: Boolean get() = account == null || account.isAnonymous
@@ -63,6 +67,7 @@ class ProfileViewModel(
     private val signOut: (suspend () -> Unit)?,
     private val claimApi: ClaimApi? = null,
     private val shopApi: ShopApi? = null,
+    private val activityApi: ActivityApi? = null,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(ProfileState(account = auth.account()))
@@ -70,6 +75,15 @@ class ProfileViewModel(
 
     init {
         loadMyShops()
+        loadStats()
+    }
+
+    /** The numbers on the profile card; kept as they were if they can't be fetched */
+    fun loadStats() {
+        val api = activityApi ?: return
+        viewModelScope.launch {
+            api.myStats().getOrNull()?.let { stats -> _state.update { it.copy(stats = stats) } }
+        }
     }
 
     /**
@@ -110,7 +124,10 @@ class ProfileViewModel(
             }
         }
         // Now that there's an account, its shops can be found
-        if (outcome == SignInOutcome.SignedIn) loadMyShops()
+        if (outcome == SignInOutcome.SignedIn) {
+            loadMyShops()
+            loadStats()
+        }
     }
 
     /** Signs out, then back in anonymously, since the app needs someone signed in to talk to the backend */
@@ -128,9 +145,10 @@ class ProfileViewModel(
                 false
             }
             if (signedOut) auth.ensureSignedIn()
+            if (signedOut) loadStats()
             _state.update {
                 if (signedOut) {
-                    it.copy(busy = false, account = auth.account(), myShops = emptyList(), message = "Signed out")
+                    it.copy(busy = false, account = auth.account(), myShops = emptyList(), stats = null, message = "Signed out")
                 } else {
                     it.copy(busy = false, error = "Couldn't sign out. Please try again.")
                 }

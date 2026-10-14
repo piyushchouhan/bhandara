@@ -1,5 +1,8 @@
 package com.example.bhandara.ui.shopdetails
 
+import com.example.bhandara.data.network.ShopWeekStats
+import com.example.bhandara.data.network.ActivityAction
+import com.example.bhandara.data.network.ActivityApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.bhandara.data.location.GeoLocation
@@ -45,6 +48,8 @@ data class ShopDetailsState(
     val isSaved: Boolean = false,
     val working: Boolean = false,
     val message: String? = null,
+    /** Manage shop only: views, directions and calls this week; null until known */
+    val weekStats: ShopWeekStats? = null,
 ) {
     val isActive: Boolean get() = shop?.isActive != false
 
@@ -66,9 +71,15 @@ class ShopDetailsViewModel(
     private val settings: AppSettings,
     private val currentUid: () -> String?,
     private val locationService: LocationService?,
+    /** Counts views, directions and calls for the owner's numbers; null where not counted */
+    private val activityApi: ActivityApi? = null,
+    /** The owner's own page (Manage shop): nothing is counted, and this week's numbers are loaded instead */
+    private val ownerView: Boolean = false,
     /** Uploads photos sent with a report and returns their URLs (throws if any fails); null where not supported */
     private val uploadPhotos: (suspend (List<PickedPhoto>) -> List<String>)? = null,
 ) : ViewModel() {
+
+    private var viewCounted = false
 
     private val _state = MutableStateFlow(
         ShopDetailsState(
@@ -84,6 +95,26 @@ class ShopDetailsViewModel(
     }
 
     fun retry() = load()
+
+    /** The user is asking for directions to the shop */
+    fun onDirections() = count(ActivityAction.DIRECTIONS)
+
+    /** The user is calling the shop */
+    fun onCall() = count(ActivityAction.CALL)
+
+    private fun count(action: ActivityAction) {
+        val api = activityApi ?: return
+        if (ownerView) return
+        viewModelScope.launch { api.shop(shopId, action) }
+    }
+
+    /** Views, directions and calls this week, for the owner; stays unknown ("–") if they can't be fetched */
+    private fun loadWeekStats() {
+        val api = activityApi ?: return
+        viewModelScope.launch {
+            api.shopWeek(shopId).getOrNull()?.let { stats -> _state.update { it.copy(weekStats = stats) } }
+        }
+    }
 
     /** After the owner added items, so the page shows them */
     fun refreshMenu() {
@@ -153,6 +184,13 @@ class ShopDetailsViewModel(
                             menu = menu.await().getOrNull().orEmpty(),
                             isOwner = uid != null && shop.ownerUid == uid,
                         )
+                    }
+                    // One view per visit to the page (a retry after a failure isn't another one)
+                    if (ownerView) {
+                        loadWeekStats()
+                    } else if (!viewCounted) {
+                        viewCounted = true
+                        count(ActivityAction.VIEW)
                     }
                     measureDistance(shop)
                 }

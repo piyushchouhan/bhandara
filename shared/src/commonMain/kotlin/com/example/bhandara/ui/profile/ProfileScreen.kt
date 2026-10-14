@@ -1,5 +1,8 @@
 package com.example.bhandara.ui.profile
 
+import com.example.bhandara.ui.shopdetails.compactCount
+import com.example.bhandara.data.network.UserStats
+import com.example.bhandara.data.network.ActivityApi
 import com.example.bhandara.shared.resources.notif_save_failed
 import com.example.bhandara.data.network.UserApi
 import com.example.bhandara.ui.settings.SettingsViewModel
@@ -215,12 +218,18 @@ fun ProfileScreen(
             accountSignIn?.let { it::signOut },
             ClaimApi(dependencies.apiClient),
             ShopApi(dependencies.apiClient),
+            ActivityApi(dependencies.apiClient),
         )
     }
     // Coming back (e.g. after deactivating a shop in Manage shop) shows the shops as they are now
     var shownBefore by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(Unit) {
-        if (shownBefore) viewModel.loadMyShops() else shownBefore = true
+        if (shownBefore) {
+            viewModel.loadMyShops()
+            viewModel.loadStats()
+        } else {
+            shownBefore = true
+        }
     }
     FeastTheme {
         ProfilePage(viewModel, accountSignIn, onBack, onManageShop, onOpenShop, onAddShop, onMyReviews, onMyPhotos, onMyFeasts, onSavedPlaces, onMyReports, onPrivacy, vendorMode)
@@ -284,7 +293,7 @@ private fun ProfilePage(
         Column(Modifier.fillMaxSize().verticalScroll(scroll)) {
             HeaderWithStats(
                 header = { ProfileHeader(state, onBack, onEdit = comingSoon, onChangePhoto = comingSoon) },
-                stats = { StatsCard() },
+                stats = { StatsCard(state.stats) },
             )
             Column(
                 Modifier.padding(start = 14.dp, end = 14.dp, top = 20.dp, bottom = 40.dp).windowInsetsPadding(WindowInsets.navigationBars),
@@ -482,7 +491,7 @@ private fun Avatar(photoUrl: String?, initial: Char?, onChangePhoto: () -> Unit)
 
 /** Reviews, photos, feasts and verifications: "–" until the backend counts them */
 @Composable
-private fun StatsCard() {
+private fun StatsCard(stats: UserStats?) {
     val colors = MaterialTheme.feastColors
     val shape = RoundedCornerShape(22.dp)
     Row(
@@ -492,10 +501,15 @@ private fun StatsCard() {
             .background(colors.surface, shape)
             .padding(horizontal = 6.dp, vertical = 14.dp),
     ) {
-        listOf(Res.string.stat_reviews, Res.string.stat_photos, Res.string.stat_feasts, Res.string.stat_verified).forEachIndexed { i, label ->
+        listOf(
+            stats?.reviews to Res.string.stat_reviews,
+            stats?.photos to Res.string.stat_photos,
+            stats?.feasts to Res.string.stat_feasts,
+            stats?.verified to Res.string.stat_verified,
+        ).forEachIndexed { i, (count, label) ->
             if (i > 0) Box(Modifier.width(1.dp).height(40.dp).background(colors.lavender))
             Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("–", color = colors.ink, fontSize = 20.sp, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.titleLarge)
+                Text(count?.let(::compactCount) ?: "–", color = colors.ink, fontSize = 20.sp, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.titleLarge)
                 Text(stringResource(label), color = colors.muted, fontSize = 11.sp, fontWeight = FontWeight.Medium, maxLines = 1, style = MaterialTheme.typography.labelSmall)
             }
         }

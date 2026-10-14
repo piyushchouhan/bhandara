@@ -1,5 +1,6 @@
 package com.example.bhandara.ui.reviews
 
+import com.example.bhandara.data.network.ActivityApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.bhandara.data.models.api.ReportDetails
@@ -104,7 +105,12 @@ class ReviewsViewModel(
     private val settings: AppSettings,
     private val currentUid: () -> String?,
     private val uploadPhotos: (suspend (photos: List<PickedPhoto>, onProgress: (Int) -> Unit) -> List<String>)?,
+    /** Counts photo views for their reviewers; null where not counted */
+    private val activityApi: ActivityApi? = null,
 ) : ViewModel() {
+
+    /** Photos already counted on this visit, so swiping back and forth counts each once */
+    private val photosCounted = mutableSetOf<String>()
 
     /** Reviews whose "helpful" is being sent, so a quick double tap doesn't send it twice */
     private val helpfulSending = mutableSetOf<String>()
@@ -214,6 +220,13 @@ class ReviewsViewModel(
      * Marks someone else's review helpful, or takes it back. The count changes at once and goes back if sending
      * fails.
      */
+    /** The user is looking at a review's photo (full screen) */
+    fun onPhotoShown(reviewId: String, photoUrl: String) {
+        val api = activityApi ?: return
+        if (!photosCounted.add("$reviewId|$photoUrl")) return
+        viewModelScope.launch { api.reviewPhoto(reviewId, photoUrl) }
+    }
+
     fun toggleHelpful(reviewId: String) {
         val review = _state.value.reviews.firstOrNull { it.id == reviewId } ?: return
         if (!_state.value.canMarkHelpful(review) || !helpfulSending.add(reviewId)) return

@@ -165,4 +165,17 @@ class ShopDetailsFormatTest {
         assertFalse(cart.noFixedRoute)
         assertNull(json.decodeFromString(LocalShopResponse.serializer(), """{"id":"8","shopName":"Sweets","latitude":1.0,"longitude":2.0}""").cartDetails)
     }
+
+    @Test
+    fun countsAreShortenedToFitASmallStat() {
+        assertEquals("0", compactCount(0))
+        assertEquals("640", compactCount(640))
+        assertEquals("999", compactCount(999))
+        assertEquals("1k", compactCount(1_000))
+        assertEquals("1.2k", compactCount(1_249))
+        assertEquals("9.9k", compactCount(9_999))
+        assertEquals("12k", compactCount(12_400))
+        assertEquals("1.5M", compactCount(1_520_000))
+    }
+
 }

@@ -135,3 +135,14 @@ fun cartOptionsOn(options: Map<String, Boolean>): List<String> {
     return CUSTOMER_CART_OPTIONS.filter { it in on }
 }
 
+/** A count as it fits a small stat: "640", "1.2k", "12k", "1.5M" */
+fun compactCount(count: Long): String = when {
+    count < 1_000 -> count.toString()
+    count < 10_000 -> oneDecimal(count / 100) + "k"
+    count < 1_000_000 -> "${count / 1_000}k"
+    else -> oneDecimal(count / 100_000) + "M"
+}
+
+/** 12 -> "1.2", 10 -> "1" (tenths, no trailing ".0") */
+private fun oneDecimal(tenths: Long): String = if (tenths % 10 == 0L) "${tenths / 10}" else "${tenths / 10}.${tenths % 10}"
+

@@ -1,5 +1,7 @@
 package com.example.bhandara.ui.drawer
 
+import com.example.bhandara.data.network.UserStats
+import com.example.bhandara.data.network.ActivityApi
 import com.example.bhandara.auth.AuthService
 import com.example.bhandara.auth.PlatformAuth
 import com.example.bhandara.auth.UserAccount
@@ -384,5 +386,28 @@ class DrawerViewModelsTest {
         val unnamed = ProfileViewModel(AuthService(FakeFirebase(google.copy(name = null))), signOut = {}).state.value
         assertEquals("p@example.com", unnamed.accountTitle)
         assertNull(unnamed.accountSubtitle)
+    }    @Test
+    fun theProfileShowsTheUsersNumbersAndKeepsThemWhenTheyCantBeFetched() = runTest(dispatcher) {
+        bodies["/api/users/me/stats"] = """{"reviews":3,"photos":5,"feasts":2,"verified":4}"""
+        val viewModel = ProfileViewModel(AuthService(FakeFirebase(google)), signOut = {}, activityApi = ActivityApi(client))
+        advanceUntilIdle()
+        assertEquals(UserStats(reviews = 3, photos = 5, feasts = 2, verified = 4), viewModel.state.value.stats)
+
+        // Back on the profile later, offline: the numbers stay
+        bodies.remove("/api/users/me/stats")
+        supportStatus = HttpStatusCode.InternalServerError
+        viewModel.loadStats()
+        advanceUntilIdle()
+
+        assertEquals(3L, viewModel.state.value.stats?.reviews)
     }
+
+    @Test
+    fun beforeTheNumbersArriveTheyAreUnknown() = runTest(dispatcher) {
+        val state = ProfileViewModel(AuthService(FakeFirebase(google)), signOut = {}).state.value
+
+        assertEquals(null, state.stats)
+    }
+
+
 }

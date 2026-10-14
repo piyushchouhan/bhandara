@@ -930,4 +930,15 @@
     <string name="my_feasts_reason_not_happening">अनेकांनी हा भंडारा होत नसल्याचे सांगितले. होत असल्यास माहिती तपासून पुन्हा पाठवा.</string>
     <string name="my_feasts_reason_money">अनेकांनी पैसे मागितले जात असल्याचे सांगितले. नकाशावरील भंडारे मोफत असले पाहिजेत.</string>
     <string name="my_feasts_reason_inappropriate">अनेकांनी फोटो किंवा माहिती अयोग्य असल्याचे सांगितले. ते बदला, आम्ही पुन्हा तपासू.</string>
+    <string name="stat_saved">सेव्ह</string>
+    <string name="notif_saved_feasts">सेव्ह केलेला भंडारा लवकर संपला</string>
+    <string name="notif_saved_feasts_note">तुम्ही सेव्ह केलेल्या भंडाऱ्यात जेवण संपल्यावर</string>
+    <plurals name="photo_views">
+        <item quantity="one">%1$s व्ह्यू</item>
+        <item quantity="other">%1$s व्ह्यू</item>
+    </plurals>
+    <plurals name="my_feasts_end_notify">
+        <item quantity="one">हा सेव्ह केलेल्या %1$d व्यक्तीला कळवले जाईल</item>
+        <item quantity="other">हा सेव्ह केलेल्या %1$d लोकांना कळवले जाईल</item>
+    </plurals>
 </resources>

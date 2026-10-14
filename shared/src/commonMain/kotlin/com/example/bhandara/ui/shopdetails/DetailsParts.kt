@@ -1,5 +1,6 @@
 package com.example.bhandara.ui.shopdetails
 
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -51,17 +52,23 @@ import org.jetbrains.compose.resources.stringResource
 
 // Photos full screen, used by the shop and reviews pages
 
-/** Photos full screen, swiping between them */
+/**
+ * Photos full screen, swiping between them
+ *
+ * @param onPhotoShown each photo the user lands on (e.g. to count its views)
+ */
 @Composable
 internal fun FullScreenPhotos(
     urls: List<String>,
     initialIndex: Int,
     onDismiss: () -> Unit,
     photoLabel: StringResource = Res.string.shop_photo,
+    onPhotoShown: (index: Int) -> Unit = {},
 ) {
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         Box(Modifier.fillMaxSize().background(Color.Black)) {
             val pager = rememberPagerState(initialPage = initialIndex) { urls.size }
+            LaunchedEffect(pager.currentPage) { onPhotoShown(pager.currentPage) }
             HorizontalPager(pager, Modifier.fillMaxSize()) { page ->
                 AsyncImage(
                     model = urls[page],

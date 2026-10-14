@@ -188,4 +188,16 @@ class SettingsViewModelTest {
         assertEquals("2.3 MB", megabytes(2_400_000))
         assertEquals("24 MB", megabytes(24L * 1024 * 1024))
     }
+
+    @Test
+    fun savedFeastAlertsAreTheirOwnSetting() = runTest(dispatcher) {
+        assertTrue(preferences.notifySavedFeasts, "on unless turned off")
+
+        viewModel.setNotification(NotificationKind.SAVED_FEASTS, false)
+        advanceUntilIdle()
+
+        assertEquals("""{"savedFeasts":false}""", requests.single().text())
+        assertFalse(preferences.notifySavedFeasts)
+    }
+
 }

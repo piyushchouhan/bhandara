@@ -1,5 +1,6 @@
 package com.example.bhandara.ui.shopdetails
 
+import com.example.bhandara.data.network.ActivityApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -131,7 +132,8 @@ fun ShopDetailsScreen(
             dependencies.settings,
             { dependencies.auth.currentUid },
             LocationService(deviceLocation),
-            { photos -> dependencies.photoUploader.upload(photos) },
+            activityApi = ActivityApi(dependencies.apiClient),
+            uploadPhotos = { photos -> dependencies.photoUploader.upload(photos) },
         )
     }
     var addingMenuItems by rememberSaveable { mutableStateOf(false) }
@@ -205,7 +207,10 @@ private fun ShopDetailsPage(
             else -> {
                 val photos = shop.imageUrls.orEmpty()
                 val openReviews = { onOpenReviews(shop.shopName, photos.firstOrNull()) }
-                val directions = { actions.openDirections(shop.latitude, shop.longitude) }
+                val directions = {
+                    viewModel.onDirections()
+                    actions.openDirections(shop.latitude, shop.longitude)
+                }
                 val overlap = 22.dp
                 val statusBar = with(LocalDensity.current) { WindowInsets.statusBars.getTop(this).toDp() }
                 val heroHeight = if (photos.isEmpty()) 200.dp + statusBar else 300.dp
@@ -228,7 +233,12 @@ private fun ShopDetailsPage(
                                 canCall = state.canCall,
                                 isSaved = state.isSaved,
                                 onToggleSaved = viewModel::toggleSaved,
-                                onCall = { shop.ownerPhone?.let(actions::dial) },
+                                onCall = {
+                                    shop.ownerPhone?.let { phone ->
+                                        viewModel.onCall()
+                                        actions.dial(phone)
+                                    }
+                                },
                                 onShare = {
                                     scope.launch {
                                         actions.share(getString(Res.string.share_shop_text, shop.shopName, ExternalLinks.directions(shop.latitude, shop.longitude)))

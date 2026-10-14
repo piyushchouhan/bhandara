@@ -1,5 +1,7 @@
 package com.example.bhandara.ui.feasts
 
+import com.example.bhandara.data.network.ActivityApi
+import io.ktor.http.content.TextContent
 import com.example.bhandara.data.location.DeviceLocation
 import com.example.bhandara.data.location.GeoLocation
 import com.example.bhandara.data.location.LocationService
@@ -392,5 +394,26 @@ class FeastViewModelsTest {
 
         viewModel.toggleSaved()
         assertFalse(settings.isFeastSaved("1"))
+    }    // ==================== Counting for the organizer ====================
+
+    @Test
+    fun openingAFeastCountsOneViewAndDirectionsAreCounted() = runTest(dispatcher) {
+        answer(HttpMethod.Post, "activity", "", HttpStatusCode.NoContent)
+        val viewModel = FeastDetailsViewModel(
+            "1", FeastApi(client), settings, { signedInUid }, LocationService(phone, nowMillis = { 0 }), { now },
+            activityApi = ActivityApi(client),
+        )
+        advanceUntilIdle()
+
+        viewModel.onDirections()
+        advanceUntilIdle()
+
+        val sent = requests.filter { it.url.encodedPath == "/api/activity" }.map { (it.body as TextContent).text }
+        assertEquals(
+            listOf("""{"targetKind":"FEAST","targetId":1,"action":"VIEW"}""", """{"targetKind":"FEAST","targetId":1,"action":"DIRECTIONS"}"""),
+            sent,
+        )
     }
+
+
 }

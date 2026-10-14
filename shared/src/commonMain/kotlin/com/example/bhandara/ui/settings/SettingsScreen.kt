@@ -1,5 +1,8 @@
 package com.example.bhandara.ui.settings
 
+import com.example.bhandara.shared.resources.notif_saved_feasts_note
+import com.example.bhandara.shared.resources.notif_saved_feasts
+import androidx.compose.material.icons.outlined.NoMeals
 import com.example.bhandara.shared.resources.notifications_on_count
 import com.example.bhandara.shared.resources.quiet_hours_note
 import com.example.bhandara.shared.resources.quiet_hours
@@ -762,7 +765,10 @@ private fun NotificationsPage(
         }
         Column {
             SectionTitle(stringResource(Res.string.notif_finding_food))
-            Card { Toggle(NotificationKind.NEARBY_FEASTS, Icons.Outlined.VolunteerActivism, true, Res.string.feasts_near_me, Res.string.feasts_near_me_note, divider = false) }
+            Card {
+                Toggle(NotificationKind.NEARBY_FEASTS, Icons.Outlined.VolunteerActivism, true, Res.string.feasts_near_me, Res.string.feasts_near_me_note, divider = true)
+                Toggle(NotificationKind.SAVED_FEASTS, Icons.Outlined.NoMeals, true, Res.string.notif_saved_feasts, Res.string.notif_saved_feasts_note, divider = false)
+            }
         }
         Column {
             SectionTitle(stringResource(Res.string.notif_contributions))

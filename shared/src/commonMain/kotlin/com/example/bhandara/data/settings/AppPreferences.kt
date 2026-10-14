@@ -15,7 +15,7 @@ enum class TextSize(val scale: Float) { SMALL(0.9f), DEFAULT(1f), LARGE(1.15f), 
 enum class StartTab { SHOPS, FEASTS }
 
 /** The notifications a user can turn on or off; the backend keeps these, the phone a copy */
-enum class NotificationKind { NEARBY_FEASTS, REPORT_UPDATES, SHOP_REVIEWS, CLAIM_STATUS, QUIET_HOURS }
+enum class NotificationKind { NEARBY_FEASTS, SAVED_FEASTS, REPORT_UPDATES, SHOP_REVIEWS, CLAIM_STATUS, QUIET_HOURS }
 
 /** Where "Directions" opens: Google Maps, or the phone's own maps app (Apple Maps on iPhone, a choice on Android) */
 enum class DirectionsApp { GOOGLE_MAPS, PHONE_MAPS }
@@ -42,6 +42,9 @@ class AppPreferences(private val store: Settings) {
         private set
     var notifyNearbyFeasts: Boolean by mutableStateOf(store.getBoolean(KEY_NOTIFY_FEASTS, true))
         private set
+    /** A feast the user saved ended early */
+    var notifySavedFeasts: Boolean by mutableStateOf(store.getBoolean(KEY_NOTIFY_SAVED_FEASTS, true))
+        private set
     var notifyReportUpdates: Boolean by mutableStateOf(store.getBoolean(KEY_NOTIFY_REPORTS, true))
         private set
     var notifyShopReviews: Boolean by mutableStateOf(store.getBoolean(KEY_NOTIFY_REVIEWS, true))
@@ -54,6 +57,7 @@ class AppPreferences(private val store: Settings) {
 
     fun notification(kind: NotificationKind): Boolean = when (kind) {
         NotificationKind.NEARBY_FEASTS -> notifyNearbyFeasts
+        NotificationKind.SAVED_FEASTS -> notifySavedFeasts
         NotificationKind.REPORT_UPDATES -> notifyReportUpdates
         NotificationKind.SHOP_REVIEWS -> notifyShopReviews
         NotificationKind.CLAIM_STATUS -> notifyClaimStatus
@@ -63,6 +67,7 @@ class AppPreferences(private val store: Settings) {
     fun updateNotification(kind: NotificationKind, on: Boolean) {
         when (kind) {
             NotificationKind.NEARBY_FEASTS -> notifyNearbyFeasts = on
+            NotificationKind.SAVED_FEASTS -> notifySavedFeasts = on
             NotificationKind.REPORT_UPDATES -> notifyReportUpdates = on
             NotificationKind.SHOP_REVIEWS -> notifyShopReviews = on
             NotificationKind.CLAIM_STATUS -> notifyClaimStatus = on
@@ -73,6 +78,7 @@ class AppPreferences(private val store: Settings) {
 
     private fun keyFor(kind: NotificationKind) = when (kind) {
         NotificationKind.NEARBY_FEASTS -> KEY_NOTIFY_FEASTS
+        NotificationKind.SAVED_FEASTS -> KEY_NOTIFY_SAVED_FEASTS
         NotificationKind.REPORT_UPDATES -> KEY_NOTIFY_REPORTS
         NotificationKind.SHOP_REVIEWS -> KEY_NOTIFY_REVIEWS
         NotificationKind.CLAIM_STATUS -> KEY_NOTIFY_CLAIMS
@@ -110,6 +116,7 @@ class AppPreferences(private val store: Settings) {
         private const val KEY_SHOW_EGG = "show_egg_items"
         private const val KEY_NOTIFY_FEASTS = "notify_nearby_feasts"
         private const val KEY_NOTIFY_REPORTS = "notify_report_updates"
+        private const val KEY_NOTIFY_SAVED_FEASTS = "notify_saved_feasts"
         private const val KEY_NOTIFY_REVIEWS = "notify_shop_reviews"
         private const val KEY_NOTIFY_CLAIMS = "notify_claim_status"
         private const val KEY_QUIET_HOURS = "quiet_hours"

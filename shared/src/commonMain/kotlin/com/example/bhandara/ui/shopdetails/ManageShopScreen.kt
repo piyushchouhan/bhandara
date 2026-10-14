@@ -1,5 +1,7 @@
 package com.example.bhandara.ui.shopdetails
 
+import com.example.bhandara.data.network.ShopWeekStats
+import com.example.bhandara.data.network.ActivityApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -120,7 +122,10 @@ fun ManageShopScreen(
 ) {
     val dependencies = LocalAppDependencies.current
     val viewModel = viewModel {
-        ShopDetailsViewModel(shopId, ShopApi(dependencies.apiClient), dependencies.settings, { dependencies.auth.currentUid }, null)
+        ShopDetailsViewModel(
+            shopId, ShopApi(dependencies.apiClient), dependencies.settings, { dependencies.auth.currentUid }, null,
+            activityApi = ActivityApi(dependencies.apiClient), ownerView = true,
+        )
     }
     // Coming back (e.g. after editing the menu on the shop page) shows the shop as it is now
     var shownBefore by rememberSaveable { mutableStateOf(false) }
@@ -201,7 +206,7 @@ private fun ManageShopPage(
                     verticalArrangement = Arrangement.spacedBy(14.dp),
                 ) {
                     ShopHeaderCard(shop, onToggleOpen = comingSoon)
-                    ThisWeek()
+                    ThisWeek(state.weekStats)
                     PartsCard(
                         shop, menuCount = state.menu.size,
                         onDetails = onViewShop,
@@ -318,9 +323,9 @@ private fun ShopHeaderCard(shop: LocalShopResponse, onToggleOpen: () -> Unit) {
     }
 }
 
-/** Views, directions and calls this week: "–" until the backend counts them */
+/** Views, directions and calls this week (each person once a day; the owner's own don't count); "–" until known */
 @Composable
-private fun ThisWeek() {
+private fun ThisWeek(stats: ShopWeekStats?) {
     val colors = MaterialTheme.feastColors
     Column {
         Text(
@@ -328,9 +333,13 @@ private fun ThisWeek() {
             letterSpacing = 0.5.sp, style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(start = 4.dp, end = 4.dp, bottom = 8.dp),
         )
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            listOf(Res.string.stat_views, Res.string.stat_directions, Res.string.stat_calls).forEach { label ->
+            listOf(
+                stats?.views to Res.string.stat_views,
+                stats?.directions to Res.string.stat_directions,
+                stats?.calls to Res.string.stat_calls,
+            ).forEach { (count, label) ->
                 Column(Modifier.weight(1f).background(colors.surface, RoundedCornerShape(18.dp)).padding(12.dp)) {
-                    Text("–", color = colors.ink, fontSize = 20.sp, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.titleLarge)
+                    Text(count?.let(::compactCount) ?: "–", color = colors.ink, fontSize = 20.sp, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.titleLarge)
                     Text(stringResource(label), color = colors.muted, fontSize = 12.sp, fontWeight = FontWeight.Medium, maxLines = 1, style = MaterialTheme.typography.labelMedium)
                 }
             }
