@@ -66,15 +66,17 @@ If the environment is missing:
 ```bash
 python3 -m venv venv
 source venv/bin/activate
-python -m pip install mkdocs-material
+python -m pip install -r requirements-docs.txt
 ```
 
-When publication is intended, deploy from the source branch:
+### Automatic publication
 
-```bash
-mkdocs gh-deploy
-```
+`.github/workflows/docs.yml` builds the site with strict validation and deploys the generated artifact to GitHub Pages. It runs when documentation, configuration, dependency, or workflow files are pushed to `main`. It can also be started through **Actions → Publish documentation → Run workflow** on `main`.
 
-This updates the documentation hosting branch. Do not edit generated pages manually. A local build does not publish the site.
+One-time repository setup: open **Settings → Pages → Build and deployment** and choose **GitHub Actions** as the source. This replaces the previous `gh-pages` branch publishing setup. The workflow uses GitHub's built-in token with Pages and identity-token permissions; no personal access token is required.
+
+Install the documentation dependency version recorded in `requirements-docs.txt` for matching local and CI builds. Inspect the build/deploy jobs in Actions when publication fails. A local build does not publish the site, and application-only commits do not trigger this documentation workflow.
+
+Do not edit generated HTML or publish manually with `mkdocs gh-deploy` after switching to the Actions source.
 
 When product behavior changes, update the feature catalogue, platform coverage, and known limitations as well as technical details. Investor-facing statements must distinguish verified product facts, proposed priorities, and business hypotheses. Add commercial metrics only from verified records, with dates and definitions.

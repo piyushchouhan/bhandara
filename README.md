@@ -16,7 +16,7 @@ The product combines everyday food discovery with time-sensitive community infor
 - [Backend integration](docs/backend-integration.md) and [API reference](docs/api-reference.md): mobile integration contract.
 - [Firebase and platform services](docs/firebase-setup.md): authentication, storage, notifications, and permissions.
 
-Published documentation: [Local Feast documentation](https://piyushchouhan.github.io/bhandara/). Local edits become public only after a documentation deployment.
+Published documentation: [Local Feast documentation](https://piyushchouhan.github.io/bhandara/). Documentation changes pushed to `main` are published by `.github/workflows/docs.yml` once GitHub Pages is configured to use GitHub Actions.
 
 ## Repository structure
 
@@ -38,6 +38,6 @@ source venv/bin/activate
 mkdocs serve
 ```
 
-Validate the site with `mkdocs build --strict`. If the environment is missing, create a virtual environment and install `mkdocs-material` first. See the [development guide](docs/development.md) for the full workflow.
+Validate the site with `mkdocs build --strict`. If the environment is missing, create a virtual environment and run `python -m pip install -r requirements-docs.txt` first. See the [development guide](docs/development.md) for the full workflow.
 
 Documentation reviewed against the mobile source on **14 October 2026**. Implemented client functionality does not by itself establish public release status, backend availability, or commercial traction.
