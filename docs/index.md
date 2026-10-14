@@ -1,57 +1,44 @@
-# Welcome to Bhandara Documentation
+# Local Feast
 
-Bhandara is an Android application built with Kotlin that helps users discover and report community feasts (Bhandaras). The app uses Firebase for user tracking and notifications, with location-based features to notify nearby users.
+## Discover the food around you
 
-## Quick Start
+Local Feast brings nearby food shops, moving vendors, and community feasts into one location-based experience. People can explore what is available, inspect menus and reviews, follow a live cart, or find a bhandara happening nearby. Shop owners and organizers can contribute information directly, while community verification and reporting help surface inaccurate listings.
 
-To get started with the project:
+The product is developed in the **Bhandara** repository. Its interface uses the **Local Feast** name.
 
-1. Clone the repository
-2. Open in Android Studio
-3. Sync Gradle dependencies
-4. Configure Firebase (see [Firebase Setup](firebase-setup.md))
-5. Run the app on an emulator or device
+## One product, three discovery needs
 
-## Key Features
+| Experience | What people need | Product response |
+| --- | --- | --- |
+| Local shops | Find food nearby and decide where to go | Searchable map, shop details, menus, prices, reviews, photos, and crowd indicators |
+| Moving vendors | Find a vendor whose location changes | Cart profiles, usual stops, and live location viewing; Android vendor mode publishes location |
+| Community feasts | Discover food that is available at a particular place and time | Nearby map and list, event timings, menus, organizer details, and feast lifecycle controls |
 
-- **Anonymous User Tracking** - No login required, automatic UID assignment
-- **Location-Based Services** - GPS tracking for nearby feast notifications
-- **Push Notifications** - FCM integration for real-time alerts
-- **Silent Data Collection** - Background tracking of user location and tokens
+## Who the product serves
 
-## Project Structure
+**People looking for food** can browse nearby options without first completing an account signup, save places, and use directions or contact actions where available.
 
-```
-bhandara/
-├── app/                    # Main application module
-│   ├── src/
-│   │   └── main/
-│   │       ├── java/       # Kotlin source files
-│   │       │   ├── data/   # Data models & repositories
-│   │       │   ├── managers/ # Business logic managers
-│   │       │   ├── services/ # Background services
-│   │       │   ├── ui/     # UI components & screens
-│   │       │   └── utils/  # Helper utilities
-│   │       └── res/        # Resources
-│   ├── build.gradle.kts    # App-level Gradle config
-│   └── google-services.json # Firebase configuration
-├── gradle/                 # Gradle wrapper and dependencies
-├── docs/                   # Documentation (MkDocs)
-└── build.gradle.kts        # Project-level Gradle config
-```
+**Shop owners and mobile vendors** can create listings, describe their offering, add menus, and establish ownership through a claim flow. Moving-cart profiles include practical details such as usual stops, payment methods, and how to recognize the cart.
 
-## Documentation Sections
+**Community organizers** can publish feasts with photos, location, timings, and food details, then edit, end, remove, or repost them as circumstances change.
 
-- [Getting Started](getting-started.md) - Setup and installation
-- [Firebase Setup](firebase-setup.md) - **User tracking, authentication & notifications**
-- [Architecture](architecture.md) - App architecture and design
-- [Features](features.md) - Application features
-- [Development](development.md) - Development guidelines
-- [Backend Integration](backend-integration.md) - API sync with PostgreSQL/PostGIS
-- [API Reference](api-reference.md) - Code documentation
+**Community contributors** can review shops, share photos, verify nearby places, report problems, and follow the status of their reports.
 
-## Commands
+## Product foundations
 
-* `mkdocs serve` - Start the live-reloading docs server
-* `mkdocs build` - Build the documentation site
-* `mkdocs gh-deploy` - Deploy to GitHub Pages
+- Shared Kotlin Multiplatform and Compose code supports Android and iOS experiences.
+- Google Maps provides map presentation on both platforms through native integrations.
+- Firebase supports authentication and photo storage; Android also integrates push notifications.
+- REST APIs provide product data, and STOMP over WebSockets delivers live cart positions.
+- English, Hindi, and Marathi resources support a locally relevant interface.
+- Saved places have local persistence and account synchronization; privacy screens include data export and account deletion requests.
+
+## Current status
+
+The repository contains implemented client flows across discovery, contribution, ownership, and personal account management. Some owner and profile controls remain placeholders. Android supports vendor location publishing and push notification handling; equivalent iOS services are not implemented in the inspected source.
+
+This documentation describes the mobile implementation reviewed on **14 October 2026**. Backend behavior is described through the client contract, since server source and deployment evidence are outside this repository. Public availability, user adoption, revenue, and operating performance require separate evidence.
+
+## Continue reading
+
+Start with the [investor brief](investor-brief.md) for the product thesis and validation priorities, the [feature catalogue](features.md) for implementation scope, or the [roadmap and readiness assessment](roadmap.md) for remaining work. Technical readers can continue to the [architecture](architecture.md) and [setup guide](getting-started.md).

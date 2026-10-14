@@ -1,68 +1,43 @@
-# Documentation Guide
+# Local Feast · Bhandara
 
-This project uses [MkDocs](https://www.mkdocs.org/) with the [Material theme](https://squidfunk.github.io/mkdocs-material/) for documentation.
+Local Feast helps people discover nearby food shops, moving vendors, and community feasts. The Bhandara repository contains its Android application, shared Kotlin Multiplatform product code, iOS host, and documentation.
 
-## 📖 Live Documentation
+The product combines everyday food discovery with time-sensitive community information: where a cart is now, when a feast is happening, and what a local shop serves.
 
-**https://piyushchouhan.github.io/bhandara/**
+## Explore the documentation
 
-## 🚀 Quick Start
+- [Product overview](docs/index.md): purpose, audiences, and product experience.
+- [Investor brief](docs/investor-brief.md): product thesis, potential business models, and validation priorities.
+- [Feature catalogue](docs/features.md): implemented capabilities and platform differences.
+- [Roadmap and readiness](docs/roadmap.md): known gaps and proposed next milestones.
+- [Architecture](docs/architecture.md): shared code and native integrations.
+- [Getting started](docs/getting-started.md): Android and iOS setup.
+- [Development](docs/development.md): code organization, checks, and documentation workflow.
+- [Backend integration](docs/backend-integration.md) and [API reference](docs/api-reference.md): mobile integration contract.
+- [Firebase and platform services](docs/firebase-setup.md): authentication, storage, notifications, and permissions.
 
-### Preview Locally
+Published documentation: [Local Feast documentation](https://piyushchouhan.github.io/bhandara/). Local edits become public only after a documentation deployment.
+
+## Repository structure
+
+```text
+app/         Android host, Firebase integrations, notifications, vendor tracking
+shared/      Shared Compose UI, ViewModels, models, APIs, preferences, and tests
+  src/commonMain/
+  src/androidMain/
+  src/iosMain/
+  src/commonTest/
+iosApp/      SwiftUI host, native bridges, and XcodeGen configuration
+docs/        MkDocs documentation source
+```
+
+## Preview the documentation
 
 ```bash
 source venv/bin/activate
 mkdocs serve
 ```
 
-Then open http://127.0.0.1:8000 in your browser. Changes auto-reload!
+Validate the site with `mkdocs build --strict`. If the environment is missing, create a virtual environment and install `mkdocs-material` first. See the [development guide](docs/development.md) for the full workflow.
 
-### Deploy to GitHub Pages
-
-```bash
-source venv/bin/activate
-mkdocs gh-deploy
-```
-
-Documentation will be live at https://piyushchouhan.github.io/bhandara/ in ~1 minute.
-
-## 📝 Editing Documentation
-
-1. Edit markdown files in the `docs/` folder
-2. Work on the `main` branch (never edit `gh-pages` manually)
-3. Preview changes with `mkdocs serve`
-4. Deploy with `mkdocs gh-deploy`
-
-## 📂 Documentation Structure
-
-```
-docs/
-├── index.md           # Home page
-├── getting-started.md # Setup guide
-├── architecture.md    # Architecture overview
-├── features.md        # Features documentation
-├── development.md     # Development guidelines
-└── api-reference.md   # API documentation
-```
-
-## ⚙️ Configuration
-
-- `mkdocs.yml` - MkDocs configuration
-- `docs/` - Documentation source files
-- `venv/` - Python virtual environment (gitignored)
-- `site/` - Built documentation (gitignored, auto-generated)
-
-## 🔧 One-Time Setup (Already Done)
-
-```bash
-python3 -m venv venv
-source venv/bin/activate
-pip install mkdocs-material
-mkdocs new .
-```
-
-## 📌 Notes
-
-- The `gh-pages` branch is automatically created and managed by `mkdocs gh-deploy`
-- Never manually edit the `gh-pages` branch
-- Always activate the virtual environment before running mkdocs commands
+Documentation reviewed against the mobile source on **14 October 2026**. Implemented client functionality does not by itself establish public release status, backend availability, or commercial traction.

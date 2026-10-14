@@ -1,87 +1,80 @@
 # Development Guide
 
-## Development Environment
+## Work within the shared architecture
 
-### Required Tools
+Place platform-independent screens, state, validation, API calls, and models in `shared/src/commonMain`. Use `androidMain` and `iosMain` for platform implementations. Android services belong in `app`; Swift SDK bridges belong in `iosApp`.
 
-- Android Studio (Arctic Fox or newer)
-- JDK 11+
-- Git
-- Android SDK
+Feature ViewModels expose `StateFlow` state and use coroutines for asynchronous work. Continue the existing `ApiResult` error-handling pattern and preserve coroutine cancellation. Add API models and typed service wrappers rather than embedding requests in composables.
 
-## Coding Standards
+Use shared string resources for user-facing text and maintain the English, Hindi, and Marathi resource sets when adding or changing copy. Check theme and text-size behavior for new screens.
 
-### Kotlin Style Guide
+## Dependency management
 
-Follow the [official Kotlin coding conventions](https://kotlinlang.org/docs/coding-conventions.html).
+The version catalogue lives in `gradle/libs.versions.toml`. Android and shared Compose versions must stay compatible; the catalogue documents this coupling. Native iOS dependencies are configured in `iosApp/project.yml`.
 
-### File Organization
+Use the checked-in wrapper. The Gradle runtime needs a compatible JDK; the project's JVM bytecode target of 11 does not mean JDK 11 is sufficient to run the Android build.
 
-- One class per file
-- Keep files under 300 lines when possible
-- Group related functionality
+## Build and test
 
-### Naming Conventions
-
-- **Classes**: PascalCase (`MainActivity`, `UserViewModel`)
-- **Functions**: camelCase (`onCreate()`, `getUserData()`)
-- **Constants**: UPPER_SNAKE_CASE (`MAX_COUNT`, `API_KEY`)
-- **Variables**: camelCase (`userName`, `itemCount`)
-
-## Git Workflow
-
-### Branch Naming
-
-- `feature/feature-name` - New features
-- `bugfix/bug-description` - Bug fixes
-- `hotfix/critical-issue` - Urgent fixes
-- `refactor/component-name` - Code refactoring
-
-### Commit Messages
-
-Follow conventional commits:
-
-```
-feat: add user authentication
-fix: resolve crash on startup
-docs: update README
-refactor: simplify data layer
-```
-
-## Building the Project
-
-### Debug Build
+Run checks relevant to the change:
 
 ```bash
-./gradlew assembleDebug
+# Shared tests on the Android JVM target
+./gradlew :shared:testDebugUnitTest
+
+# Android host unit tests and debug build
+./gradlew :app:testDebugUnitTest :app:assembleDebug
+
+# Shared tests on an Apple Silicon iOS simulator
+./gradlew :shared:iosSimulatorArm64Test
+
+# Android device/emulator tests, when a device is connected
+./gradlew :app:connectedDebugAndroidTest
 ```
 
-### Release Build
+The shared suite covers authentication, API outcomes, location, live feeds, saved-place synchronization, preferences, photos, navigation, and feature ViewModels. Ktor MockEngine and fake dependencies support deterministic checks without a production backend.
+
+Native SDK integration, maps, camera access, push delivery, and long-running vendor tracking also require device-level validation. A passing unit suite does not establish production acceptance.
+
+## Validate real-world behavior
+
+For location-related changes, check approximate and precise permission states, location services being disabled, app backgrounding, and network recovery. For authentication and sync changes, check guest-to-account transitions, sign-out, and switching accounts. For contribution flows, check failed uploads and rejected requests before a success state is shown.
+
+Keep ownership and administrative authorization on the backend. Configured administrator emails influence interface prompts and are not an authorization boundary.
+
+## Release configuration
+
+The current Android build configuration uses a local development endpoint and a debug keystore for release builds. Configure the intended backend, production transport policy, application identity, and proper signing before distribution. The iOS environment is supplied through its ignored xcconfig file and native Firebase configuration.
+
+Generated outputs, credentials, signing material, and local environment files do not belong in source control. Deployment and signing changes should be reviewed as release work.
+
+## Documentation workflow
+
+The site uses MkDocs Material. Documentation source is in `docs/`, navigation and theme are in `mkdocs.yml`, and generated HTML is ignored under `site/`.
 
 ```bash
-./gradlew assembleRelease
+# Existing environment
+source venv/bin/activate
+mkdocs serve
+
+# Validate links and configuration warnings during a documentation build
+mkdocs build --strict
 ```
 
-## Testing
-
-### Running Tests
+If the environment is missing:
 
 ```bash
-# Unit tests
-./gradlew test
-
-# Instrumented tests
-./gradlew connectedAndroidTest
+python3 -m venv venv
+source venv/bin/activate
+python -m pip install mkdocs-material
 ```
 
-## Code Review
+When publication is intended, deploy from the source branch:
 
-- All changes require a pull request
-- At least one approval required
-- CI checks must pass
+```bash
+mkdocs gh-deploy
+```
 
-## Documentation
+This updates the documentation hosting branch. Do not edit generated pages manually. A local build does not publish the site.
 
-- Document public APIs with KDoc
-- Update this documentation when adding features
-- Keep README.md up to date
+When product behavior changes, update the feature catalogue, platform coverage, and known limitations as well as technical details. Investor-facing statements must distinguish verified product facts, proposed priorities, and business hypotheses. Add commercial metrics only from verified records, with dates and definitions.

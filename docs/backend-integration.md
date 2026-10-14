@@ -1,125 +1,67 @@
 # Backend Integration
 
-## Overview
+## Scope and ownership
 
-The application communicates with a backend REST API to handle user synchronization, location updates, and bhandara (feast) management. The networking layer is built using **Retrofit** and **OkHttp**, ensuring robust data exchange with proper authentication and error handling.
+The mobile applications use a custom REST backend and STOMP/WebSocket service. This repository contains the client integration, not the server implementation, database migrations, moderator console, or deployment configuration.
 
-## Mobile Implementation
+The descriptions below reflect the client contract as reviewed on **14 October 2026**. Confirm authorization, retention, moderation, rate limits, and operational guarantees against the actual backend before making production claims.
 
-### Tech Stack
+## REST transport
 
-- **Retrofit 2**: Type-safe HTTP client.
-- **OkHttp 3**: Underlying HTTP client with interceptors.
-- **Gson**: JSON serialization/deserialization.
-- **Coroutines**: Asynchronous API calls.
+`shared/.../data/network/ApiClient.kt` uses Ktor with kotlinx.serialization. Android uses an OkHttp engine; iOS uses Darwin. The client sets JSON content type by default, ignores unknown response fields, and maps unsuccessful responses to structured `ApiError` values.
 
-### Network Configuration
+- Connection timeout: **15 seconds**.
+- Request timeout: **60 seconds**, including menu-photo extraction.
+- Authentication: `Authorization: Bearer <Firebase ID token>` when available.
+- Android base URL: `BuildConfig.API_BASE_URL` from `app/build.gradle.kts`.
+- iOS base URL: `ApiBaseUrl` from the generated `Info.plist`, populated through `Secrets.xcconfig`.
 
-The network configuration is centralized in `com.example.bhandara.data.api.NetworkModule`.
+Anonymous Firebase users also have an authenticated identity. The client may send a request without a token when token retrieval is unavailable; the backend must reject protected operations appropriately.
 
-- **Base URL**: Defined in `build.gradle.kts` as `API_BASE_URL`.
-  - *Debug*: Defaults to `http://10.0.2.2:8080/` (Android Emulator localhost) or local IP.
-  - *Release*: Should point to production server.
-- **Timeouts**: 30 seconds for connect, read, and write operations.
-- **Logging**: `HttpLoggingInterceptor` is enabled in DEBUG mode (Level: BODY).
+## Main data flows
 
-### Authentication
+### Discovery
 
-Security is handled via `AuthInterceptor`. It automatically retrieves the current Firebase User's ID token and attaches it to every request:
+The shops map requests `api/feed` using `lat`, `lon`, and `radius` query parameters. The response supplies active shops/carts, an optional verification prompt, and optional shop zones. Zones include shop IDs, center coordinates, outlines, and localized names.
 
-```http
-Authorization: Bearer <firebase_id_token>
-```
+Feast discovery uses `api/feasts/nearby` with `lat`, `lon`, and radius. Search radii are expressed in meters; the user's default is 5 km.
 
-If the user is not signed in (or `signInAnonymously` hasn't completed), the request proceeds without the header.
+### Contributions and media
 
-## API Reference
+Photos are compressed and uploaded through platform Firebase Storage adapters. The client submits resulting URLs with shops, feasts, reviews, claims, or report evidence. `PhotoUploader` reports progress and attempts cleanup of completed uploads when a batch fails.
 
-The contract is defined in `com.example.bhandara.data.api.ApiService`.
+Menu extraction is different: compressed photos go directly to `api/menu-items/image/extract` as multipart data under the `images` field. Returned draft items are checked and edited before menu submission.
 
-### 1. User Management
+### Saved places
 
-#### Create User
-Registers a new user (anonymous or authenticated) with the backend.
+`api/saved/sync` accepts queued saves and removals and returns the account's saved places. The client persists changes locally until synchronization succeeds. Account switching and guest migration are coordinated by `SavedPlacesSync`.
 
-- **Endpoint**: `POST api/users`
-- **Request**: `CreateUserRequest`
-  - `uid`: Firebase User ID
-  - `fcmToken`: Firebase Cloud Messaging token
-  - `latitude`: Current latitude
-  - `longitude`: Current longitude
-- **Response**: `CreateUserResponse`
+### Accounts and notifications
 
-#### Update Location
-Periodically updates the user's location for geo-fencing features.
+Android registers users and FCM tokens, synchronizes replacement tokens, and submits location for nearby notification targeting. Notification preferences have a backend record and a local copy. The source includes notification routing for new feasts, report updates, shop reviews, and claim outcomes.
 
-- **Endpoint**: `PUT api/users/location`
-- **Request**: `UpdateLocationRequest`
-  - `uid`: Firebase User ID
-  - `latitude`: New latitude
-  - `longitude`: New longitude
-- **Response**: `UpdateLocationResponse`
+The account deletion client expects personal account data to be removed while shops and feasts remain without the person's name. This is an integration expectation; backend execution and retention need independent verification.
 
-### 2. Feast Management
+## WebSocket integration
 
-#### Report Bhandara (Create Feast)
-Submits a new bhandara event.
+The base URL is converted from HTTP(S) to WS(S), with `/ws/websocket` appended. Firebase tokens are supplied in STOMP connection headers.
 
-- **Endpoint**: `POST api/feasts`
-- **Request**: `FeastRequest`
-  - `menuItems`: List of food items
-  - `startTime` / `endTime`: Event duration
-  - `latitude` / `longitude`: Event location
-  - `imageUrls`: List of uploaded image URLs
-  - (and other details)
-- **Response**: `FeastResponse`
+| Destination | Direction | Purpose |
+| --- | --- | --- |
+| `/app/cart/location` | Android vendor → server | Publish position and presence |
+| `/app/cart/offline` | Android vendor → server | Signal that sharing stopped |
+| `/topic/cart/{shopId}` | Server → customer | Deliver cart position updates |
 
-#### Get Nearby Feasts
-Retrieves active bhandaras within a specific radius.
+Shared `LiveCartFeed` reconnects with increasing delays capped at 30 seconds and skips unreadable messages. The Android vendor publisher has its own connection and retry handling. The server must authorize publishing against actual ownership rather than trusting identity fields in a message.
 
-- **Endpoint**: `GET api/feasts/nearby`
-- **Query Params**:
-  - `lat`: User's latitude
-  - `lon`: User's longitude
-  - `radius`: Search radius in meters (default: 500.0)
-- **Response**: `List<FeastResponse>`
+## Trust and moderation boundaries
 
-## Backend Requirements (Reference)
+The client supports ownership claim outcomes, verification votes with coordinates, report evidence, report status, review visibility states, and feast takedown/resubmission states. It does not prove how the server reaches those decisions.
 
-For the server-side implementation to support this mobile app, the following database structure (using PostgreSQL + PostGIS) is recommended.
+Server responsibilities include token validation, owner/admin authorization, proximity enforcement, duplicate prevention, rate limiting, claim decisions, moderation actions, and notification fan-out. Configured client administrator email lists are for interface behavior only.
 
-### Database Schema
+## Failure handling
 
-```sql
-CREATE EXTENSION postgis;
+The client maps validation errors, unauthorized access, forbidden operations, missing resources, conflicts, rate limits, service failures, network failures, and unreadable responses. Validation messages can be shown to the user; internal failures receive generic messages. Cancellation propagates when a screen or operation is stopped.
 
--- Users Table
-CREATE TABLE users (
-    uid VARCHAR(128) PRIMARY KEY,
-    fcm_token VARCHAR(512),
-    location GEOGRAPHY(POINT, 4326),
-    last_active TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- Feasts Table
-CREATE TABLE feasts (
-    id SERIAL PRIMARY KEY,
-    organizer_uid VARCHAR(128) REFERENCES users(uid),
-    description TEXT,
-    location GEOGRAPHY(POINT, 4326),
-    start_time TIMESTAMP,
-    end_time TIMESTAMP,
-    is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE INDEX idx_users_location ON users USING GIST (location);
-CREATE INDEX idx_feasts_location ON feasts USING GIST (location);
-```
-
-### API Implementation Notes
-
-1.  **Duplicate Handling**: The `POST api/users` endpoint should handle "upsert" logic (insert if new, update if exists).
-2.  **Geo-Queries**: Use PostGIS `ST_DWithin` for the `nearby` endpoint to efficiently find feasts.
-3.  **Token Validation**: The backend **must** verify the Firebase ID token in the `Authorization` header using the Firebase Admin SDK.
+For exact paths and payload families, continue to the [API reference](api-reference.md).
