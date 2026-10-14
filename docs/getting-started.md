@@ -4,7 +4,7 @@
 
 Use the repository's Gradle wrapper and dependency catalogue rather than substituting independently selected library versions.
 
-For Android, install an Android Studio version compatible with the configured Android Gradle Plugin, JDK 17 or a compatible Gradle runtime, and Android SDK 36. The application currently requires Android API 35 or later. The Java/Kotlin bytecode target is 11; that is separate from the JDK needed to run the build.
+For Android, install an Android Studio version compatible with the configured Android Gradle Plugin, JDK 17 or a compatible Gradle runtime, and Android SDK 37. The application currently requires Android API 35 or later. The Java/Kotlin bytecode target is 11; that is separate from the JDK needed to run the build.
 
 For iOS, use macOS, Xcode, XcodeGen, and a compatible JDK. Kotlin targets arm64 iPhones and Apple Silicon simulators. `iosApp/project.yml` declares iOS 16.0; verify deployment compatibility with the native SDK versions resolved by Swift Package Manager.
 

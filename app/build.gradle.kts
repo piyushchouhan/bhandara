@@ -4,7 +4,6 @@ import java.io.FileInputStream
 
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     // Add the Google services Gradle plugin
     id("com.google.gms.google-services")
@@ -21,13 +20,13 @@ val localProperties = Properties().apply {
 android {
     namespace = "com.example.bhandara"
     compileSdk {
-        version = release(36)
+        version = release(37)
     }
 
     defaultConfig {
         applicationId = "com.example.bhandara"
         minSdk = 35
-        targetSdk = 36
+        targetSdk = 37
         versionCode = 1
         versionName = "1.0"
 
