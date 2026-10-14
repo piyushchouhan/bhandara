@@ -1,5 +1,9 @@
 package com.example.bhandara.services
 
+import com.example.bhandara.navigation.NOTIFICATION_DATA_KEYS
+import kotlinx.coroutines.runBlocking
+import com.example.bhandara.data.auth.AppBackend
+import com.example.bhandara.data.auth.AppAuth
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -25,9 +29,13 @@ class BhandaraMessagingService : FirebaseMessagingService() {
         super.onNewToken(token)
         // Never log the token itself: it lets anyone send notifications to this device
         Log.d(TAG, "New FCM token received")
-        
-        // TODO: Save token to Firestore when user is authenticated
-        // This will be handled in MainActivity after anonymous auth
+
+        // Firebase replaced this phone's token: tell the backend, or notifications stop reaching it.
+        // This runs on a background thread, so waiting for the request is fine. If nobody is signed in yet,
+        // or it fails, the next app start sends it (UserManager).
+        val uid = AppAuth.service.currentUid ?: return
+        val sent = runBlocking { AppBackend.pushTokenSync(applicationContext).sync(uid, token) }
+        Log.d(TAG, if (sent) "New FCM token sent to the backend" else "New FCM token will be sent at the next app start")
     }
     
     override fun onMessageReceived(message: RemoteMessage) {
@@ -51,23 +59,17 @@ class BhandaraMessagingService : FirebaseMessagingService() {
         val body = message.notification?.body ?: data["body"] ?: "Check out a new bhandara near you"
         
         // Show notification in system tray
-        showNotification(title, body, notificationType, feastId)
+        showNotification(title, body, data)
     }
     
-    private fun showNotification(
-        title: String, 
-        body: String, 
-        type: String = "",
-        feastId: String = ""
-    ) {
+    private fun showNotification(title: String, body: String, data: Map<String, String>) {
         createNotificationChannel()
         
-        // Intent to open MainActivity when notification is tapped
-        // Later you can add feastId as extras to navigate to specific bhandara
+        // Tapping opens the app on what the notification is about; the data goes along as extras under the same
+        // keys Android uses for notifications shown while the app is in the background
         val intent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            putExtra("notification_type", type)
-            putExtra("feast_id", feastId)
+            NOTIFICATION_DATA_KEYS.forEach { key -> data[key]?.let { putExtra(key, it) } }
         }
         
         val pendingIntent = PendingIntent.getActivity(

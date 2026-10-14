@@ -1,0 +1,94 @@
+# Xcode project definition. Generate the .xcodeproj with:  cd iosApp && xcodegen
+# (the generated iosApp.xcodeproj is not committed; this file is the source of truth)
+name: iosApp
+options:
+  bundleIdPrefix: com.localfeast
+  deploymentTarget:
+    iOS: "16.0"
+# Official iOS SDKs via Swift Package Manager: Firebase (only the parts the app uses are linked, see the target)
+# and Google Maps
+packages:
+  Firebase:
+    url: https://github.com/firebase/firebase-ios-sdk
+    from: "12.0.0"
+  GoogleMaps:
+    url: https://github.com/googlemaps/ios-maps-sdk
+    from: "9.0.0"
+  GoogleSignIn:
+    url: https://github.com/google/GoogleSignIn-iOS
+    from: "8.0.0"
+# Local secrets (e.g. the Google Maps key) come from Config/Secrets.xcconfig, which is not in git
+configFiles:
+  Debug: Config/Secrets.xcconfig
+  Release: Config/Secrets.xcconfig
+targets:
+  iosApp:
+    type: application
+    platform: iOS
+    sources:
+      - iosApp
+    dependencies:
+      - package: Firebase
+        product: FirebaseAuth
+      - package: Firebase
+        product: FirebaseStorage
+      - package: GoogleMaps
+        product: GoogleMaps
+      - package: GoogleSignIn
+        product: GoogleSignIn
+    info:
+      path: iosApp/Info.plist
+      properties:
+        CFBundleDisplayName: Local Feast
+        # The name iOS uses in its own prompts (e.g. "Local Feast wants to use google.com to sign in")
+        CFBundleName: Local Feast
+        # The app's languages; iOS then offers them on the app's page in Settings (the side menu links there)
+        CFBundleDevelopmentRegion: en
+        CFBundleLocalizations: [en, hi, mr]
+        # From Config/Secrets.xcconfig; read at launch to start Google Maps
+        GoogleMapsApiKey: $(MAPS_API_KEY)
+        # Platform admins (comma-separated), as in Android's ADMIN_EMAILS; keep in sync with the backend's
+        # app.admin-emails. Only skips owner-only prompts; the backend does the real check from the sign-in token.
+        AdminEmails: "piyush9695@gmail.com"
+        # The backend's address, also from Config/Secrets.xcconfig
+        ApiBaseUrl: $(API_BASE_URL)
+        # Allows plain http only to this computer (localhost / .local), for a backend run locally
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
+        # Shown when the app asks for location access
+        # Google's sign-in page returns to the app through this URL scheme (from Config/Secrets.xcconfig)
+        CFBundleURLTypes:
+          - CFBundleURLSchemes: [$(GOOGLE_REVERSED_CLIENT_ID)]
+        # Shown when the app asks to use the camera (photos of reviews, feasts and shops); choosing from the
+        # photo library uses the system picker, which needs no permission
+        NSCameraUsageDescription: Local Feast uses the camera to take photos of food, shops and community feasts you share.
+        NSLocationWhenInUseUsageDescription: Local Feast uses your location to show food shops, carts and community feasts near you.
+        # The logo on the app's background colour while it starts (Assets.xcassets; dark in dark mode)
+        UILaunchScreen:
+          UIColorName: LaunchBackground
+          UIImageName: LaunchLogo
+        # Lets Compose animate at 120 Hz on ProMotion iPhones
+        CADisableMinimumFrameDurationOnPhone: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.localfeast.app
+        # The home-screen icon (Assets.xcassets/AppIcon: the logo on white, like Android's)
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        SWIFT_VERSION: "5.0"
+        CODE_SIGN_STYLE: Automatic
+        # Simulator builds are signed locally (no Apple account needed); without a signature Firebase can't use
+        # the keychain, so sign-in fails
+        "CODE_SIGN_IDENTITY[sdk=iphonesimulator*]": "-"
+        # The Kotlin "Shared" framework built by Gradle (see the build script below)
+        FRAMEWORK_SEARCH_PATHS: "$(SRCROOT)/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)"
+        OTHER_LDFLAGS: ["$(inherited)", "-framework", "Shared"]
+        # The Gradle build script needs to read the project outside Xcode's sandbox
+        ENABLE_USER_SCRIPT_SANDBOXING: NO
+    preBuildScripts:
+      - name: Compile Kotlin shared code
+        basedOnDependencyAnalysis: false
+        script: |
+          # Xcode doesn't see the terminal's PATH; fall back to the JDK macOS knows about
+          if [ -z "$JAVA_HOME" ]; then export JAVA_HOME="$(/usr/libexec/java_home)"; fi
+          cd "$SRCROOT/.."
+          ./gradlew :shared:embedAndSignAppleFrameworkForXcode

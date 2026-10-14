@@ -21,3 +21,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "Bhandara"
 include(":app")
+include(":shared")

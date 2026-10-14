@@ -7,6 +7,8 @@
         <domain includeSubdomains="true">127.0.0.1</domain>
         <domain includeSubdomains="true">192.168.1.7</domain>
         <domain includeSubdomains="true">192.168.1.14</domain>
+        <domain includeSubdomains="true">192.168.1.4</domain>
+        <domain includeSubdomains="true">192.168.1.5</domain>
         <domain includeSubdomains="true">tobago-sphere-photo-magnetic.trycloudflare.com</domain>
         <domain includeSubdomains="true">localfeast-backend-app.azurewebsites.net</domain>
     </domain-config>

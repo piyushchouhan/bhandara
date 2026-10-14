@@ -1,5 +1,7 @@
 package com.example.bhandara.managers
 
+import com.example.bhandara.data.auth.AppBackend
+import com.example.bhandara.data.settings.AppSettings
 import android.content.Context
 import android.util.Log
 import androidx.work.Constraints
@@ -7,7 +9,8 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
-import com.example.bhandara.data.repository.BackendRepository
+import com.example.bhandara.data.network.ApiResult
+import com.example.bhandara.data.network.onFailure
 import com.example.bhandara.data.repository.UserRepository
 import com.example.bhandara.utils.LocationHelper
 import com.example.bhandara.workers.LocationUpdateWorker
@@ -24,11 +27,9 @@ class UserManager(
     private val coroutineScope: CoroutineScope
 ) {
     private val userRepository = UserRepository()
-    private val backendRepository = BackendRepository()
     private val locationHelper = LocationHelper(context)
     
-    // SharedPreferences to track backend sync status
-    private val prefs = context.getSharedPreferences("user_sync_prefs", Context.MODE_PRIVATE)
+    private val settings = AppSettings(context)
     
     /**
      * Deferred that completes when initializeUser() finishes.
@@ -39,21 +40,20 @@ class UserManager(
     
     companion object {
         private const val TAG = "UserManager"
-        const val KEY_BACKEND_SYNCED = "backend_synced_"
     }
     
     /**
      * Check if user has been synced to backend
      */
     fun isUserSyncedToBackend(uid: String): Boolean {
-        return prefs.getBoolean(KEY_BACKEND_SYNCED + uid, false)
+        return settings.isRegisteredWithBackend(uid)
     }
     
     /**
      * Mark user as synced to backend
      */
     private fun markUserSyncedToBackend(uid: String) {
-        prefs.edit().putBoolean(KEY_BACKEND_SYNCED + uid, true).apply()
+        settings.markRegisteredWithBackend(uid)
         Log.d(TAG, "Marked user $uid as synced to backend")
     }
     
@@ -79,20 +79,22 @@ class UserManager(
                     return@launch
                 }
                 
-                userRepository.saveUser(uid, fcmToken)
-                
                 // Only create user in backend if not already synced
                 if (!isUserSyncedToBackend(uid)) {
-                    val backendResponse = backendRepository.createUser(uid, fcmToken, null)
-                    if (backendResponse != null) {
+                    val registered = AppBackend.userApi.register(uid, fcmToken, null)
+                    if (registered is ApiResult.Success) {
                         markUserSyncedToBackend(uid)
+                        // Registration included the token
+                        settings.markPushTokenSent(uid, fcmToken)
                         initCompleted.complete(true)
                     } else {
                         Log.e(TAG, "Failed to create user in backend, will retry on next start")
                         initCompleted.complete(false)
                     }
                 } else {
-                    // Already synced from a previous session
+                    // Already synced from a previous session. Make sure the backend has this phone's current
+                    // push token: it may have changed while the app was closed, or an earlier send failed.
+                    AppBackend.pushTokenSync(context).sync(uid, fcmToken)
                     initCompleted.complete(true)
                 }
                 
@@ -104,7 +106,7 @@ class UserManager(
     }
     
     /**
-     * Update user location in Firestore and backend.
+     * Send the user's location to the backend.
      * Waits for [initializeUser] to complete before calling the backend
      * to avoid the "User not found" error.
      */
@@ -114,9 +116,6 @@ class UserManager(
             
             val location = locationHelper.getCurrentLocation()
             if (location != null) {
-                // Always update Firestore (no dependency on backend registration)
-                userRepository.updateUserLocation(uid, location)
-                
                 // Wait for backend registration to finish before sending location
                 val backendReady = initCompleted.await()
                 if (!backendReady) {
@@ -126,7 +125,8 @@ class UserManager(
                 
                 val fcmToken = userRepository.getFcmToken()
                 if (fcmToken != null) {
-                    backendRepository.updateUserLocation(uid, fcmToken, location)
+                    AppBackend.userApi.updateLocation(uid, fcmToken, location)
+                        .onFailure { Log.w(TAG, "Location update failed: ${it.message}") }
                 }
             }
         }

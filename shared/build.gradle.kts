@@ -1,0 +1,95 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
+// Code shared by the Android app and the iOS app.
+//   src/commonMain  - Kotlin + Compose used by both platforms (models, theme, home screen; more over time)
+//   src/androidMain - Android-only implementations, when common code needs one
+//   src/iosMain     - iOS-only code, including the entry point the iOS app calls (MainViewController)
+//   src/commonTest  - tests for shared code; they run on Android (JVM) and on the iOS simulator
+//   src/commonMain/composeResources - images, fonts and translated text used by shared screens
+plugins {
+    alias(libs.plugins.kotlin.multiplatform)
+    alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.android.library)
+    alias(libs.plugins.compose.multiplatform)
+    alias(libs.plugins.kotlin.compose)
+}
+
+kotlin {
+    androidTarget {
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_11)
+        }
+    }
+
+    // iPhone (device) and the iOS simulator on Apple Silicon Macs.
+    // Each builds a "Shared" framework that the Xcode project in iosApp/ links against.
+    listOf(iosArm64(), iosSimulatorArm64()).forEach { target ->
+        target.binaries.framework {
+            baseName = "Shared"
+            isStatic = true
+        }
+    }
+
+    sourceSets {
+        commonMain.dependencies {
+            implementation(libs.kotlinx.serialization.json)
+            implementation(libs.kotlinx.coroutines.core)
+            implementation(libs.kotlinx.datetime) // feast dates and times
+            api(libs.ktor.client.core) // ApiClient's constructor takes a Ktor engine
+            implementation(libs.ktor.client.content.negotiation)
+            implementation(libs.ktor.serialization.kotlinx.json)
+            // Live cart locations (STOMP over a Ktor WebSocket)
+            implementation(libs.ktor.client.websockets)
+            implementation(libs.krossbow.stomp.core)
+            implementation(libs.krossbow.websocket.ktor)
+            implementation(libs.multiplatform.settings)
+            // Screens: ViewModels that survive rotation, and photos loaded from the internet
+            implementation(libs.jetbrains.lifecycle.viewmodel.compose)
+            implementation(libs.coil3.compose)
+            implementation(libs.coil3.network.ktor)
+            implementation(compose.runtime)
+            implementation(compose.foundation)
+            implementation(compose.material3)
+            implementation(compose.materialIconsExtended) // shop details uses icons beyond the core set
+            implementation(compose.ui)
+            implementation(compose.components.resources)
+        }
+        // Each platform sends requests with its own networking stack
+        androidMain.dependencies {
+            implementation(libs.ktor.client.okhttp)
+            implementation(libs.play.services.location)
+            implementation(libs.play.services.maps)
+            implementation(libs.maps.compose)
+            implementation(libs.androidx.activity.compose) // asking for permissions from shared screens
+            implementation(libs.androidx.appcompat) // switching the app's language
+        }
+        iosMain.dependencies {
+            implementation(libs.ktor.client.darwin)
+        }
+        // Tests run on both platforms against a fake server (Ktor's MockEngine)
+        commonTest.dependencies {
+            implementation(libs.kotlin.test)
+            implementation(libs.kotlinx.coroutines.test)
+            implementation(libs.ktor.client.mock)
+            implementation(libs.multiplatform.settings.test)
+        }
+    }
+}
+
+compose.resources {
+    publicResClass = true
+    packageOfResClass = "com.example.bhandara.shared.resources"
+}
+
+android {
+    namespace = "com.example.bhandara.shared"
+    compileSdk = 36
+    defaultConfig {
+        minSdk = 35
+        consumerProguardFiles("consumer-rules.pro")
+    }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
+    }
+}
