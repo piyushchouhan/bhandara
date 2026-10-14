@@ -1,5 +1,8 @@
 package com.example.bhandara.ui.reviews
 
+import com.example.bhandara.shared.resources.photo_views
+import com.example.bhandara.shared.resources.stat_views
+import com.example.bhandara.ui.shopdetails.compactCount
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -214,7 +217,7 @@ fun MyPhotosScreen(
                             contentPadding = PaddingValues(start = 14.dp, end = 14.dp, bottom = 32.dp),
                             verticalArrangement = Arrangement.spacedBy(18.dp),
                         ) {
-                            item(key = "summary") { Summary(state.photos.size, state.placeCount) }
+                            item(key = "summary") { Summary(state.photos.size, state.placeCount, state.viewCount) }
                             items(state.groups, key = { it.review.id }) { group ->
                                 Group(group, onOpenShop = { onOpenShop(group.review.shopId) }, onOpen = { viewing = it })
                             }
@@ -297,14 +300,16 @@ private fun SelectingHeader(count: Int, onClose: () -> Unit, onSelectAll: () -> 
     }
 }
 
-/** The indigo card: how many photos, and in how many places */
+/** The indigo card: how many photos, in how many places, and how often others opened them */
 @Composable
-private fun Summary(photos: Int, places: Int) {
+private fun Summary(photos: Int, places: Int, views: Long) {
     val colors = MaterialTheme.feastColors
     Row(Modifier.fillMaxWidth().background(colors.indigo, RoundedCornerShape(22.dp)).padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
         SummaryCell(photos.toString(), stringResource(Res.string.my_photos_label), Modifier.weight(1f))
         Box(Modifier.width(1.dp).height(44.dp).background(Color.White.copy(alpha = 0.14f)))
         SummaryCell(places.toString(), stringResource(Res.string.my_photos_places), Modifier.weight(1f))
+        Box(Modifier.width(1.dp).height(44.dp).background(Color.White.copy(alpha = 0.14f)))
+        SummaryCell(compactCount(views), stringResource(Res.string.stat_views), Modifier.weight(1f))
     }
 }
 
@@ -489,9 +494,13 @@ private fun PhotoViewer(
                     ShopThumbnail(review, 44.dp)
                     Column(Modifier.weight(1f)) {
                         Text(review.shopName.orEmpty(), color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.titleSmall)
-                        reviewAgeText(reviewAge(review.createdAt, today))?.let {
-                            Text(it, color = Color(0xFFC7C4F0), fontSize = 12.sp, fontWeight = FontWeight.Medium, style = MaterialTheme.typography.bodySmall)
-                        }
+                        // "Added 2 days ago · 640 views", for the photo being shown
+                        val views = group.photos.getOrNull(pager.currentPage)?.views ?: 0L
+                        val line = listOfNotNull(
+                            reviewAgeText(reviewAge(review.createdAt, today)),
+                            pluralStringResource(Res.plurals.photo_views, views.coerceAtMost(Int.MAX_VALUE.toLong()).toInt(), compactCount(views)),
+                        ).joinToString(" · ")
+                        Text(line, color = Color(0xFFC7C4F0), fontSize = 12.sp, fontWeight = FontWeight.Medium, style = MaterialTheme.typography.bodySmall)
                     }
                     Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, stringResource(Res.string.my_reviews_view_shop), tint = Color.White, modifier = Modifier.size(20.dp))
                 }

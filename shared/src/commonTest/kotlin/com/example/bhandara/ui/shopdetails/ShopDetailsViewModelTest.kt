@@ -1,5 +1,8 @@
 package com.example.bhandara.ui.shopdetails
 
+import com.example.bhandara.data.network.ShopWeekStats
+import com.example.bhandara.data.network.ActivityApi
+import io.ktor.http.content.TextContent
 import com.example.bhandara.photos.CompressedPhoto
 import com.example.bhandara.photos.PhotoUploadException
 import com.example.bhandara.photos.PickedPhoto
@@ -523,5 +526,72 @@ class ShopDetailsViewModelTest {
             is OutgoingContent.ByteArrayContent -> content.bytes().decodeToString()
             else -> ""
         }
+    }    // ==================== Counting for the owner ====================
+
+    private fun activities() = requestsTo("activity").map { (it.body as TextContent).text }
+
+    @Test
+    fun openingTheShopCountsOneViewAndDirectionsAndCallsAreCountedToo() = runTest(dispatcher) {
+        answer("activity", "", HttpStatusCode.NoContent)
+        val viewModel = ShopDetailsViewModel("5", ShopApi(client), settings, { signedInUid }, null, activityApi = ActivityApi(client))
+        advanceUntilIdle()
+
+        viewModel.onDirections()
+        viewModel.onCall()
+        viewModel.refreshMenu()
+        advanceUntilIdle()
+
+        assertEquals(
+            listOf(
+                """{"targetKind":"SHOP","targetId":5,"action":"VIEW"}""",
+                """{"targetKind":"SHOP","targetId":5,"action":"DIRECTIONS"}""",
+                """{"targetKind":"SHOP","targetId":5,"action":"CALL"}""",
+            ),
+            activities(),
+        )
     }
+
+    @Test
+    fun aRetryAfterAFailedLoadIsStillOneView() = runTest(dispatcher) {
+        answer("activity", "", HttpStatusCode.NoContent)
+        answer("localshops/5", """{"message":"Server error"}""", HttpStatusCode.InternalServerError)
+        val viewModel = ShopDetailsViewModel("5", ShopApi(client), settings, { signedInUid }, null, activityApi = ActivityApi(client))
+        advanceUntilIdle()
+        assertTrue(activities().isEmpty(), "nothing was seen yet")
+
+        answer("localshops/5", shop())
+        viewModel.retry()
+        advanceUntilIdle()
+        viewModel.retry()
+        advanceUntilIdle()
+
+        assertEquals(1, activities().size)
+    }
+
+    @Test
+    fun theOwnersOwnPageCountsNothingAndShowsThisWeeksNumbers() = runTest(dispatcher) {
+        answer("localshops/5/stats", """{"views":214,"directions":38,"calls":6}""")
+        val viewModel = ShopDetailsViewModel(
+            "5", ShopApi(client), settings, { signedInUid }, null, activityApi = ActivityApi(client), ownerView = true,
+        )
+        advanceUntilIdle()
+        viewModel.onDirections()
+        advanceUntilIdle()
+
+        assertTrue(activities().isEmpty())
+        assertEquals(ShopWeekStats(views = 214, directions = 38, calls = 6), viewModel.state.value.weekStats)
+    }
+
+    @Test
+    fun withoutThisWeeksNumbersTheyStayUnknown() = runTest(dispatcher) {
+        val viewModel = ShopDetailsViewModel(
+            "5", ShopApi(client), settings, { signedInUid }, null, activityApi = ActivityApi(client), ownerView = true,
+        )
+        advanceUntilIdle()
+
+        assertNull(viewModel.state.value.weekStats)
+        assertNotNull(viewModel.state.value.shop, "the page still works")
+    }
+
+
 }

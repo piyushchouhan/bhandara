@@ -1,5 +1,7 @@
 package com.example.bhandara.ui.feasts
 
+import com.example.bhandara.data.network.ActivityAction
+import com.example.bhandara.data.network.ActivityApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.bhandara.data.location.GeoLocation
@@ -60,7 +62,11 @@ class FeastDetailsViewModel(
     private val now: () -> LocalDateTime = ::localNow,
     /** Uploads photos sent with a report and returns their URLs (throws if any fails); null where not supported */
     private val uploadPhotos: (suspend (List<PickedPhoto>) -> List<String>)? = null,
+    /** Counts views and directions for the organizer's numbers; null where not counted */
+    private val activityApi: ActivityApi? = null,
 ) : ViewModel() {
+
+    private var viewCounted = false
 
     private val _state = MutableStateFlow(FeastDetailsState(hasReported = settings.hasReportedFeast(feastId), isSaved = settings.isFeastSaved(feastId)))
     val state: StateFlow<FeastDetailsState> = _state.asStateFlow()
@@ -70,6 +76,14 @@ class FeastDetailsViewModel(
     }
 
     fun retry() = load()
+
+    /** The user is asking for directions to the feast */
+    fun onDirections() = count(ActivityAction.DIRECTIONS)
+
+    private fun count(action: ActivityAction) {
+        val api = activityApi ?: return
+        viewModelScope.launch { api.feast(feastId, action) }
+    }
 
     /** Saves the feast to the user's places (on the phone), or takes it out */
     fun toggleSaved() {
@@ -128,6 +142,11 @@ class FeastDetailsViewModel(
                             timing = feastTiming(feast, now()),
                             isOrganizer = uid != null && feast.firebaseUid == uid,
                         )
+                    }
+                    // One view per visit to the page
+                    if (!viewCounted) {
+                        viewCounted = true
+                        count(ActivityAction.VIEW)
                     }
                     measureDistance(feast)
                 }

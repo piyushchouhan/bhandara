@@ -89,6 +89,7 @@ class SettingsViewModel(
 /** Just this one setting, so the others stay as the backend has them */
 private fun settingsWith(kind: NotificationKind, on: Boolean) = when (kind) {
     NotificationKind.NEARBY_FEASTS -> UserApi.NotificationSettings(nearbyFeasts = on)
+    NotificationKind.SAVED_FEASTS -> UserApi.NotificationSettings(savedFeasts = on)
     NotificationKind.REPORT_UPDATES -> UserApi.NotificationSettings(reportUpdates = on)
     NotificationKind.SHOP_REVIEWS -> UserApi.NotificationSettings(shopReviews = on)
     NotificationKind.CLAIM_STATUS -> UserApi.NotificationSettings(claimStatus = on)
@@ -97,6 +98,7 @@ private fun settingsWith(kind: NotificationKind, on: Boolean) = when (kind) {
 
 private fun UserApi.NotificationSettings.valueOf(kind: NotificationKind): Boolean? = when (kind) {
     NotificationKind.NEARBY_FEASTS -> nearbyFeasts
+    NotificationKind.SAVED_FEASTS -> savedFeasts
     NotificationKind.REPORT_UPDATES -> reportUpdates
     NotificationKind.SHOP_REVIEWS -> shopReviews
     NotificationKind.CLAIM_STATUS -> claimStatus

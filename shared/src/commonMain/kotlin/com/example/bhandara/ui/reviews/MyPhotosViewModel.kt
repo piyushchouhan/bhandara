@@ -13,7 +13,10 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /** One of the user's photos, in the review it belongs to */
-data class MyPhoto(val url: String, val review: ReviewResponse)
+data class MyPhoto(val url: String, val review: ReviewResponse) {
+    /** How many people opened it (each once a day) */
+    val views: Long get() = review.photoViews?.get(url) ?: 0L
+}
 
 /** A shop's photos from the user's review of it, in the order they were added */
 data class PhotoGroup(val review: ReviewResponse, val photos: List<MyPhoto>)
@@ -48,6 +51,9 @@ data class MyPhotosState(
     val placeCount: Int get() = groups.size
 
     val selectedPhotos: List<MyPhoto> get() = photos.filter { it.url in selected }
+
+    /** How many times the shown photos were opened by others (each person once a day) */
+    val viewCount: Long get() = photos.sumOf { it.views }
 }
 
 class MyPhotosViewModel(private val reviewApi: ReviewApi) : ViewModel() {

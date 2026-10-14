@@ -1,5 +1,6 @@
 package com.example.bhandara.ui.feasts
 
+import com.example.bhandara.data.network.ActivityApi
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -167,6 +168,7 @@ fun FeastDetailsScreen(feastId: String, onBack: () -> Unit, onFindOtherFeasts: (
             { dependencies.auth.currentUid },
             LocationService(deviceLocation),
             uploadPhotos = { photos -> dependencies.photoUploader.upload(photos) },
+            activityApi = ActivityApi(dependencies.apiClient),
         )
     }
     FeastTheme { FeastDetailsPage(viewModel, onBack, onFindOtherFeasts) }
@@ -200,7 +202,12 @@ private fun FeastDetailsPage(viewModel: FeastDetailsViewModel, onBack: () -> Uni
     val takenDown = feast != null && !state.isActive
     val timing = feast?.let { feastTiming(it, now) } ?: FeastTiming.Unknown
     val canGo = feast != null && state.isActive && timing != FeastTiming.Ended
-    val directions = { feast?.let { actions.openDirections(it.latitude, it.longitude) } }
+    val directions = {
+        feast?.let {
+            viewModel.onDirections()
+            actions.openDirections(it.latitude, it.longitude)
+        }
+    }
     val share = {
         feast?.let {
             scope.launch { actions.share(getString(Res.string.share_shop_text, it.organizerName ?: "", ExternalLinks.directions(it.latitude, it.longitude))) }

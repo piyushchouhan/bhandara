@@ -61,6 +61,7 @@ class UserApi(private val client: ApiClient) {
         val shopReviews: Boolean? = null,
         val claimStatus: Boolean? = null,
         val quietHours: Boolean? = null,
+        val savedFeasts: Boolean? = null,
     )
 
     /** Changes the notification settings given */

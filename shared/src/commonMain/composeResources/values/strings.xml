@@ -930,4 +930,15 @@
     <string name="my_feasts_reason_not_happening">Several people reported this feast wasn’t happening. If it is, check the details and send it back for a review.</string>
     <string name="my_feasts_reason_money">Several people reported that money was being asked for. Feasts on the map must be free.</string>
     <string name="my_feasts_reason_inappropriate">Several people reported the photos or details as inappropriate. Change them and we’ll review it again.</string>
+    <string name="stat_saved">Saved</string>
+    <string name="notif_saved_feasts">Saved feast ends early</string>
+    <string name="notif_saved_feasts_note">When the food runs out at a feast you saved</string>
+    <plurals name="photo_views">
+        <item quantity="one">%1$s view</item>
+        <item quantity="other">%1$s views</item>
+    </plurals>
+    <plurals name="my_feasts_end_notify">
+        <item quantity="one">%1$d person who saved it will be told</item>
+        <item quantity="other">%1$d people who saved it will be told</item>
+    </plurals>
 </resources>

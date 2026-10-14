@@ -1,5 +1,7 @@
 package com.example.bhandara.ui.reviews
 
+import com.example.bhandara.data.network.ActivityApi
+import io.ktor.http.content.TextContent
 import com.example.bhandara.data.network.ApiClient
 import com.example.bhandara.data.network.ReviewApi
 import com.example.bhandara.data.settings.AppSettings
@@ -673,5 +675,28 @@ class ReviewsViewModelTest {
             val text = (body as? OutgoingContent.ByteArrayContent)?.bytes()?.decodeToString().orEmpty()
             return Json.parseToJsonElement(text).jsonObject
         }
+    }    // ==================== Counting photo views ====================
+
+    @Test
+    fun eachPhotoOpenedIsCountedOnceWhileThePageIsOpen() = runTest(dispatcher) {
+        answer(HttpMethod.Post, "activity", "", HttpStatusCode.NoContent)
+        val viewModel = ReviewsViewModel("5", ReviewApi(client), settings, { signedInUid }, uploader, ActivityApi(client))
+        advanceUntilIdle()
+
+        viewModel.onPhotoShown("1", "https://img.test/a.webp")
+        viewModel.onPhotoShown("1", "https://img.test/b.webp")
+        viewModel.onPhotoShown("1", "https://img.test/a.webp") // swiped back
+        advanceUntilIdle()
+
+        val sent = requests.filter { it.url.encodedPath == "/api/activity" }.map { (it.body as TextContent).text }
+        assertEquals(
+            listOf(
+                """{"targetKind":"REVIEW_PHOTO","targetId":1,"action":"VIEW","photoUrl":"https://img.test/a.webp"}""",
+                """{"targetKind":"REVIEW_PHOTO","targetId":1,"action":"VIEW","photoUrl":"https://img.test/b.webp"}""",
+            ),
+            sent,
+        )
     }
+
+
 }

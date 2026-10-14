@@ -60,6 +60,13 @@ data class FeastResponse(
 
     /** Whether the organizer can still fix it and send it back */
     val canResubmit: Boolean = false,
+
+    // Its reach, in the organizer's own list only (each person once a day); null elsewhere
+    val viewCount: Long? = null,
+    val directionsCount: Long? = null,
+    val callCount: Long? = null,
+    /** How many saved it; they're told if it ends early */
+    val savedCount: Long? = null,
     
     val createdAt: String? = null,
     

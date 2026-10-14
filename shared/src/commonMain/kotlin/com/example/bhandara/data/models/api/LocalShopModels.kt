@@ -149,6 +149,8 @@ data class ReviewResponse(
     val helpfulCount: Int = 0,
     /** Whether the signed-in user marked it helpful */
     val helpfulByMe: Boolean = false,
+    /** My reviews only: how many people opened each photo (photo URL -> views) */
+    val photoViews: Map<String, Long>? = null,
     /** The reviewed shop, for lists of one person's reviews */
     val shopName: String? = null,
     val shopArea: String? = null,

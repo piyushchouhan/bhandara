@@ -23,4 +23,10 @@ class NotificationRoutesTest {
         assertNull(routeForNotification(mapOf("type" to "new_localfeast", "feastId" to " ")), "a feast without its id")
         assertNull(routeForNotification(mapOf("type" to "shop_review", "shopId" to null)))
     }
+
+    @Test
+    fun aSavedFeastThatEndedEarlyOpensTheFeast() {
+        assertEquals(Route.FeastDetails("9"), routeForNotification(mapOf("type" to "saved_feast_ended", "feastId" to "9")))
+    }
+
 }

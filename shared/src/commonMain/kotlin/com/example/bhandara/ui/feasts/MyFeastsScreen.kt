@@ -1,5 +1,13 @@
 package com.example.bhandara.ui.feasts
 
+import com.example.bhandara.shared.resources.my_feasts_end_notify
+import androidx.compose.material.icons.outlined.Notifications
+import org.jetbrains.compose.resources.pluralStringResource
+import com.example.bhandara.shared.resources.photo_views
+import com.example.bhandara.shared.resources.stat_saved
+import com.example.bhandara.shared.resources.stat_directions
+import com.example.bhandara.shared.resources.stat_views
+import com.example.bhandara.ui.shopdetails.compactCount
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -92,7 +100,6 @@ import com.example.bhandara.shared.resources.community_feast
 import com.example.bhandara.shared.resources.feasts_posted
 import com.example.bhandara.shared.resources.my_feasts_change_time
 import com.example.bhandara.shared.resources.my_feasts_contact_support
-import com.example.bhandara.shared.resources.my_feasts_dishes
 import com.example.bhandara.shared.resources.my_feasts_edit
 import com.example.bhandara.shared.resources.my_feasts_empty_text
 import com.example.bhandara.shared.resources.my_feasts_empty_title
@@ -112,12 +119,10 @@ import com.example.bhandara.shared.resources.my_feasts_none_taken_down
 import com.example.bhandara.shared.resources.my_feasts_none_upcoming
 import com.example.bhandara.shared.resources.my_feasts_past
 import com.example.bhandara.shared.resources.my_feasts_past_heading
-import com.example.bhandara.shared.resources.my_feasts_photos
 import com.example.bhandara.shared.resources.my_feasts_post
 import com.example.bhandara.shared.resources.my_feasts_reason
 import com.example.bhandara.shared.resources.my_feasts_reason_reports
 import com.example.bhandara.shared.resources.my_feasts_repost
-import com.example.bhandara.shared.resources.my_feasts_serves
 import com.example.bhandara.shared.resources.my_feasts_share
 import com.example.bhandara.shared.resources.my_feasts_take_down
 import com.example.bhandara.shared.resources.my_feasts_take_down_confirm
@@ -139,7 +144,7 @@ import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
 
 // Feasts I posted (design "Feasts I Posted": 1a list, 1b More sheet, 1c end early, 1d taken down, 1e empty; dark
-// 2a–2e). Views, directions, saves and "Fix and resubmit" have no backend yet, so they're left out.
+// 2a–2e). Each feast shows its views, directions and saves; ending early tells the people who saved it.
 
 /**
  * The user's own feasts, from Profile → My activity
@@ -260,6 +265,10 @@ fun MyFeastsScreen(
                 text = stringResource(Res.string.my_feasts_end_text, feastName(feast)),
                 confirm = stringResource(Res.string.my_feasts_end_confirm),
                 dismiss = stringResource(Res.string.my_feasts_keep_live),
+                // "12 people who saved it will be notified"
+                note = (feast.savedCount ?: 0).takeIf { it > 0 }?.let { saved ->
+                    pluralStringResource(Res.plurals.my_feasts_end_notify, saved.coerceAtMost(Int.MAX_VALUE.toLong()).toInt(), saved)
+                },
                 onConfirm = {
                     endingEarly = null
                     viewModel.endEarly(feast.id)
@@ -433,11 +442,11 @@ private fun TicketCard(feast: FeastResponse, busy: Boolean, onOpen: () -> Unit, 
             },
         )
         Row(Modifier.fillMaxWidth().padding(horizontal = 6.dp, vertical = 12.dp)) {
-            Fact(feast.estimatedCapacity.takeIf { it > 0 }?.toString() ?: "–", stringResource(Res.string.my_feasts_serves), Modifier.weight(1f))
+            Fact(compactCount(feast.viewCount ?: 0), stringResource(Res.string.stat_views), Modifier.weight(1f))
             Divider()
-            Fact(feast.menuItems.size.toString(), stringResource(Res.string.my_feasts_dishes), Modifier.weight(1f))
+            Fact(compactCount(feast.directionsCount ?: 0), stringResource(Res.string.stat_directions), Modifier.weight(1f))
             Divider()
-            Fact(feast.imageUrls.size.toString(), stringResource(Res.string.my_feasts_photos), Modifier.weight(1f))
+            Fact(compactCount(feast.savedCount ?: 0), stringResource(Res.string.stat_saved), Modifier.weight(1f))
         }
         Row(Modifier.fillMaxWidth().height(1.dp).background(colors.lavender)) {}
         Row(Modifier.fillMaxWidth().height(50.dp)) {
@@ -504,8 +513,11 @@ private fun PastRow(feast: FeastResponse, onOpen: () -> Unit, onRepost: () -> Un
         DateTile(feast)
         Column(Modifier.weight(1f)) {
             Text(feastName(feast), color = colors.ink, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.titleSmall)
+            // "Ended · 530 views"
+            val views = feast.viewCount ?: 0
             Text(
-                stringResource(if (feast.endedEarlyAt != null) Res.string.my_feasts_ended_early else Res.string.my_feasts_ended),
+                stringResource(if (feast.endedEarlyAt != null) Res.string.my_feasts_ended_early else Res.string.my_feasts_ended) + " · " +
+                    pluralStringResource(Res.plurals.photo_views, views.coerceAtMost(Int.MAX_VALUE.toLong()).toInt(), compactCount(views)),
                 color = colors.muted, fontSize = 12.sp, fontWeight = FontWeight.Medium, style = MaterialTheme.typography.bodySmall,
             )
         }
@@ -661,6 +673,7 @@ private fun ConfirmDialog(
     dismiss: String,
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
+    note: String? = null,
 ) {
     val colors = MaterialTheme.feastColors
     Dialog(onDismissRequest = onDismiss) {
@@ -674,6 +687,16 @@ private fun ConfirmDialog(
             }
             Text(title, color = colors.ink, fontSize = 20.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center, style = MaterialTheme.typography.titleLarge)
             Text(text, color = colors.muted, fontSize = 14.sp, lineHeight = 20.sp, textAlign = TextAlign.Center, style = MaterialTheme.typography.bodyMedium)
+            note?.let {
+                Row(
+                    Modifier.fillMaxWidth().background(colors.page, RoundedCornerShape(16.dp)).padding(horizontal = 14.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    Icon(Icons.Outlined.Notifications, contentDescription = null, tint = colors.saffronText, modifier = Modifier.size(20.dp))
+                    Text(it, color = colors.ink, fontSize = 13.sp, lineHeight = 18.sp, fontWeight = FontWeight.Medium, style = MaterialTheme.typography.bodySmall)
+                }
+            }
             Column(Modifier.fillMaxWidth().padding(top = 4.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 FeastButton(confirm, onClick = onConfirm, style = if (danger) FeastButtonStyle.DANGER else FeastButtonStyle.SAFFRON, height = 52.dp, modifier = Modifier.fillMaxWidth())
                 FeastButton(dismiss, onClick = onDismiss, style = FeastButtonStyle.SOFT, height = 52.dp, modifier = Modifier.fillMaxWidth())

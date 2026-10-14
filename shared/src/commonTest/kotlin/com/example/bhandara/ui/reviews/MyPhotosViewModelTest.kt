@@ -173,6 +173,28 @@ class MyPhotosViewModelTest {
 
     // ==================== Test data ====================
 
+    @Test
+    fun eachPhotosViewsAndTheirTotalAreShown() = runTest(dispatcher) {
+        mine = """[{"id":"1","shopId":"s1","reviewerUid":"me","rating":4,"shopName":"Sharma Chaat","isActive":true,""" +
+            """"imageUrls":["${url("a")}","${url("b")}"],"photoViews":{"${url("a")}":640,"${url("b")}":0}},""" +
+            """{"id":"2","shopId":"s2","reviewerUid":"me","rating":3,"shopName":"Momo Corner","isActive":true,""" +
+            """"imageUrls":["${url("c")}"],"photoViews":{"${url("c")}":12}},""" +
+            """{"id":"3","shopId":"s3","reviewerUid":"me","rating":1,"shopName":"Gone","isActive":false,"removedByModerator":true,""" +
+            """"imageUrls":["${url("d")}"],"photoViews":{"${url("d")}":999}}]"""
+
+        val state = opened().state.value
+
+        assertEquals(listOf(640L, 0L, 12L), state.photos.map { it.views })
+        assertEquals(652L, state.viewCount, "photos in removed reviews aren't shown, so they aren't counted")
+    }
+
+    @Test
+    fun photosFromOlderBackendsHaveNoViews() = runTest(dispatcher) {
+        mine = "[${review("1", "Sharma Chaat", listOf("a"))}]"
+
+        assertEquals(0L, opened().state.value.viewCount)
+    }
+
     private companion object {
         fun url(name: String) = "https://img.test/$name.webp"
 

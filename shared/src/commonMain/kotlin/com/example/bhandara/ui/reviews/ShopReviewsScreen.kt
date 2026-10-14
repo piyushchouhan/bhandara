@@ -1,5 +1,6 @@
 package com.example.bhandara.ui.reviews
 
+import com.example.bhandara.data.network.ActivityApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.selection.toggleable
@@ -152,6 +153,7 @@ fun ShopReviewsScreen(
             dependencies.settings,
             { dependencies.auth.currentUid },
             dependencies.photoUploader::upload,
+            ActivityApi(dependencies.apiClient),
         )
     }
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -214,6 +216,7 @@ fun ShopReviewsScreen(
                                     onDelete = { deleting = review.id },
                                     onReport = { reporting = review.id },
                                     onHelpful = { viewModel.toggleHelpful(review.id) },
+                                    onPhotoShown = { url -> viewModel.onPhotoShown(review.id, url) },
                                 )
                             }
                         }
@@ -343,6 +346,7 @@ private fun ReviewCard(
     onDelete: () -> Unit,
     onReport: () -> Unit,
     onHelpful: () -> Unit,
+    onPhotoShown: (photoUrl: String) -> Unit = {},
 ) {
     val colors = MaterialTheme.feastColors
     var openPhoto by remember { mutableStateOf<Int?>(null) }
@@ -415,7 +419,11 @@ private fun ReviewCard(
         }
     }
     openPhoto?.let { index ->
-        FullScreenPhotos(review.imageUrls.orEmpty(), initialIndex = index, onDismiss = { openPhoto = null }, photoLabel = Res.string.review_photo)
+        val urls = review.imageUrls.orEmpty()
+        FullScreenPhotos(
+            urls, initialIndex = index, onDismiss = { openPhoto = null }, photoLabel = Res.string.review_photo,
+            onPhotoShown = { shown -> urls.getOrNull(shown)?.let(onPhotoShown) },
+        )
     }
 }
 
