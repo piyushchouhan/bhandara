@@ -13,5 +13,6 @@ data class UpdateLocationRequest(
     
     val longitude: Double,
     
-    val fcmToken: String
+    /** Left out when the phone has none; the backend keeps the one it has */
+    val fcmToken: String? = null,
 )

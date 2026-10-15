@@ -22,17 +22,18 @@ class UserApi(private val client: ApiClient) {
         }
 
     /**
-     * Registers the signed-in user with their push token, so they can be told about feasts nearby. Without a
-     * location yet, the backend gets an "unknown" one (-90, -180) that is never near anything.
+     * Registers the signed-in user's phone, with its push token when it has one, so they can be told about feasts
+     * nearby and their notification settings are kept. Without a location yet, the backend gets an "unknown" one
+     * (-90, -180) that is never near anything.
      */
-    suspend fun register(uid: String, fcmToken: String, location: GeoLocation?): ApiResult<CreateUserResponse> =
+    suspend fun register(uid: String, fcmToken: String?, location: GeoLocation?): ApiResult<CreateUserResponse> =
         client.call("api/users") {
             method = HttpMethod.Post
             setBody(CreateUserRequest(uid, fcmToken, location?.latitude ?: UNKNOWN_LATITUDE, location?.longitude ?: UNKNOWN_LONGITUDE))
         }
 
     /** Where the user is now, for notifications about feasts near them */
-    suspend fun updateLocation(uid: String, fcmToken: String, location: GeoLocation): ApiResult<Unit> =
+    suspend fun updateLocation(uid: String, fcmToken: String?, location: GeoLocation): ApiResult<Unit> =
         client.callForNothing("api/users/location") {
             method = HttpMethod.Put
             setBody(UpdateLocationRequest(uid, location.latitude, location.longitude, fcmToken))

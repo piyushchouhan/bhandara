@@ -1,5 +1,6 @@
 package com.example.bhandara
 
+import com.example.bhandara.push.KeepDeviceRegistered
 import com.example.bhandara.data.crowd.KeepCountingCrowds
 import com.example.bhandara.data.saved.KeepSavedPlacesSynced
 import com.example.bhandara.ui.privacy.privacyStart
@@ -104,6 +105,8 @@ fun MainViewController(
           ProvideAppPreferences(dependencies.settings.preferences) {
             KeepSavedPlacesSynced()
             KeepCountingCrowds()
+            // Registers the phone and shares its location while open (Android does this in the background)
+            KeepDeviceRegistered()
             BhandaraTheme {
                 val navigator = rememberAppNavigator(startOnFeasts = dependencies.settings.preferences.startTab == StartTab.FEASTS)
 
