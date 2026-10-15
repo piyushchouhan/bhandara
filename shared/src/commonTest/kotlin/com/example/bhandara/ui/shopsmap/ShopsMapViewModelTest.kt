@@ -130,6 +130,46 @@ class ShopsMapViewModelTest {
     }
 
     @Test
+    fun locationAllowedInAnotherDialogStillFindsTheUser() = runTest(dispatcher) {
+        // The app's own start-up request is showing, so the map's request answers "denied" at once
+        phone.permitted = false
+        val viewModel = started()
+        viewModel.onLocationPermissionResult(false)
+        advanceUntilIdle()
+        assertEquals(MapLocationState.PermissionDenied, viewModel.state.value.location)
+
+        // The user allows location in the other dialog; the app comes back to the front
+        phone.permitted = true
+        viewModel.onLocationAccessChanged(true)
+        advanceUntilIdle()
+
+        assertEquals(MapLocationState.Found(here), viewModel.state.value.location)
+        assertEquals(1, feedRequests().size)
+    }
+
+    @Test
+    fun comingBackToTheAppDoesNotLookForTheUserAgainOnceFound() = runTest(dispatcher) {
+        val viewModel = started()
+
+        viewModel.onLocationAccessChanged(true)
+        advanceUntilIdle()
+
+        assertEquals(1, feedRequests().size)
+    }
+
+    @Test
+    fun locationStillOffChangesNothing() = runTest(dispatcher) {
+        phone.permitted = false
+        val viewModel = started()
+
+        viewModel.onLocationAccessChanged(false)
+        advanceUntilIdle()
+
+        assertEquals(MapLocationState.PermissionNeeded, viewModel.state.value.location)
+        assertTrue(feedRequests().isEmpty())
+    }
+
+    @Test
     fun withoutPermissionTheUserIsAskedAndNothingIsLoadedYet() = runTest(dispatcher) {
         phone.permitted = false
         val viewModel = started()

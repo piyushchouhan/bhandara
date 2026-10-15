@@ -186,6 +186,16 @@ class ShopsMapViewModel(
         if (granted) locateAndLoad() else _state.update { it.copy(location = MapLocationState.PermissionDenied) }
     }
 
+    /**
+     * What the phone allows now, read each time the app comes back (e.g. from the permission dialog or Settings).
+     * The map can think location is off when it isn't: on Android, a second permission request while another is
+     * showing (the app asks at start too) answers "denied" at once, even if the user then allows the first.
+     */
+    fun onLocationAccessChanged(allowed: Boolean) {
+        val location = _state.value.location
+        if (allowed && (location == MapLocationState.PermissionNeeded || location == MapLocationState.PermissionDenied)) locateAndLoad()
+    }
+
     /** Try again after the location or the shops couldn't be loaded */
     fun retry() {
         val location = (_state.value.location as? MapLocationState.Found)?.location

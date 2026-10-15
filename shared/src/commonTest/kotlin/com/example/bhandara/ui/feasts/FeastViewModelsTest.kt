@@ -132,6 +132,20 @@ class FeastViewModelsTest {
     }
 
     @Test
+    fun feastsMapFindsTheUserWhenLocationIsAllowedInAnotherDialog() = runTest(dispatcher) {
+        phone.permitted = false
+        val viewModel = mapStarted()
+        viewModel.onLocationPermissionResult(false)
+        advanceUntilIdle()
+
+        phone.permitted = true
+        viewModel.onLocationAccessChanged(true)
+        advanceUntilIdle()
+
+        assertEquals(MapLocationState.Found(here), viewModel.state.value.location)
+    }
+
+    @Test
     fun withoutPermissionTheUserIsAskedAndNothingIsLoaded() = runTest(dispatcher) {
         phone.permitted = false
         val viewModel = mapStarted()
