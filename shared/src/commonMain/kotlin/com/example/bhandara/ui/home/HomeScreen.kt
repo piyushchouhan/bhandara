@@ -1,5 +1,6 @@
 package com.example.bhandara.ui.home
 
+import com.example.bhandara.platform.rememberPermissionStatuses
 import com.example.bhandara.vendor.VendorModeBanner
 import com.example.bhandara.vendor.VendorModeDrawerRow
 import androidx.compose.foundation.Image
@@ -190,6 +191,9 @@ private fun HomeMap(
 
     // Ask for location the first time the map needs it; afterwards only when the user taps "Allow location"
     val requestLocation = rememberLocationPermissionRequest { granted -> viewModel.onLocationPermissionResult(granted) }
+    // Allowed after all (the dialog closed, or the user came back from Settings): find the user
+    val locationAllowed = rememberPermissionStatuses().location
+    LaunchedEffect(locationAllowed) { viewModel.onLocationAccessChanged(locationAllowed) }
     var askedForLocation by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(state.location) {
         if (state.location == MapLocationState.PermissionNeeded && !askedForLocation) {

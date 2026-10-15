@@ -1,5 +1,6 @@
 package com.example.bhandara.ui.feasts
 
+import com.example.bhandara.platform.rememberPermissionStatuses
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -119,6 +120,9 @@ fun FeastsMapScreen(onBack: () -> Unit, onFeastClick: (feastId: String) -> Unit,
 
     // Ask for location the first time it's needed; afterwards only when the user taps "Allow location"
     val requestLocation = rememberLocationPermissionRequest { granted -> viewModel.onLocationPermissionResult(granted) }
+    // Allowed after all (the dialog closed, or the user came back from Settings): find the user
+    val locationAllowed = rememberPermissionStatuses().location
+    LaunchedEffect(locationAllowed) { viewModel.onLocationAccessChanged(locationAllowed) }
     var askedForLocation by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(state.location) {
         if (state.location == MapLocationState.PermissionNeeded && !askedForLocation) {
