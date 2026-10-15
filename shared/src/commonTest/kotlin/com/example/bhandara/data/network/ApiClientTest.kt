@@ -13,6 +13,7 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.OutgoingContent
 import io.ktor.http.headersOf
 import kotlinx.coroutines.test.runTest
+import io.ktor.client.network.sockets.SocketTimeoutException
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
@@ -189,6 +190,14 @@ class ApiClientTest {
 
         assertEquals(ApiError.Kind.SERVER, error.kind)
         assertEquals("Something went wrong on our side. Please try again.", error.message)
+    }
+
+    @Test
+    fun anAnswerThatTakesTooLongSaysSoRatherThanNoInternet() = runTest {
+        val error = ShopApi(client { throw SocketTimeoutException("Read timed out") }).getShop("5").error()
+
+        assertEquals(ApiError.Kind.NETWORK, error.kind)
+        assertEquals(ApiErrors.TIMEOUT, error.message)
     }
 
     @Test
