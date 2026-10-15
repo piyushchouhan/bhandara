@@ -245,7 +245,6 @@
     <string name="shop_landmark">Landmark (optional)</string>
     <string name="shop_cuisine">Cuisine (optional)</string>
     <string name="shop_cost_for_two">Cost for two, ₹ (optional)</string>
-    <string name="shop_place_info">The shop goes on the map where you are now, so add it from the shop.</string>
     <string name="add_shop_button">Add shop</string>
     <string name="add_shop_sign_in_reason">Sign in with Google to add a shop, so customers know it's listed by a real person and you can manage it later.</string>
     <string name="owner_confirm_title">Owner confirmation</string>
@@ -945,4 +944,13 @@
     <string name="vendor_mode_active">📍 Sharing live location — customers can see you</string>
     <string name="vendor_mode_no_shop">Create a moving cart shop first to enable vendor mode</string>
     <string name="vendor_mode_needs_location">Allow location (always) so customers can follow your cart</string>
+    <!-- Add shop: adjust the pin (1d / 1g) -->
+    <string name="adjust_pin">Adjust pin</string>
+    <string name="pin_where_you_are">Pinned where you are now</string>
+    <string name="pin_put_by_hand">Pinned where you put it</string>
+    <string name="pin_adjust_title">Put the pin on your shop</string>
+    <string name="pin_adjust_hint">Move the map until the pin sits on the shop. Satellite shows the roofs and lanes, so it's easier to find.</string>
+    <string name="map_view">Map</string>
+    <string name="satellite_view">Satellite</string>
+    <string name="use_this_spot">Use this spot</string>
 </resources>

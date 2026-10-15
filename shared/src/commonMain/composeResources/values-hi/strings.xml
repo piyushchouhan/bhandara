@@ -245,7 +245,6 @@
     <string name="shop_landmark">लैंडमार्क (ज़रूरी नहीं)</string>
     <string name="shop_cuisine">व्यंजन शैली (ज़रूरी नहीं)</string>
     <string name="shop_cost_for_two">दो लोगों का खर्च, ₹ (ज़रूरी नहीं)</string>
-    <string name="shop_place_info">दुकान मैप पर वहीं दिखेगी जहाँ आप अभी हैं, इसलिए दुकान से ही जोड़ें।</string>
     <string name="add_shop_button">दुकान जोड़ें</string>
     <string name="add_shop_sign_in_reason">दुकान जोड़ने के लिए Google से साइन इन करें, ताकि ग्राहकों को पता रहे कि इसे किसी असली व्यक्ति ने जोड़ा है और आप बाद में इसे संभाल सकें।</string>
     <string name="owner_confirm_title">मालिक की पुष्टि</string>
@@ -945,4 +944,13 @@
     <string name="vendor_mode_active">📍 लाइव लोकेशन शेयर हो रही है — ग्राहक आपको देख सकते हैं</string>
     <string name="vendor_mode_no_shop">विक्रेता मोड चालू करने के लिए पहले चलती गाड़ी दुकान बनाएं</string>
     <string name="vendor_mode_needs_location">लोकेशन (हमेशा) की अनुमति दें ताकि ग्राहक आपकी गाड़ी देख सकें</string>
+    <!-- Add shop: adjust the pin (1d / 1g) -->
+    <string name="adjust_pin">पिन बदलें</string>
+    <string name="pin_where_you_are">पिन वहीं है जहाँ आप अभी हैं</string>
+    <string name="pin_put_by_hand">पिन वहीं है जहाँ आपने लगाया</string>
+    <string name="pin_adjust_title">पिन अपनी दुकान पर लगाएँ</string>
+    <string name="pin_adjust_hint">मैप को तब तक खिसकाएँ जब तक पिन दुकान पर न आ जाए। सैटेलाइट में छतें और गलियाँ दिखती हैं, तो ढूँढना आसान है।</string>
+    <string name="map_view">मैप</string>
+    <string name="satellite_view">सैटेलाइट</string>
+    <string name="use_this_spot">यही जगह रखें</string>
 </resources>

@@ -1,5 +1,6 @@
 package com.example.bhandara.ui.addshop
 
+import com.example.bhandara.data.location.GeoLocation
 import com.example.bhandara.data.models.api.CartStopDetails
 import com.example.bhandara.data.models.api.CartDetails
 import com.example.bhandara.data.models.api.MenuItemRequest
@@ -73,6 +74,8 @@ data class ShopForm(
     val takeaway: Boolean = true,
     val hasSeating: Boolean = true,
     val wifi: Boolean = false,
+    /** Where the owner put the shop's pin (Adjust pin, 1g); null = where the phone is when the shop is added */
+    val pin: GeoLocation? = null,
     // A moving cart's own parts (design "Moving cart branch"), sent as its cartDetails
     val cartType: String = "",
     val cartSells: List<String> = emptyList(),
@@ -171,6 +174,8 @@ data class ShopForm(
         takeaway = takeaway,
         hasSeating = hasSeating,
         wifiAvailable = wifi,
+        pinLatitude = pin?.latitude,
+        pinLongitude = pin?.longitude,
     )
 
     companion object {
@@ -191,6 +196,7 @@ data class ShopForm(
             takeaway = draft?.takeaway ?: true,
             hasSeating = draft?.hasSeating ?: true,
             wifi = draft?.wifiAvailable ?: false,
+            pin = draft?.pinLatitude?.let { lat -> draft.pinLongitude?.let { lng -> GeoLocation(lat, lng) } },
         )
     }
 }

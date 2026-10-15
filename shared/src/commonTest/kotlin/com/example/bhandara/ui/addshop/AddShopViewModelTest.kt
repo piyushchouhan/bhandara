@@ -607,6 +607,47 @@ class AddShopViewModelTest {
     }
 
     @Test
+    fun aShopGoesWhereItsPinWasPutNotWhereThePhoneIs() = runTest(dispatcher) {
+        val viewModel = viewModel()
+        viewModel.fillIn()
+        viewModel.setPin(GeoLocation(18.5901, 73.8912))
+
+        submitted(viewModel)
+
+        val shop = requestTo("/api/localshops").json()
+        assertEquals(18.5901, shop["latitude"]!!.jsonPrimitive.double)
+        assertEquals(73.8912, shop["longitude"]!!.jsonPrimitive.double)
+    }
+
+    @Test
+    fun aPinPutByHandNeedsNoLocationAccess() = runTest(dispatcher) {
+        // Added later from home: the owner found the shop on the map
+        phone.permitted = false
+        val viewModel = viewModel()
+        viewModel.fillIn()
+        viewModel.setPin(GeoLocation(18.5901, 73.8912))
+
+        submitted(viewModel)
+
+        assertFalse(viewModel.state.value.needsLocation)
+        assertEquals(18.5901, requestTo("/api/localshops").json()["latitude"]!!.jsonPrimitive.double)
+    }
+
+    @Test
+    fun thePinIsKeptForNextTimeAndClearingForgetsIt() {
+        viewModel().apply {
+            fillIn()
+            setPin(GeoLocation(18.5901, 73.8912))
+        }
+
+        val again = viewModel()
+        assertEquals(GeoLocation(18.5901, 73.8912), again.state.value.form.pin)
+
+        again.clearAll()
+        assertNull(viewModel().state.value.form.pin)
+    }
+
+    @Test
     fun ifPhotosFailToUploadNoShopIsAdded() = runTest(dispatcher) {
         uploadFails = true
         val viewModel = viewModel()

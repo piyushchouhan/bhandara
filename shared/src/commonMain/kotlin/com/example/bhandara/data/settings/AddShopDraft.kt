@@ -27,6 +27,9 @@ data class AddShopDraft(
     val takeaway: Boolean = true,
     val hasSeating: Boolean = true,
     val wifiAvailable: Boolean = false,
+    /** The pin put by hand (Adjust pin), if any */
+    val pinLatitude: Double? = null,
+    val pinLongitude: Double? = null,
 ) {
     /** Nothing entered yet: an untouched form */
     val isEmpty: Boolean get() = this == AddShopDraft()

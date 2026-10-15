@@ -39,6 +39,7 @@ import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Mail
 import androidx.compose.material.icons.outlined.MyLocation
+import androidx.compose.material.icons.outlined.OpenInFull
 import androidx.compose.material.icons.outlined.NearMe
 import androidx.compose.material.icons.outlined.PhotoCamera
 import androidx.compose.material.icons.outlined.Place
@@ -139,7 +140,9 @@ import com.example.bhandara.shared.resources.shop_landmark
 import com.example.bhandara.shared.resources.shop_name
 import com.example.bhandara.shared.resources.shop_phone
 import com.example.bhandara.shared.resources.shop_photos_label
-import com.example.bhandara.shared.resources.shop_place_info
+import com.example.bhandara.shared.resources.adjust_pin
+import com.example.bhandara.shared.resources.pin_put_by_hand
+import com.example.bhandara.shared.resources.pin_where_you_are
 import com.example.bhandara.shared.resources.shop_type
 import com.example.bhandara.shared.resources.shop_type_bakery
 import com.example.bhandara.shared.resources.shop_type_cafe
@@ -239,6 +242,8 @@ private fun AddShopPage(viewModel: AddShopViewModel, onBack: () -> Unit, onAdded
     // The stop being added (a new one has no id yet) or changed, on the full-screen map
     var stopSheet by remember { mutableStateOf<CartStop?>(null) }
     var addingStop by rememberSaveable { mutableStateOf(false) }
+    // The shop's pin on the full-screen map (1g)
+    var adjustingPin by rememberSaveable { mutableStateOf(false) }
     // A cart's Items step starts by picking what it sells (3m), then its items (3i)
     var pickingCategories by rememberSaveable { mutableStateOf(true) }
     val requestLocation = rememberLocationPermissionRequest { granted -> if (granted) viewModel.submit() }
@@ -289,6 +294,15 @@ private fun AddShopPage(viewModel: AddShopViewModel, onBack: () -> Unit, onAdded
             onRemove = { viewModel.removeStop(it.id); close() },
             onNoFixedRoute = { viewModel.setNoFixedRoute(true); close() },
             onClose = close,
+        )
+        return
+    }
+
+    if (adjustingPin) {
+        PinAdjustScreen(
+            start = state.form.pin,
+            onPicked = { viewModel.setPin(it); adjustingPin = false },
+            onClose = { adjustingPin = false },
         )
         return
     }
@@ -351,7 +365,7 @@ private fun AddShopPage(viewModel: AddShopViewModel, onBack: () -> Unit, onAdded
                     pickingCategories -> CategoryPickStep(state.form, viewModel)
                     else -> CartItemsStep(state.form, viewModel, onEditRoute = { viewModel.goBackTo(ShopStep.ROUTE) })
                 }
-                ShopStep.DETAILS -> if (isCart) CartDetailsStep(state.form, viewModel) else DetailsStep(state.form, viewModel)
+                ShopStep.DETAILS -> if (isCart) CartDetailsStep(state.form, viewModel) else DetailsStep(state.form, viewModel, onAdjustPin = { adjustingPin = true })
             }
         }
         BottomBar(
@@ -684,12 +698,12 @@ private fun MenuDrawing() {
     }
 }
 
-/** Step 4 (design 1d): where the shop goes on the map, then the optional details */
+/** Step 4 (design 1d): where the shop goes on the map ("Adjust pin" opens 1g), then the optional details */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun DetailsStep(form: ShopForm, viewModel: AddShopViewModel) {
+private fun DetailsStep(form: ShopForm, viewModel: AddShopViewModel, onAdjustPin: () -> Unit) {
     val colors = MaterialTheme.feastColors
-    PlaceCard()
+    PlaceCard(pinnedByHand = form.pin != null, onAdjustPin = onAdjustPin)
     FeastFormField(form.description, stringResource(Res.string.section_description), viewModel::onDescriptionChange, height = 76.dp, singleLine = false)
     FeastFormField(form.phone, stringResource(Res.string.shop_phone), viewModel::onPhoneChange, icon = Icons.Outlined.Call, height = 52.dp, keyboardType = KeyboardType.Phone)
     FeastFormField(form.email, stringResource(Res.string.shop_email), viewModel::onEmailChange, icon = Icons.Outlined.Mail, height = 52.dp, keyboardType = KeyboardType.Email)
@@ -732,9 +746,9 @@ private fun FacilityChip(label: StringResource, selected: Boolean, onClick: () -
     }
 }
 
-/** A drawn bit of map with a saffron spot, over "The shop goes on the map where you are now" */
+/** A drawn bit of map with a saffron spot, over where the pin is and "Adjust pin" */
 @Composable
-private fun PlaceCard() {
+private fun PlaceCard(pinnedByHand: Boolean, onAdjustPin: () -> Unit) {
     val colors = MaterialTheme.feastColors
     Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(colors.indigo)) {
         Box(Modifier.fillMaxWidth().height(76.dp).clipToBounds().background(colors.mapLand)) {
@@ -761,9 +775,20 @@ private fun PlaceCard() {
                 )
             }
         }
-        Row(Modifier.padding(horizontal = 14.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            Icon(Icons.Outlined.MyLocation, contentDescription = null, tint = colors.saffron, modifier = Modifier.size(22.dp))
-            Text(stringResource(Res.string.shop_place_info), color = colors.onIndigo, fontSize = 14.sp, lineHeight = 19.sp, style = MaterialTheme.typography.bodyMedium)
+        Row(Modifier.padding(start = 14.dp, end = 10.dp, top = 10.dp, bottom = 10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Icon(if (pinnedByHand) Icons.Outlined.Place else Icons.Outlined.MyLocation, contentDescription = null, tint = colors.saffron, modifier = Modifier.size(22.dp))
+            Text(
+                stringResource(if (pinnedByHand) Res.string.pin_put_by_hand else Res.string.pin_where_you_are), color = colors.onIndigo, fontSize = 14.sp, lineHeight = 19.sp,
+                style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f),
+            )
+            Row(
+                Modifier.height(44.dp).clip(RoundedCornerShape(12.dp)).background(colors.saffron).clickable(onClick = onAdjustPin).padding(horizontal = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                Icon(Icons.Outlined.OpenInFull, contentDescription = null, tint = colors.onSaffron, modifier = Modifier.size(18.dp))
+                Text(stringResource(Res.string.adjust_pin), color = colors.onSaffron, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.labelLarge)
+            }
         }
     }
 }

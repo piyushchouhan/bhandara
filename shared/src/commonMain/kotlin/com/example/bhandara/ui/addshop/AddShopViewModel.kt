@@ -2,6 +2,7 @@ package com.example.bhandara.ui.addshop
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.bhandara.data.location.GeoLocation
 import com.example.bhandara.data.location.LocationResult
 import com.example.bhandara.data.location.LocationService
 import com.example.bhandara.data.models.api.LocalShopRequest
@@ -206,6 +207,9 @@ class AddShopViewModel(
     fun onLandmarkChange(text: String) = edit { it.copy(landmark = text.take(MAX_SHOP_LANDMARK)) }
     fun onCuisineChange(text: String) = edit { it.copy(cuisine = text.take(100)) }
     fun onCostForTwoChange(text: String) = edit { it.copy(costForTwo = text.filter(Char::isDigit).take(6)) }
+
+    /** The spot picked on the full-screen map (Adjust pin); the shop goes there instead of where the phone is */
+    fun setPin(spot: GeoLocation) = edit { it.copy(pin = spot) }
     fun setHomeDelivery(on: Boolean) = edit { it.copy(homeDelivery = on) }
     fun setTakeaway(on: Boolean) = edit { it.copy(takeaway = on) }
     fun setSeating(on: Boolean) = edit { it.copy(hasSeating = on) }
@@ -265,7 +269,8 @@ class AddShopViewModel(
         }
         _state.update { it.copy(form = form, submitting = true, error = null, needsLocation = false) }
         viewModelScope.launch {
-            val here = (locationService.locate() as? LocationResult.Found)?.location ?: return@launch fail(
+            // A pin put by hand wins over where the phone is
+            val here = form.pin ?: (locationService.locate() as? LocationResult.Found)?.location ?: return@launch fail(
                 "Your location is needed to put the shop on the map. Allow location and make sure it's on.",
                 needsLocation = true,
             )

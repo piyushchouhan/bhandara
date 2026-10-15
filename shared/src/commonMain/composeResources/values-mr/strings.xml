@@ -245,7 +245,6 @@
     <string name="shop_landmark">खूण (ऐच्छिक)</string>
     <string name="shop_cuisine">पाककृती प्रकार (ऐच्छिक)</string>
     <string name="shop_cost_for_two">दोघांचा खर्च, ₹ (ऐच्छिक)</string>
-    <string name="shop_place_info">दुकान नकाशावर तुम्ही आत्ता जिथे आहात तिथे दिसेल, म्हणून दुकानातूनच जोडा.</string>
     <string name="add_shop_button">दुकान जोडा</string>
     <string name="add_shop_sign_in_reason">दुकान जोडण्यासाठी Google ने साइन इन करा, म्हणजे ग्राहकांना कळेल की ते खऱ्या व्यक्तीने जोडले आहे आणि तुम्ही नंतर ते सांभाळू शकाल.</string>
     <string name="owner_confirm_title">मालकाची खात्री</string>
@@ -945,4 +944,13 @@
     <string name="vendor_mode_active">📍 थेट स्थान शेअर केले जात आहे — ग्राहक तुम्हाला पाहू शकतात</string>
     <string name="vendor_mode_no_shop">विक्रेता मोड सुरू करण्यासाठी आधी फिरती गाडी दुकान तयार करा</string>
     <string name="vendor_mode_needs_location">ग्राहकांना तुमची गाडी दिसावी म्हणून स्थान (नेहमी) परवानगी द्या</string>
+    <!-- Add shop: adjust the pin (1d / 1g) -->
+    <string name="adjust_pin">पिन बदला</string>
+    <string name="pin_where_you_are">पिन तुम्ही आत्ता जिथे आहात तिथे आहे</string>
+    <string name="pin_put_by_hand">पिन तुम्ही लावलेल्या जागी आहे</string>
+    <string name="pin_adjust_title">पिन तुमच्या दुकानावर लावा</string>
+    <string name="pin_adjust_hint">पिन दुकानावर येईपर्यंत नकाशा हलवा. सॅटेलाइटमध्ये छपरं आणि गल्ल्या दिसतात, त्यामुळे शोधणं सोपं जातं.</string>
+    <string name="map_view">नकाशा</string>
+    <string name="satellite_view">सॅटेलाइट</string>
+    <string name="use_this_spot">हीच जागा ठेवा</string>
 </resources>

@@ -21,12 +21,14 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
+import com.google.maps.android.compose.MapType
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.Polygon
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.google.maps.android.compose.rememberMarkerState
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
 
 @Composable
 actual fun PlatformMap(
@@ -41,6 +43,8 @@ actual fun PlatformMap(
     contentPadding: PaddingValues,
     zones: List<MapZone>,
     onZoneClick: (zoneId: String) -> Unit,
+    satellite: Boolean,
+    onCameraIdle: (GeoLocation) -> Unit,
 ) {
     val cameraState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(camera.center.toLatLng(), camera.zoom)
@@ -52,6 +56,13 @@ actual fun PlatformMap(
     LaunchedEffect(cameraState) {
         snapshotFlow { cameraState.position.zoom }.distinctUntilChanged().collect { currentOnZoomChanged(it) }
     }
+    val currentOnCameraIdle by rememberUpdatedState(onCameraIdle)
+    LaunchedEffect(cameraState) {
+        snapshotFlow { cameraState.isMoving }.distinctUntilChanged().filter { !it }.collect {
+            val target = cameraState.position.target
+            currentOnCameraIdle(GeoLocation(target.latitude, target.longitude))
+        }
+    }
 
     val style = remember(look, darkMap) { MapStyleOptions(MapStyles.forLook(look, darkMap)) }
     val zoneColors = remember(darkMap) { zoneColors(darkMap) }
@@ -61,7 +72,12 @@ actual fun PlatformMap(
         cameraPositionState = cameraState,
         contentPadding = contentPadding,
         // The "you are here" dot needs location access; callers only turn it on once it's allowed
-        properties = MapProperties(isMyLocationEnabled = showMyLocation, mapStyleOptions = style),
+        properties = MapProperties(
+            isMyLocationEnabled = showMyLocation,
+            // Satellite photos keep Google's own labels; the app's style is for the drawn map
+            mapType = if (satellite) MapType.HYBRID else MapType.NORMAL,
+            mapStyleOptions = if (satellite) null else style,
+        ),
         uiSettings = MapUiSettings(
             zoomControlsEnabled = false,
             myLocationButtonEnabled = false,
