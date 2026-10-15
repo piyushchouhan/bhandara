@@ -129,10 +129,6 @@ dependencies {
     implementation("com.google.android.gms:play-services-auth:21.2.0")
     
     
-    // Live cart locations over a WebSocket (STOMP); REST calls go through the shared module
-    implementation("com.squareup.okhttp3:okhttp:4.12.0")
-    implementation("com.google.code.gson:gson:2.10.1")
-    
     // WorkManager for periodic location updates
     implementation("androidx.work:work-runtime-ktx:2.9.0")
     
@@ -140,8 +136,4 @@ dependencies {
     implementation("com.google.android.gms:play-services-maps:19.0.0")
     // Google Maps Compose
     implementation("com.google.maps.android:maps-compose:4.3.3")
-
-    // STOMP over WebSocket (Krossbow)
-    implementation(libs.krossbow.stomp.core)
-    implementation("org.hildan.krossbow:krossbow-websocket-okhttp:${libs.versions.krossbow.get()}")
 }

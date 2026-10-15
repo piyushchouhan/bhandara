@@ -1,6 +1,3 @@
 <resources>
     <string name="app_name" translatable="false">Local Feast</string>
-    <string name="vendor_mode">Vendor Mode</string>
-    <string name="vendor_mode_active">📍 Sharing live location — customers can see you</string>
-    <string name="vendor_mode_no_shop">Create a moving cart shop first to enable vendor mode</string>
 </resources>

@@ -1,5 +1,6 @@
 package com.example.bhandara.ui.profile
 
+import com.example.bhandara.vendor.VendorModeProfileCard
 import com.example.bhandara.ui.shopdetails.compactCount
 import com.example.bhandara.data.network.UserStats
 import com.example.bhandara.data.network.ActivityApi
@@ -194,7 +195,7 @@ interface AccountSignIn {
  * @param onMyReviews / [onMyPhotos] / [onMyFeasts] / [onSavedPlaces] My activity → My reviews / My photos / Feasts I posted /
  *   Saved places; [onMyReports] → My reports
  * @param onPrivacy Account → Privacy and data (or straight to deleting the account)
- * @param vendorMode Android's vendor mode card ([VendorModeCard]); null where there is none
+ * @param vendorMode the Vendor Mode card (shown where the platform has Vendor Mode)
  */
 @Composable
 fun ProfileScreen(
@@ -208,7 +209,7 @@ fun ProfileScreen(
     onSavedPlaces: () -> Unit = {},
     onMyReports: () -> Unit = {},
     onPrivacy: (startAtDelete: Boolean) -> Unit = {},
-    vendorMode: (@Composable () -> Unit)? = null,
+    vendorMode: (@Composable () -> Unit)? = { VendorModeProfileCard() },
     accountSignIn: AccountSignIn? = LocalAccountSignIn.current,
 ) {
     val dependencies = LocalAppDependencies.current
