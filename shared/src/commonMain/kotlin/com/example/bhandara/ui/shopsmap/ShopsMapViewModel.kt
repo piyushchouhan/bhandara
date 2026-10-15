@@ -174,11 +174,20 @@ class ShopsMapViewModel(
 
     private var started = false
 
-    /** Find the user and load the map; only the first call does anything (the screen calls it when shown) */
+    /**
+     * Find the user and load the map (the screen calls it each time it's shown). Coming back to it (e.g. after
+     * adding a shop) loads the shops again where the user was found, without moving the map.
+     */
     fun start() {
-        if (started) return
+        if (started) return refresh()
         started = true
         locateAndLoad()
+    }
+
+    private fun refresh() {
+        val location = (_state.value.location as? MapLocationState.Found)?.location ?: return
+        if (_state.value.loadingShops) return
+        viewModelScope.launch { loadShops(location) }
     }
 
     /** After the screen asked for location access */

@@ -30,6 +30,7 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertSame
 import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNull
@@ -101,6 +102,21 @@ class ShopsMapViewModelTest {
     private fun feedRequests() = requests.filter { it.url.encodedPath == "/api/feed" }
 
     // ==================== Locating the user and loading the map ====================
+
+    @Test
+    fun comingBackToTheMapShowsAShopAddedMeanwhileWithoutMovingTheMap() = runTest(dispatcher) {
+        val viewModel = started()
+        val camera = viewModel.state.value.camera
+
+        // The user added a shop, then came back to the map
+        feedBody = feed(shops = listOf(shop("1", "Sharma Chaat"), shop("30", "McDonald's")))
+        viewModel.start()
+        advanceUntilIdle()
+
+        assertEquals(listOf("Sharma Chaat", "McDonald's"), viewModel.state.value.shops.map { it.shopName })
+        assertSame(camera, viewModel.state.value.camera)
+        assertEquals(2, feedRequests().size)
+    }
 
     @Test
     fun theMapCentresOnTheUserAndShowsTheShopsAroundThem() = runTest(dispatcher) {

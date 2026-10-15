@@ -40,6 +40,7 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertSame
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
@@ -115,6 +116,19 @@ class FeastViewModelsTest {
         requests.filter { it.method == method && it.url.encodedPath == "/api/$path" }
 
     // ==================== The feasts map ====================
+
+    @Test
+    fun comingBackToTheMapShowsAFeastPostedMeanwhileWithoutMovingTheMap() = runTest(dispatcher) {
+        val viewModel = mapStarted()
+        val camera = viewModel.state.value.camera
+
+        nearbyAre(feast("1", "Gurudwara langar"), feast("2", null, start = "20:00:00", end = "23:00:00"), feast("3", "Mandir bhandara"))
+        viewModel.start()
+        advanceUntilIdle()
+
+        assertEquals(listOf("1", "2", "3"), viewModel.state.value.feasts.map { it.id })
+        assertSame(camera, viewModel.state.value.camera)
+    }
 
     @Test
     fun theMapCentresOnTheUserAndShowsFeastsAroundThem() = runTest(dispatcher) {

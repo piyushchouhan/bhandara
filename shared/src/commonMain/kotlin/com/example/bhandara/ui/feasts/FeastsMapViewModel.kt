@@ -107,11 +107,20 @@ class FeastsMapViewModel(
 
     private var started = false
 
-    /** Find the user and load the feasts; only the first call does anything (the screen calls it when shown) */
+    /**
+     * Find the user and load the feasts (the screen calls it each time it's shown). Coming back to it (e.g. after
+     * posting a feast) loads the feasts again where the user was found, without moving the map.
+     */
     fun start() {
-        if (started) return
+        if (started) return refresh()
         started = true
         locateAndLoad()
+    }
+
+    private fun refresh() {
+        val location = (_state.value.location as? MapLocationState.Found)?.location ?: return
+        if (_state.value.loading) return
+        viewModelScope.launch { load(location) }
     }
 
     fun onLocationPermissionResult(granted: Boolean) {
