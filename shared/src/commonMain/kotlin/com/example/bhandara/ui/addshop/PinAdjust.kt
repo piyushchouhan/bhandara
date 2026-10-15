@@ -8,11 +8,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
@@ -90,7 +90,6 @@ internal fun PinAdjustScreen(start: GeoLocation?, onPicked: (GeoLocation) -> Uni
     }
     var sheetHeight by remember { mutableFloatStateOf(0f) }
     val density = LocalDensity.current
-    val statusBar = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
 
     Box(Modifier.fillMaxSize().background(colors.mapLand)) {
         camera?.let { target ->
@@ -101,8 +100,10 @@ internal fun PinAdjustScreen(start: GeoLocation?, onPicked: (GeoLocation) -> Uni
                 darkMap = colors.isDark,
                 onPinClick = {},
                 look = MapLook.FEAST,
-                // The map's middle is the pin's tip: under the status bar and above the sheet
-                contentPadding = PaddingValues(top = statusBar, bottom = with(density) { sheetHeight.toDp() }),
+                // The same padding above and below keeps the map's middle (where it says it is) in the middle of the
+                // screen, under the pin's tip, while the Google logo stays above the sheet. Padding only below would
+                // move that middle up by half the sheet, and the shop would go ~200 m away from the pin.
+                contentPadding = with(density) { sheetHeight.toDp() }.let { PaddingValues(top = it, bottom = it) },
                 satellite = satellite,
                 onCameraIdle = { spot = it },
                 modifier = Modifier.fillMaxSize(),
@@ -114,13 +115,6 @@ internal fun PinAdjustScreen(start: GeoLocation?, onPicked: (GeoLocation) -> Uni
                     SquareIconButton(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(Res.string.back), onClose)
                     Box(Modifier.weight(1f))
                     MapKindToggle(satellite) { satellite = it }
-                }
-                // The pin's tip marks the middle of the map
-                Column(Modifier.align(Alignment.Center).padding(bottom = 80.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Box(Modifier.height(30.dp).background(colors.indigo, RoundedCornerShape(10.dp)).padding(horizontal = 10.dp), contentAlignment = Alignment.Center) {
-                        Text(stringResource(Res.string.move_map_pin), color = colors.onIndigo, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.labelMedium)
-                    }
-                    Icon(Icons.Rounded.LocationOn, contentDescription = null, tint = colors.saffron, modifier = Modifier.padding(top = 6.dp).size(44.dp))
                 }
                 here?.let { phone ->
                     SquareIconButton(
@@ -152,8 +146,21 @@ internal fun PinAdjustScreen(start: GeoLocation?, onPicked: (GeoLocation) -> Uni
                 )
             }
         }
+        // The pin's tip marks the middle of the screen, which is the middle of the map. The tip is 2/24 of the
+        // icon above its bottom edge, so the pin is nudged down by that much.
+        Column(
+            Modifier.align(Alignment.Center).padding(bottom = 80.dp).offset(y = PIN_SIZE / 12),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Box(Modifier.height(30.dp).background(colors.indigo, RoundedCornerShape(10.dp)).padding(horizontal = 10.dp), contentAlignment = Alignment.Center) {
+                Text(stringResource(Res.string.move_map_pin), color = colors.onIndigo, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.labelMedium)
+            }
+            Icon(Icons.Rounded.LocationOn, contentDescription = null, tint = colors.saffron, modifier = Modifier.padding(top = 6.dp).size(PIN_SIZE))
+        }
     }
 }
+
+private val PIN_SIZE = 44.dp
 
 /** Map | Satellite, the picked one in indigo */
 @Composable
