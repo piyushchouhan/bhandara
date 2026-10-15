@@ -1,6 +1,3 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="vendor_mode">विक्रेता मोड</string>
-    <string name="vendor_mode_active">📍 लाइव लोकेशन शेयर हो रही है — ग्राहक आपको देख सकते हैं</string>
-    <string name="vendor_mode_no_shop">विक्रेता मोड चालू करने के लिए पहले चलती गाड़ी दुकान बनाएं</string>
 </resources>

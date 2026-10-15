@@ -19,8 +19,8 @@ Use the checked-in wrapper. The Gradle runtime needs a compatible JDK; the proje
 Run checks relevant to the change:
 
 ```bash
-# Shared tests on the Android JVM target
-./gradlew :shared:testDebugUnitTest
+# Shared tests on the JVM (Android host tests)
+./gradlew :shared:testAndroidHostTest
 
 # Android host unit tests and debug build
 ./gradlew :app:testDebugUnitTest :app:assembleDebug

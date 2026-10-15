@@ -941,4 +941,8 @@
         <item quantity="one">इसे सेव करने वाले %1$d व्यक्ति को बताया जाएगा</item>
         <item quantity="other">इसे सेव करने वाले %1$d लोगों को बताया जाएगा</item>
     </plurals>
+    <string name="vendor_mode">विक्रेता मोड</string>
+    <string name="vendor_mode_active">📍 लाइव लोकेशन शेयर हो रही है — ग्राहक आपको देख सकते हैं</string>
+    <string name="vendor_mode_no_shop">विक्रेता मोड चालू करने के लिए पहले चलती गाड़ी दुकान बनाएं</string>
+    <string name="vendor_mode_needs_location">लोकेशन (हमेशा) की अनुमति दें ताकि ग्राहक आपकी गाड़ी देख सकें</string>
 </resources>

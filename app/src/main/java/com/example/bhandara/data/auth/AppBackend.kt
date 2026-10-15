@@ -1,5 +1,7 @@
 package com.example.bhandara.data.auth
 
+import com.example.bhandara.data.repository.UserRepository
+import com.example.bhandara.push.DeviceRegistration
 import android.content.Context
 import com.example.bhandara.BuildConfig
 import com.example.bhandara.data.network.ApiClient
@@ -19,4 +21,9 @@ object AppBackend {
 
 
     fun pushTokenSync(context: Context) = PushTokenSync(userApi, AppSettings(context))
+
+    /** Registers this phone (with its push token when Firebase gives one) and shares its location */
+    fun deviceRegistration(context: Context) = DeviceRegistration(
+        userApi, AppSettings(context), { AppAuth.service.currentUid }, { UserRepository().getFcmToken() },
+    )
 }

@@ -1,5 +1,6 @@
 package com.example.bhandara.ui.privacy
 
+import com.example.bhandara.vendor.LocalVendorMode
 import com.example.bhandara.shared.resources.privacy_policy
 import com.example.bhandara.platform.ExternalLinks
 import androidx.compose.material.icons.automirrored.rounded.OpenInNew
@@ -167,7 +168,7 @@ import org.jetbrains.compose.resources.stringResource
  * Privacy and data, from Profile → Account
  *
  * @param startAt the page to open on: DELETE from "Delete account", LOCATION from Settings → Location access
- * @param hasVendorMode the platform has Vendor Mode (Android), which shares a cart's location
+ * @param hasVendorMode the platform has Vendor Mode, which shares a cart's location
  * @param onAccountDeleted the account is gone and the user signed out; go home
  */
 @Composable
@@ -176,7 +177,7 @@ fun PrivacyScreen(
     onOpenTerms: () -> Unit,
     onAccountDeleted: () -> Unit,
     startAt: PrivacyPage = PrivacyPage.MAIN,
-    hasVendorMode: Boolean = false,
+    hasVendorMode: Boolean = LocalVendorMode.current != null,
 ) {
     val dependencies = LocalAppDependencies.current
     val accountSignIn = LocalAccountSignIn.current

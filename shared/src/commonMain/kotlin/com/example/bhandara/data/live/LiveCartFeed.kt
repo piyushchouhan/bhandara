@@ -61,13 +61,11 @@ class LiveCartFeed(
          * with [idToken] when there is one. Each subscription has its own connection, closed when it ends.
          */
         fun connectingTo(apiBaseUrl: String, idToken: suspend () -> String?): LiveCartFeed {
-            val url = apiBaseUrl.replaceFirst("https://", "wss://").replaceFirst("http://", "ws://").trimEnd('/') + "/ws/websocket"
+            val url = cartSocketUrl(apiBaseUrl)
             // Frequent pings notice a connection that died quietly (e.g. switching mobile networks)
-            val http = HttpClient(platformHttpEngine()) { install(WebSockets) { pingIntervalMillis = 20_000 } }
-            val stomp = StompClient(KtorWebSocketClient(http))
+            val stomp = cartStompClient(pingIntervalMillis = 20_000)
             return LiveCartFeed(subscribe = { topic ->
-                val headers = idToken()?.let { mapOf("Authorization" to "Bearer $it") } ?: emptyMap()
-                val session = stomp.connect(url, customStompConnectHeaders = headers)
+                val session = stomp.connect(url, customStompConnectHeaders = signedInHeaders(idToken()))
                 session.subscribeText(topic).onCompletion {
                     withContext(NonCancellable) { runCatching { withTimeoutOrNull(2_000) { session.disconnect() } } }
                 }
@@ -78,3 +76,16 @@ class LiveCartFeed(
 
 /** 1 s, 2 s, 4 s … up to 30 s */
 fun reconnectPauseMillis(failures: Int): Long = (1_000L shl (failures - 1).coerceIn(0, 5)).coerceAtMost(30_000L)
+
+/** The backend's STOMP endpoint for live carts, from its address (http becomes ws) */
+internal fun cartSocketUrl(apiBaseUrl: String): String =
+    apiBaseUrl.replaceFirst("https://", "wss://").replaceFirst("http://", "ws://").trimEnd('/') + "/ws/websocket"
+
+/** A STOMP client over a Ktor WebSocket, pinging this often to notice dead connections */
+internal fun cartStompClient(pingIntervalMillis: Long): StompClient =
+    StompClient(KtorWebSocketClient(HttpClient(platformHttpEngine()) { install(WebSockets) { this.pingIntervalMillis = pingIntervalMillis } }))
+
+/** The backend only takes a cart's location from a connection that carries its owner's login */
+internal fun signedInHeaders(idToken: String?): Map<String, String> =
+    idToken?.let { mapOf("Authorization" to "Bearer $it") } ?: emptyMap()
+

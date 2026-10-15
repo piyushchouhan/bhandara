@@ -4,7 +4,6 @@ import java.io.FileInputStream
 
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     // Add the Google services Gradle plugin
     id("com.google.gms.google-services")
@@ -21,13 +20,13 @@ val localProperties = Properties().apply {
 android {
     namespace = "com.example.bhandara"
     compileSdk {
-        version = release(36)
+        version = release(37)
     }
 
     defaultConfig {
         applicationId = "com.example.bhandara"
         minSdk = 35
-        targetSdk = 36
+        targetSdk = 37
         versionCode = 1
         versionName = "1.0"
 
@@ -130,10 +129,6 @@ dependencies {
     implementation("com.google.android.gms:play-services-auth:21.2.0")
     
     
-    // Live cart locations over a WebSocket (STOMP); REST calls go through the shared module
-    implementation("com.squareup.okhttp3:okhttp:4.12.0")
-    implementation("com.google.code.gson:gson:2.10.1")
-    
     // WorkManager for periodic location updates
     implementation("androidx.work:work-runtime-ktx:2.9.0")
     
@@ -141,8 +136,4 @@ dependencies {
     implementation("com.google.android.gms:play-services-maps:19.0.0")
     // Google Maps Compose
     implementation("com.google.maps.android:maps-compose:4.3.3")
-
-    // STOMP over WebSocket (Krossbow)
-    implementation(libs.krossbow.stomp.core)
-    implementation("org.hildan.krossbow:krossbow-websocket-okhttp:${libs.versions.krossbow.get()}")
 }

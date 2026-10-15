@@ -1,5 +1,9 @@
 package com.example.bhandara
 
+import com.example.bhandara.vendor.IosVendorTracker
+import com.example.bhandara.vendor.VendorMode
+import com.example.bhandara.vendor.LocalVendorMode
+import com.example.bhandara.push.KeepDeviceRegistered
 import com.example.bhandara.data.crowd.KeepCountingCrowds
 import com.example.bhandara.data.saved.KeepSavedPlacesSynced
 import com.example.bhandara.ui.privacy.privacyStart
@@ -100,10 +104,13 @@ fun MainViewController(
             LocalIosMapBridge provides mapBridge,
             LocalAppDependencies provides dependencies,
             LocalAccountSignIn provides remember { IosAccountSignIn(googleSignIn) },
+            LocalVendorMode provides remember { VendorMode(dependencies.settings, IosVendorTracker(apiBaseUrl, authService::idToken)) },
         ) {
           ProvideAppPreferences(dependencies.settings.preferences) {
             KeepSavedPlacesSynced()
             KeepCountingCrowds()
+            // Registers the phone and shares its location while open (Android does this in the background)
+            KeepDeviceRegistered()
             BhandaraTheme {
                 val navigator = rememberAppNavigator(startOnFeasts = dependencies.settings.preferences.startTab == StartTab.FEASTS)
 
@@ -141,10 +148,17 @@ fun MainViewController(
                         onBack = { navigator.back() },
                         onPosted = { feastId -> navigator.replace(Route.FeastDetails(feastId)) },
                     )
-                    Route.AddShop -> AddShopScreen(
-                        onBack = { navigator.back() },
-                        onAdded = { shopId -> navigator.replace(Route.ShopDetails(shopId)) },
-                    )
+                    Route.AddShop -> {
+                        val vendorMode = LocalVendorMode.current
+                        AddShopScreen(
+                            onBack = { navigator.back() },
+                            onAdded = { shopId -> navigator.replace(Route.ShopDetails(shopId)) },
+                            onGoLive = { shopId ->
+                                vendorMode?.set(true)
+                                navigator.replace(Route.ShopDetails(shopId))
+                            },
+                        )
+                    }
                     is Route.ClaimShop -> ClaimShopScreen(shopId = route.shopId, shopName = route.shopName, onDone = { navigator.back() })
                     Route.Profile -> ProfileScreen(
                         onBack = { navigator.back() },
@@ -163,7 +177,6 @@ fun MainViewController(
                         onOpenTerms = { navigator.navigate(Route.Terms) },
                         onAccountDeleted = { navigator.backToHome() },
                         startAt = privacyStart(route),
-                        hasVendorMode = false,
                     )
                     Route.Settings -> SettingsScreen(
                         onBack = { navigator.back() },

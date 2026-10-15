@@ -1,5 +1,8 @@
 package com.example.bhandara
 
+import com.example.bhandara.services.AndroidVendorTracker
+import com.example.bhandara.vendor.VendorMode
+import com.example.bhandara.vendor.LocalVendorMode
 import com.example.bhandara.data.crowd.KeepCountingCrowds
 import com.example.bhandara.navigation.NOTIFICATION_DATA_KEYS
 import com.example.bhandara.navigation.routeForNotification
@@ -56,10 +59,6 @@ import com.example.bhandara.ui.profile.LocalAccountSignIn
 import com.example.bhandara.ui.profile.ProfileScreen
 import com.example.bhandara.ui.shopdetails.ManageShopScreen
 import com.example.bhandara.ui.components.GoogleAccountSignIn
-import com.example.bhandara.ui.components.VendorMode
-import com.example.bhandara.ui.components.VendorModeBanner
-import com.example.bhandara.ui.components.VendorModeItem
-import com.example.bhandara.ui.components.VendorModeProfileCard
 import com.example.bhandara.ui.feasts.FeastDetailsScreen
 import com.example.bhandara.ui.reportfeast.ReportFeastScreen
 import com.example.bhandara.ui.feasts.FeastsMapScreen
@@ -109,6 +108,7 @@ class MainActivity : AppCompatActivity() {
               CompositionLocalProvider(
                   LocalAppDependencies provides remember { AppDependencies(AppBackend.client, AppSettings(this), AppAuth.service, BuildConfig.VERSION_NAME, PhotoUploader(AndroidFirebaseStorage()), BuildConfig.ADMIN_EMAILS.split(",")) },
                   LocalAccountSignIn provides remember { GoogleAccountSignIn(this) },
+                  LocalVendorMode provides remember { VendorMode(AppSettings(this), AndroidVendorTracker(this)) },
               ) {
                val preferences = LocalAppDependencies.current.settings.preferences
                ProvideAppPreferences(preferences) {
@@ -132,7 +132,7 @@ class MainActivity : AppCompatActivity() {
                         requestPermissions()
                     }
                 
-                    val vendorMode = remember { VendorMode(this@MainActivity) }
+                    val vendorMode = LocalVendorMode.current
 
                     fun navigateTo(route: Route) = navigator.navigate(route)
 
@@ -162,8 +162,6 @@ class MainActivity : AppCompatActivity() {
                                     onReportIssueClick = { navigateTo(Route.ReportIssue) },
                                     onSuggestFeatureClick = { navigateTo(Route.SuggestFeature) },
                                     onHowToUseClick = { navigateTo(Route.HowToUse) },
-                                    drawerExtraItems = { VendorModeItem(vendorMode) },
-                                    overlay = { VendorModeBanner(vendorMode, Modifier.align(Alignment.TopCenter)) },
                                 )
                             }
                             Route.Hungry -> {
@@ -196,7 +194,7 @@ class MainActivity : AppCompatActivity() {
                                     // The new shop's page replaces the form, so back goes home
                                     onAdded = { shopId -> navigator.replace(Route.ShopDetails(shopId)) },
                                     onGoLive = { shopId ->
-                                        vendorMode.set(true)
+                                        vendorMode?.set(true)
                                         navigator.replace(Route.ShopDetails(shopId))
                                     },
                                 )
@@ -243,7 +241,6 @@ class MainActivity : AppCompatActivity() {
                                     onSavedPlaces = { navigateTo(Route.SavedPlaces) },
                                     onMyReports = { navigateTo(Route.MyReports) },
                                     onPrivacy = { startAtDelete -> navigateTo(Route.Privacy(startAtDelete)) },
-                                    vendorMode = { VendorModeProfileCard(vendorMode) },
                                 )
                             }
                             is Route.Privacy -> {
@@ -252,8 +249,6 @@ class MainActivity : AppCompatActivity() {
                                     onOpenTerms = { navigateTo(Route.Terms) },
                                     onAccountDeleted = { navigator.backToHome() },
                                     startAt = privacyStart(route),
-                                    // Vendor Mode (a cart's live location) is Android only
-                                    hasVendorMode = true,
                                 )
                             }
                             Route.Settings -> {

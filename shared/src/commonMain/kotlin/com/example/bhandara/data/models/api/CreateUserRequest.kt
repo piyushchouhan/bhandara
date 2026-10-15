@@ -9,7 +9,8 @@ import kotlinx.serialization.Serializable
 data class CreateUserRequest(
     val firebaseUid: String,
     
-    val fcmToken: String,
+    /** Null for a phone that can't get push notifications yet (e.g. an iPhone until push is set up) */
+    val fcmToken: String? = null,
     
     val latitude: Double,
     

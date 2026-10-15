@@ -9,16 +9,26 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.kotlin.serialization)
-    alias(libs.plugins.android.library)
+    alias(libs.plugins.android.kotlin.multiplatform.library)
     alias(libs.plugins.compose.multiplatform)
     alias(libs.plugins.kotlin.compose)
 }
 
 kotlin {
-    androidTarget {
+    // Android (AGP 9's library plugin for multiplatform modules)
+    android {
+        namespace = "com.example.bhandara.shared"
+        compileSdk = 37
+        minSdk = 35
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_11)
         }
+        // Compose resources (strings, fonts, images) go into the Android library
+        androidResources {
+            enable = true
+        }
+        // commonTest also runs on the JVM, as Android host tests
+        withHostTest {}
     }
 
     // iPhone (device) and the iOS simulator on Apple Silicon Macs.
@@ -81,15 +91,3 @@ compose.resources {
     packageOfResClass = "com.example.bhandara.shared.resources"
 }
 
-android {
-    namespace = "com.example.bhandara.shared"
-    compileSdk = 36
-    defaultConfig {
-        minSdk = 35
-        consumerProguardFiles("consumer-rules.pro")
-    }
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-    }
-}

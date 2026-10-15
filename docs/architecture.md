@@ -72,6 +72,6 @@ Android FCM delivery, token synchronization, and notification tap routing are im
 
 ## Technology baseline
 
-Versions are defined in `gradle/libs.versions.toml` and platform build files. The reviewed catalogue uses Kotlin 2.4.21, Compose Multiplatform 1.11.1, Ktor 3.5.2, and AGP 8.13.2. Android compiles and targets API 36 with minimum API 35. The iOS project declares deployment target 16.0 and builds arm64 device/simulator frameworks; validate the effective minimum against resolved native SDKs.
+Versions are defined in `gradle/libs.versions.toml` and platform build files. The reviewed catalogue uses Kotlin 2.4.21, Compose Multiplatform 1.12.1, Ktor 3.6.0, AGP 9.4.1 and Gradle 9.8.1. The shared module uses AGP's multiplatform library plugin (`com.android.kotlin.multiplatform.library`), and the app relies on AGP's built-in Kotlin. Android compiles and targets API 37 with minimum API 35. The iOS project declares deployment target 16.0 and builds arm64 device/simulator frameworks; validate the effective minimum against resolved native SDKs.
 
 See [development](development.md) for validation commands and [backend integration](backend-integration.md) for service boundaries.

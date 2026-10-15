@@ -1,5 +1,7 @@
 package com.example.bhandara.ui.home
 
+import com.example.bhandara.vendor.VendorModeBanner
+import com.example.bhandara.vendor.VendorModeDrawerRow
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -119,8 +121,8 @@ import org.jetbrains.compose.resources.stringResource
  * menu, a search, and a sheet at the bottom to add a shop or switch to community feasts.
  *
  * @param onShopClick opens a shop or cart's page
- * @param drawerExtraItems platform-only rows in the side menu (Android's vendor mode)
- * @param overlay drawn over the screen, e.g. Android's "vendor mode is on" banner
+ * @param drawerExtraItems extra rows at the top of the side menu (by default Vendor Mode, where the platform has it)
+ * @param overlay drawn over the screen (by default the "Vendor Mode is on" banner)
  */
 @Composable
 fun HomeScreen(
@@ -135,8 +137,8 @@ fun HomeScreen(
     onReportIssueClick: () -> Unit,
     onSuggestFeatureClick: () -> Unit,
     onHowToUseClick: () -> Unit,
-    drawerExtraItems: @Composable ColumnScope.(closeDrawer: () -> Unit) -> Unit = {},
-    overlay: @Composable BoxScope.() -> Unit = {},
+    drawerExtraItems: @Composable ColumnScope.(closeDrawer: () -> Unit) -> Unit = { VendorModeDrawerRow() },
+    overlay: @Composable BoxScope.() -> Unit = { VendorModeBanner(Modifier.align(Alignment.TopCenter)) },
 ) {
     FeastTheme {
         AppDrawer(
