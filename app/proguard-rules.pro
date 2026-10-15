@@ -28,3 +28,7 @@
     public static int d(...);
     public static int i(...);
 }
+
+# Krossbow's Ktor adapter can describe handshake failures of the JDK's own HTTP client (java.net.http), which
+# Android doesn't have; that code only runs on desktop JVMs, so its missing classes are expected here
+-dontwarn java.net.http.**

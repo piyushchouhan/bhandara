@@ -130,7 +130,7 @@ dependencies {
     
     
     // WorkManager for periodic location updates
-    implementation("androidx.work:work-runtime-ktx:2.9.0")
+    implementation("androidx.work:work-runtime-ktx:2.11.2")
     
     // Google Maps SDK for Android
     implementation("com.google.android.gms:play-services-maps:19.0.0")
