@@ -1,5 +1,6 @@
 package com.example.bhandara.ui.shopdetails
 
+import com.example.bhandara.data.network.FssaiApi
 import com.example.bhandara.data.network.ShopWeekStats
 import com.example.bhandara.data.network.ActivityApi
 import io.ktor.http.content.TextContent
@@ -501,6 +502,90 @@ class ShopDetailsViewModelTest {
         viewModel.onMessageShown()
 
         assertNull(viewModel.state.value.message)
+    }
+
+    // ==================== FSSAI licence ====================
+
+    private fun TestScope.openedWithLicences(): ShopDetailsViewModel =
+        ShopDetailsViewModel("5", ShopApi(client), settings, { signedInUid }, null, fssaiApi = FssaiApi(client)).also { advanceUntilIdle() }
+
+    @Test
+    fun theOwnerSeesTheirLicenceIsWaitingForTheCheck() = runTest(dispatcher) {
+        signedInUid = "owner-1"
+        answer("localshops/5", shop(ownerUid = "owner-1"))
+        answer("fssai/shops/5/mine", """{"id":1,"shopId":5,"licenceNumber":"11523026000123","validTill":"2028-03-12","status":"PENDING_REVIEW"}""")
+
+        val state = openedWithLicences().state.value
+
+        assertTrue(state.canAddFssai)
+        assertEquals("PENDING_REVIEW", state.ownFssai?.status)
+    }
+
+    @Test
+    fun anOwnerWhoNeverSentOneCanAddIt() = runTest(dispatcher) {
+        signedInUid = "owner-1"
+        answer("localshops/5", shop(ownerUid = "owner-1"))
+        answer("fssai/shops/5/mine", "", HttpStatusCode.NoContent)
+
+        val state = openedWithLicences().state.value
+
+        assertTrue(state.canAddFssai)
+        assertNull(state.ownFssai)
+    }
+
+    @Test
+    fun customersDontAskForTheOwnersLicence() = runTest(dispatcher) {
+        val state = openedWithLicences().state.value
+
+        assertFalse(state.canAddFssai)
+        assertTrue(requestsTo("fssai/shops/5/mine").isEmpty())
+    }
+
+    @Test
+    fun aCartsOwnerCantAddOne() = runTest(dispatcher) {
+        signedInUid = "owner-1"
+        answer("localshops/5", shop(ownerUid = "owner-1").dropLast(1) + ""","isMovingCart":true}""")
+
+        val state = openedWithLicences().state.value
+
+        assertFalse(state.canAddFssai)
+        assertTrue(requestsTo("fssai/shops/5/mine").isEmpty())
+    }
+
+    @Test
+    fun afterSendingOneTheOwnerSeesItWaiting() = runTest(dispatcher) {
+        signedInUid = "owner-1"
+        answer("localshops/5", shop(ownerUid = "owner-1"))
+        answer("fssai/shops/5/mine", "", HttpStatusCode.NoContent)
+        val viewModel = openedWithLicences()
+
+        answer("fssai/shops/5/mine", """{"id":1,"shopId":5,"licenceNumber":"11523026000123","validTill":"2028-03-12","status":"PENDING_REVIEW"}""")
+        viewModel.onFssaiSent()
+        advanceUntilIdle()
+
+        assertEquals("PENDING_REVIEW", viewModel.state.value.ownFssai?.status)
+        assertNotNull(viewModel.state.value.message)
+    }
+
+    @Test
+    fun theShopsCheckedLicenceComesWithIt() = runTest(dispatcher) {
+        answer("localshops/5", shop().dropLast(1) + ""","fssai":{"maskedNumber":"1152 3026 •••• 23","kind":"LICENCE","validTill":"2028-03-12","checkedOn":"2026-10-02"}}""")
+
+        val badge = opened().state.value.shop?.fssai
+
+        assertEquals("1152 3026 •••• 23", badge?.maskedNumber)
+        assertEquals("2026-10-02", badge?.checkedOn)
+    }
+
+    @Test
+    fun aWrongLicenceCanBeReported() = runTest(dispatcher) {
+        answer("localshops/5/report", shop())
+        val viewModel = opened()
+
+        viewModel.report(ShopReportReason.WRONG_FSSAI_LICENCE)
+        advanceUntilIdle()
+
+        assertTrue("WRONG_FSSAI_LICENCE" in requestsTo("localshops/5/report").single().bodyText())
     }
 
     private companion object {

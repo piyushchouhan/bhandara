@@ -1,5 +1,7 @@
 package com.example.bhandara.ui.shopdetails
 
+import com.example.bhandara.data.models.api.FssaiStatus
+import com.example.bhandara.data.network.FssaiApi
 import com.example.bhandara.data.network.ShopWeekStats
 import com.example.bhandara.data.network.ActivityAction
 import com.example.bhandara.data.network.ActivityApi
@@ -50,6 +52,8 @@ data class ShopDetailsState(
     val message: String? = null,
     /** Manage shop only: views, directions and calls this week; null until known */
     val weekStats: ShopWeekStats? = null,
+    /** The owner's latest FSSAI licence (whether it's waiting or was turned down); null when none or not known */
+    val ownFssai: FssaiStatus? = null,
 ) {
     val isActive: Boolean get() = shop?.isActive != false
 
@@ -62,6 +66,9 @@ data class ShopDetailsState(
     /** Listed by the platform and not claimed yet, so its real owner can claim it */
     val canClaim: Boolean get() = shop?.ownerClaimed == false && isActive && !isOwner
     val canCall: Boolean get() = isActive && !shop?.ownerPhone.isNullOrBlank()
+
+    /** The owner of a fixed shop can send an FSSAI licence (carts don't get the badge) */
+    val canAddFssai: Boolean get() = isOwner && isActive && shop?.isMovingCart != true
 }
 
 /** One shop's page, the same on Android and iOS */
@@ -75,6 +82,8 @@ class ShopDetailsViewModel(
     private val activityApi: ActivityApi? = null,
     /** The owner's own page (Manage shop): nothing is counted, and this week's numbers are loaded instead */
     private val ownerView: Boolean = false,
+    /** The owner's own FSSAI licence; null where it isn't shown */
+    private val fssaiApi: FssaiApi? = null,
     /** Uploads photos sent with a report and returns their URLs (throws if any fails); null where not supported */
     private val uploadPhotos: (suspend (List<PickedPhoto>) -> List<String>)? = null,
 ) : ViewModel() {
@@ -168,6 +177,20 @@ class ShopDetailsViewModel(
 
     fun onMessageShown() = _state.update { it.copy(message = null) }
 
+    /** The owner sent a licence from the shop page: it now waits for the check */
+    fun onFssaiSent() {
+        _state.update { it.copy(message = "Sent for checking. It's usually checked within 2 days.") }
+        loadOwnFssai()
+    }
+
+    private fun loadOwnFssai() {
+        val api = fssaiApi ?: return
+        if (!_state.value.canAddFssai) return
+        viewModelScope.launch {
+            api.mine(shopId).getOrNull()?.let { own -> _state.update { it.copy(ownFssai = own) } }
+        }
+    }
+
     private fun load() {
         _state.update { it.copy(loading = true, error = null) }
         viewModelScope.launch {
@@ -192,6 +215,7 @@ class ShopDetailsViewModel(
                         viewCounted = true
                         count(ActivityAction.VIEW)
                     }
+                    loadOwnFssai()
                     measureDistance(shop)
                 }
                 is ApiResult.Failure -> {

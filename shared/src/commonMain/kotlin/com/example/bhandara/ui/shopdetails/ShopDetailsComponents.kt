@@ -206,7 +206,7 @@ internal fun ShopHero(urls: List<String>, height: Dp, overlap: Dp, onPhotoClick:
 /** The shop's name, and "Verified shop · Street food · ★ 3.0 (1)" under it */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-internal fun ShopTitle(shop: LocalShopResponse) {
+internal fun ShopTitle(shop: LocalShopResponse, onFssai: () -> Unit = {}) {
     val colors = MaterialTheme.feastColors
     val meta = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp, fontWeight = FontWeight.Medium, color = colors.muted)
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -241,6 +241,8 @@ internal fun ShopTitle(shop: LocalShopResponse) {
                 }
             }
         }
+        // A checked licence on a fixed shop (5a); carts never show it
+        if (shop.fssai != null && shop.isMovingCart != true) Box(Modifier.padding(top = 4.dp)) { FssaiBadgeChip(onFssai) }
     }
 }
 

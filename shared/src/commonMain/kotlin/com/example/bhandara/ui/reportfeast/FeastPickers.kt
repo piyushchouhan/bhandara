@@ -18,6 +18,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ChevronLeft
 import androidx.compose.material.icons.rounded.ChevronRight
+import androidx.compose.material.icons.rounded.KeyboardDoubleArrowLeft
+import androidx.compose.material.icons.rounded.KeyboardDoubleArrowRight
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -93,9 +95,13 @@ private fun PickerSheet(onDismiss: () -> Unit, onOk: () -> Unit, content: @Compo
     }
 }
 
-/** Date as a calendar sheet: past days fade, today is ringed, the chosen day is filled indigo */
+/**
+ * Date as a calendar sheet: past days fade, today is ringed, the chosen day is filled indigo
+ *
+ * @param yearArrows also jump a year at a time (dates years ahead, e.g. a licence's expiry)
+ */
 @Composable
-internal fun FeastDateSheet(current: LocalDate?, onPicked: (LocalDate) -> Unit, onDismiss: () -> Unit) {
+internal fun FeastDateSheet(current: LocalDate?, onPicked: (LocalDate) -> Unit, onDismiss: () -> Unit, yearArrows: Boolean = false) {
     val colors = MaterialTheme.feastColors
     val today = remember { localNow().date }
     var chosen by remember { mutableStateOf(current ?: today) }
@@ -111,9 +117,17 @@ internal fun FeastDateSheet(current: LocalDate?, onPicked: (LocalDate) -> Unit, 
         Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
             Text("${MONTHS[month.monthNumber - 1]} ${month.year}", color = colors.ink, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
             val canGoBack = month > firstMonth
+            if (yearArrows) {
+                MonthButton(Icons.Rounded.KeyboardDoubleArrowLeft, enabled = canGoBack) { month = maxOf(firstMonth, month.minus(DatePeriod(years = 1))) }
+                Spacer(Modifier.width(4.dp))
+            }
             MonthButton(Icons.Rounded.ChevronLeft, enabled = canGoBack) { month = month.minus(DatePeriod(months = 1)) }
             Spacer(Modifier.width(4.dp))
             MonthButton(Icons.Rounded.ChevronRight, enabled = true) { month = month.plus(DatePeriod(months = 1)) }
+            if (yearArrows) {
+                Spacer(Modifier.width(4.dp))
+                MonthButton(Icons.Rounded.KeyboardDoubleArrowRight, enabled = true) { month = month.plus(DatePeriod(years = 1)) }
+            }
         }
         Row {
             listOf("S", "M", "T", "W", "T", "F", "S").forEach {

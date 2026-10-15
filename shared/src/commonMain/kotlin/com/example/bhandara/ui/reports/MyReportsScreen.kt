@@ -133,6 +133,7 @@ import com.example.bhandara.shared.resources.my_reports_withdraw_title
 import com.example.bhandara.shared.resources.my_reports_what_changed
 import com.example.bhandara.shared.resources.my_reports_withdrawn
 import com.example.bhandara.shared.resources.report_reason_closed
+import com.example.bhandara.shared.resources.report_reason_fssai
 import com.example.bhandara.shared.resources.report_reason_inappropriate
 import com.example.bhandara.shared.resources.report_reason_not_food_shop
 import com.example.bhandara.shared.resources.report_reason_wrong_location
@@ -303,6 +304,7 @@ private fun reportTitle(report: MyReport): String = stringResource(
 private fun reasonText(reason: String?): StringResource? = when (reason) {
     "WRONG_LOCATION" -> Res.string.report_reason_wrong_location
     "PERMANENTLY_CLOSED" -> Res.string.report_reason_closed
+    "WRONG_FSSAI_LICENCE" -> Res.string.report_reason_fssai
     "NOT_FOOD_SHOP" -> Res.string.report_reason_not_food_shop
     "INAPPROPRIATE_CONTENT" -> Res.string.report_reason_inappropriate
     "SUGGEST_DELETE" -> Res.string.my_reports_suggested_removing

@@ -1,5 +1,7 @@
 package com.example.bhandara.ui.shopdetails
 
+import com.example.bhandara.data.network.FssaiApi
+import com.example.bhandara.ui.fssai.FssaiScreen
 import com.example.bhandara.data.network.ActivityApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -134,9 +136,12 @@ fun ShopDetailsScreen(
             LocationService(deviceLocation),
             activityApi = ActivityApi(dependencies.apiClient),
             uploadPhotos = { photos -> dependencies.photoUploader.upload(photos) },
+            fssaiApi = FssaiApi(dependencies.apiClient),
         )
     }
     var addingMenuItems by rememberSaveable { mutableStateOf(false) }
+    // The owner sending the shop's FSSAI licence (5a), in place of the page
+    var addingFssai by rememberSaveable { mutableStateOf(false) }
     // Coming back to the page (e.g. after claiming the shop or writing a review) shows it as it is now
     var shownBefore by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(Unit) {
@@ -155,6 +160,16 @@ fun ShopDetailsScreen(
             },
             onBack = { addingMenuItems = false },
         )
+    } else if (addingFssai) {
+        FssaiScreen(
+            shopId = shopId,
+            initial = null,
+            onBack = { addingFssai = false },
+            onDone = {
+                addingFssai = false
+                viewModel.onFssaiSent()
+            },
+        )
     } else {
         FeastTheme {
             ShopDetailsPage(
@@ -164,12 +179,13 @@ fun ShopDetailsScreen(
                 onOpenReviews = onOpenReviews,
                 onWriteReview = onWriteReview,
                 onAddMenuItems = { addingMenuItems = true },
+                onAddFssai = { addingFssai = true },
             )
         }
     }
 }
 
-private enum class ShopDialog { REPORT, SUGGEST_DELETE, DEACTIVATE }
+private enum class ShopDialog { REPORT, REPORT_FSSAI, SUGGEST_DELETE, DEACTIVATE, FSSAI }
 
 @Composable
 private fun ShopDetailsPage(
@@ -179,6 +195,7 @@ private fun ShopDetailsPage(
     onOpenReviews: (shopName: String, photoUrl: String?) -> Unit,
     onWriteReview: (shopName: String, photoUrl: String?) -> Unit,
     onAddMenuItems: () -> Unit,
+    onAddFssai: () -> Unit,
 ) {
     val colors = MaterialTheme.feastColors
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -227,7 +244,7 @@ private fun ShopDetailsPage(
                                 .padding(start = 18.dp, end = 18.dp, top = 20.dp, bottom = 120.dp),
                             verticalArrangement = Arrangement.spacedBy(16.dp),
                         ) {
-                            ShopTitle(shop)
+                            ShopTitle(shop, onFssai = { dialog = ShopDialog.FSSAI })
                             StatusCards(state)
                             ActionTiles(
                                 canCall = state.canCall,
@@ -256,6 +273,13 @@ private fun ShopDetailsPage(
                             )
                             MenuCard(state.menu, shop.menuItems.orEmpty(), onAddItems = onAddMenuItems.takeIf { state.canEditMenu })
                             // A cart's seating and the like don't apply; its own details do
+                            if (shop.isMovingCart != true) {
+                                val badge = shop.fssai
+                                when {
+                                    badge != null -> FoodSafetyRow(badge) { dialog = ShopDialog.FSSAI }
+                                    state.canAddFssai -> OwnerFssaiRow(state.ownFssai, onAdd = onAddFssai)
+                                }
+                            }
                             if (shop.isMovingCart == true) shop.cartDetails?.let { CartDetailsCard(it) } else FacilitiesCard(shop)
                             shop.description?.takeIf { it.isNotBlank() }?.let { DescriptionCard(it.trim()) }
                             onClaim?.takeIf { state.canClaim }?.let { claim -> ClaimCard { claim(shop.shopName) } }
@@ -321,7 +345,20 @@ private fun ShopDetailsPage(
 
     val shop = state.shop
     when (dialog) {
-        ShopDialog.REPORT -> ReportShopSheet(onReport = viewModel::report, onDismiss = { dialog = null })
+        ShopDialog.REPORT -> ReportShopSheet(onReport = viewModel::report, onDismiss = { dialog = null }, hasFssai = shop?.fssai != null)
+
+        ShopDialog.REPORT_FSSAI -> ReportShopSheet(
+            onReport = viewModel::report, onDismiss = { dialog = null }, hasFssai = true, initial = ShopReportReason.WRONG_FSSAI_LICENCE,
+        )
+
+        ShopDialog.FSSAI -> shop?.fssai?.let { badge ->
+            FssaiBadgeSheet(
+                badge,
+                onCheckOnSite = { actions.openUrl(FSSAI_LOOKUP_URL) },
+                onReport = { dialog = ShopDialog.REPORT_FSSAI }.takeIf { state.canReport },
+                onDismiss = { dialog = null },
+            )
+        }
 
         ShopDialog.SUGGEST_DELETE -> ConfirmShopSheet(
             icon = Icons.Rounded.Delete,
