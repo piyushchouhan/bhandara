@@ -63,6 +63,10 @@ targets:
         # photo library uses the system picker, which needs no permission
         NSCameraUsageDescription: Local Feast uses the camera to take photos of food, shops and community feasts you share.
         NSLocationWhenInUseUsageDescription: Local Feast uses your location to show food shops, carts and community feasts near you.
+        # Vendor Mode: a moving cart's location keeps being shared while the screen is off ("Always" access and the
+        # location background mode; neither needs a paid Apple Developer account)
+        NSLocationAlwaysAndWhenInUseUsageDescription: With Vendor Mode on, Local Feast shares your cart's location so customers can follow it, even while your screen is off.
+        UIBackgroundModes: [location]
         # The logo on the app's background colour while it starts (Assets.xcassets; dark in dark mode)
         UILaunchScreen:
           UIColorName: LaunchBackground
