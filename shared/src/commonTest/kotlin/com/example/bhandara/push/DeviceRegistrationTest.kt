@@ -39,14 +39,19 @@ class DeviceRegistrationTest {
 
     private val requests = mutableListOf<HttpRequestData>()
     private var registerStatus = HttpStatusCode.Created
+    /** The backend lost the user (e.g. its data was reset): updates answer 404 until it registers again */
+    private var userGone = false
 
     private val client = ApiClient("https://api.test/", { "id-token" }, MockEngine(MockEngineConfig().apply {
         dispatcher = this@DeviceRegistrationTest.dispatcher
         addHandler { request ->
             requests += request
             val (status, body) = when {
-                request.method == HttpMethod.Post && request.url.encodedPath == "/api/users" ->
+                request.method == HttpMethod.Post && request.url.encodedPath == "/api/users" -> {
+                    if (registerStatus == HttpStatusCode.Created) userGone = false
                     registerStatus to if (registerStatus == HttpStatusCode.Created) """{"id":"1","firebaseUid":"me-1"}""" else """{"message":"No"}"""
+                }
+                userGone -> HttpStatusCode.NotFound to """{"message":"User not found"}"""
                 else -> HttpStatusCode.NoContent to ""
             }
             respond(body, status, headersOf(HttpHeaders.ContentType, "application/json"))
@@ -143,4 +148,40 @@ class DeviceRegistrationTest {
         assertTrue(failing.ensureRegistered())
         assertNull(sentTo(HttpMethod.Post, "/api/users").single().json()["fcmToken"])
     }
+
+    @Test
+    fun whenTheBackendNoLongerKnowsThePhoneSharingTheLocationRegistersItAgain() = runTest(dispatcher) {
+        registration.ensureRegistered()
+        userGone = true
+
+        assertTrue(registration.shareLocation(here))
+
+        assertEquals(2, sentTo(HttpMethod.Post, "/api/users").size)
+        assertEquals("18.5823", sentTo(HttpMethod.Post, "/api/users").last().json()["latitude"]!!.jsonPrimitive.content)
+        assertTrue(settings.isRegisteredWithBackend("me-1"))
+    }
+
+    @Test
+    fun whenTheBackendNoLongerKnowsThePhoneANewTokenRegistersItAgain() = runTest(dispatcher) {
+        token = "token-1"
+        registration.ensureRegistered()
+        userGone = true
+
+        token = "token-2"
+        assertTrue(registration.ensureRegistered())
+
+        assertEquals("token-2", sentTo(HttpMethod.Post, "/api/users").last().json()["fcmToken"]!!.jsonPrimitive.content)
+        assertEquals("token-2", settings.lastPushTokenSent("me-1"))
+    }
+
+    @Test
+    fun otherFailuresDoNotStartARegistrationAgain() = runTest(dispatcher) {
+        registration.ensureRegistered()
+        registerStatus = HttpStatusCode.InternalServerError
+
+        registration.shareLocation(here)
+
+        assertEquals(1, sentTo(HttpMethod.Post, "/api/users").size, "a location update that worked needs nothing more")
+    }
+
 }
