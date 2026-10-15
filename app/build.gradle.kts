@@ -7,6 +7,8 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     // Add the Google services Gradle plugin
     id("com.google.gms.google-services")
+    // Crashes from testers' phones, with readable stack traces (uploads the R8 mapping on release builds)
+    id("com.google.firebase.crashlytics")
 }
 
 // Load API keys from local.properties (which is gitignored)
@@ -61,7 +63,12 @@ android {
     }
 
     buildTypes {
+        // Crash reports come from testers' release builds only, not from development on this computer
+        debug {
+            manifestPlaceholders["crashlyticsEnabled"] = false
+        }
         release {
+            manifestPlaceholders["crashlyticsEnabled"] = true
             signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = true
             proguardFiles(
@@ -118,6 +125,7 @@ dependencies {
     implementation(platform("com.google.firebase:firebase-bom:34.7.0"))
     // When using the BoM, don't specify versions in Firebase dependencies
     implementation("com.google.firebase:firebase-analytics")
+    implementation("com.google.firebase:firebase-crashlytics")
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-storage")
     implementation("com.google.firebase:firebase-messaging")
