@@ -1,7 +1,10 @@
 package com.example.bhandara.ui.addshop
 
+import com.example.bhandara.data.network.FssaiApi
+import com.example.bhandara.ui.fssai.FssaiForm
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.bhandara.data.location.GeoLocation
 import com.example.bhandara.data.location.LocationResult
 import com.example.bhandara.data.location.LocationService
 import com.example.bhandara.data.models.api.LocalShopRequest
@@ -26,8 +29,10 @@ import kotlinx.coroutines.launch
  *
  * @param menuSaved false when the shop was added but its detailed menu couldn't be saved (the owner can add it
  *                  from the shop's page)
+ * @param fssaiSent false when the shop was added but its FSSAI licence couldn't be sent (the owner can send it
+ *                  from the shop's page)
  */
-data class AddedShop(val id: String, val menuSaved: Boolean)
+data class AddedShop(val id: String, val menuSaved: Boolean, val fssaiSent: Boolean = true)
 
 /**
  * @param error          what stops the user, ready to show
@@ -65,6 +70,8 @@ class AddShopViewModel(
     private val settings: AppSettings,
     private val currentUid: () -> String?,
     accountEmail: String?,
+    /** Sends the FSSAI licence once the shop is added */
+    private val fssaiApi: FssaiApi? = null,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(
@@ -206,6 +213,12 @@ class AddShopViewModel(
     fun onLandmarkChange(text: String) = edit { it.copy(landmark = text.take(MAX_SHOP_LANDMARK)) }
     fun onCuisineChange(text: String) = edit { it.copy(cuisine = text.take(100)) }
     fun onCostForTwoChange(text: String) = edit { it.copy(costForTwo = text.filter(Char::isDigit).take(6)) }
+
+    /** The FSSAI licence from 5a, sent once the shop is added (food shops only); null takes it off */
+    fun setFssai(licence: FssaiForm?) = edit { it.copy(fssai = licence) }
+
+    /** The spot picked on the full-screen map (Adjust pin); the shop goes there instead of where the phone is */
+    fun setPin(spot: GeoLocation) = edit { it.copy(pin = spot) }
     fun setHomeDelivery(on: Boolean) = edit { it.copy(homeDelivery = on) }
     fun setTakeaway(on: Boolean) = edit { it.copy(takeaway = on) }
     fun setSeating(on: Boolean) = edit { it.copy(hasSeating = on) }
@@ -265,7 +278,8 @@ class AddShopViewModel(
         }
         _state.update { it.copy(form = form, submitting = true, error = null, needsLocation = false) }
         viewModelScope.launch {
-            val here = (locationService.locate() as? LocationResult.Found)?.location ?: return@launch fail(
+            // A pin put by hand wins over where the phone is
+            val here = form.pin ?: (locationService.locate() as? LocationResult.Found)?.location ?: return@launch fail(
                 "Your location is needed to put the shop on the map. Allow location and make sure it's on.",
                 needsLocation = true,
             )
@@ -317,8 +331,24 @@ class AddShopViewModel(
             // A cart's items are its menu
             val menu = if (form.isCart) form.cartMenu else form.detailedMenu
             val menuSaved = menu.isEmpty() || menuApi.addItems(shop.id, menu) is ApiResult.Success
-            _state.update { it.copy(submitting = false, uploadProgress = null, added = AddedShop(shop.id, menuSaved)) }
+            val fssaiSent = form.fssai?.takeUnless { form.isCart }?.let { sendFssai(shop.id, it) } ?: true
+            _state.update { it.copy(submitting = false, uploadProgress = null, added = AddedShop(shop.id, menuSaved, fssaiSent)) }
         }
+    }
+
+    private suspend fun sendFssai(shopId: String, licence: FssaiForm): Boolean {
+        val api = fssaiApi ?: return false
+        val validTill = licence.validTill ?: return false
+        val pages = licence.pages.map { page ->
+            try {
+                page.compressed()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                null
+            } ?: return false
+        }
+        return api.submit(shopId, licence.number, validTill.toString(), pages) is ApiResult.Success
     }
 
     private fun fail(message: String, needsLocation: Boolean = false) =

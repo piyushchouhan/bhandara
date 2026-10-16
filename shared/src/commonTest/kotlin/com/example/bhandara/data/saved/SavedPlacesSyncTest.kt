@@ -186,4 +186,16 @@ class SavedPlacesSyncTest {
 
         assertEquals(before + 2, settings.savedChanges.value)
     }
+
+    @Test
+    fun aSyncIsNotItselfAChangeToSyncSoSyncingStops() = runTest(dispatcher) {
+        settings.setShopSaved("5", true)
+        accountHas = places("SHOP:5", "SHOP:7")
+        val before = settings.savedChanges.value
+
+        sync.sync()
+
+        assertEquals(before, settings.savedChanges.value, "only the user's saves and unsaves start a sync")
+    }
+
 }

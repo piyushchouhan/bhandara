@@ -1,5 +1,19 @@
 package com.example.bhandara.ui.addshop
 
+import com.example.bhandara.data.network.FssaiApi
+import com.example.bhandara.ui.fssai.FssaiForm
+import com.example.bhandara.ui.fssai.FssaiScreen
+import com.example.bhandara.ui.fssai.fssaiDate
+import com.example.bhandara.ui.fssai.fssaiNumber
+import com.example.bhandara.shared.resources.fssai_card_add
+import com.example.bhandara.shared.resources.fssai_card_added
+import com.example.bhandara.shared.resources.fssai_card_change
+import com.example.bhandara.shared.resources.fssai_card_text
+import com.example.bhandara.shared.resources.fssai_card_title
+import com.example.bhandara.shared.resources.fssai_not_sent_text
+import com.example.bhandara.shared.resources.fssai_not_sent_title
+import androidx.compose.material.icons.outlined.VerifiedUser
+import androidx.compose.material.icons.outlined.AddAPhoto
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -39,6 +53,7 @@ import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Mail
 import androidx.compose.material.icons.outlined.MyLocation
+import androidx.compose.material.icons.outlined.OpenInFull
 import androidx.compose.material.icons.outlined.NearMe
 import androidx.compose.material.icons.outlined.PhotoCamera
 import androidx.compose.material.icons.outlined.Place
@@ -139,7 +154,9 @@ import com.example.bhandara.shared.resources.shop_landmark
 import com.example.bhandara.shared.resources.shop_name
 import com.example.bhandara.shared.resources.shop_phone
 import com.example.bhandara.shared.resources.shop_photos_label
-import com.example.bhandara.shared.resources.shop_place_info
+import com.example.bhandara.shared.resources.adjust_pin
+import com.example.bhandara.shared.resources.pin_put_by_hand
+import com.example.bhandara.shared.resources.pin_where_you_are
 import com.example.bhandara.shared.resources.shop_type
 import com.example.bhandara.shared.resources.shop_type_bakery
 import com.example.bhandara.shared.resources.shop_type_cafe
@@ -224,6 +241,7 @@ fun AddShopScreen(onBack: () -> Unit, onAdded: (shopId: String) -> Unit, onGoLiv
                 dependencies.settings,
                 { dependencies.auth.currentUid },
                 account?.email,
+                FssaiApi(dependencies.apiClient),
             )
         }
         FeastTheme { AddShopPage(viewModel, onBack, onAdded, onGoLive) }
@@ -239,6 +257,10 @@ private fun AddShopPage(viewModel: AddShopViewModel, onBack: () -> Unit, onAdded
     // The stop being added (a new one has no id yet) or changed, on the full-screen map
     var stopSheet by remember { mutableStateOf<CartStop?>(null) }
     var addingStop by rememberSaveable { mutableStateOf(false) }
+    // The shop's pin on the full-screen map (1g)
+    var adjustingPin by rememberSaveable { mutableStateOf(false) }
+    // The FSSAI licence (5a), sent with the shop
+    var addingFssai by rememberSaveable { mutableStateOf(false) }
     // A cart's Items step starts by picking what it sells (3m), then its items (3i)
     var pickingCategories by rememberSaveable { mutableStateOf(true) }
     val requestLocation = rememberLocationPermissionRequest { granted -> if (granted) viewModel.submit() }
@@ -247,7 +269,7 @@ private fun AddShopPage(viewModel: AddShopViewModel, onBack: () -> Unit, onAdded
     val added = state.added
     val isCart = state.form.isCart
     // A cart first hears about Vendor Mode (3g)
-    LaunchedEffect(added) { if (added != null && added.menuSaved && !isCart) onAdded(added.id) }
+    LaunchedEffect(added) { if (added != null && added.menuSaved && added.fssaiSent && !isCart) onAdded(added.id) }
     if (added != null && added.menuSaved && isCart) {
         GoLiveScreen(
             cartName = state.form.shopName.trim(),
@@ -256,11 +278,11 @@ private fun AddShopPage(viewModel: AddShopViewModel, onBack: () -> Unit, onAdded
         )
         return
     }
-    if (added != null && !added.menuSaved) {
+    if (added != null && (!added.menuSaved || !added.fssaiSent)) {
         AlertDialog(
             onDismissRequest = { onAdded(added.id) },
-            title = { Text(stringResource(Res.string.menu_not_saved_title)) },
-            text = { Text(stringResource(Res.string.menu_not_saved_text)) },
+            title = { Text(stringResource(if (!added.menuSaved) Res.string.menu_not_saved_title else Res.string.fssai_not_sent_title)) },
+            text = { Text(stringResource(if (!added.menuSaved) Res.string.menu_not_saved_text else Res.string.fssai_not_sent_text)) },
             confirmButton = { TextButton(onClick = { onAdded(added.id) }) { Text(stringResource(Res.string.ok)) } },
         )
     }
@@ -289,6 +311,28 @@ private fun AddShopPage(viewModel: AddShopViewModel, onBack: () -> Unit, onAdded
             onRemove = { viewModel.removeStop(it.id); close() },
             onNoFixedRoute = { viewModel.setNoFixedRoute(true); close() },
             onClose = close,
+        )
+        return
+    }
+
+    if (addingFssai) {
+        FssaiScreen(
+            shopId = null,
+            initial = state.form.fssai,
+            onBack = { addingFssai = false },
+            onDone = { licence ->
+                viewModel.setFssai(licence)
+                addingFssai = false
+            },
+        )
+        return
+    }
+
+    if (adjustingPin) {
+        PinAdjustScreen(
+            start = state.form.pin,
+            onPicked = { viewModel.setPin(it); adjustingPin = false },
+            onClose = { adjustingPin = false },
         )
         return
     }
@@ -351,7 +395,7 @@ private fun AddShopPage(viewModel: AddShopViewModel, onBack: () -> Unit, onAdded
                     pickingCategories -> CategoryPickStep(state.form, viewModel)
                     else -> CartItemsStep(state.form, viewModel, onEditRoute = { viewModel.goBackTo(ShopStep.ROUTE) })
                 }
-                ShopStep.DETAILS -> if (isCart) CartDetailsStep(state.form, viewModel) else DetailsStep(state.form, viewModel)
+                ShopStep.DETAILS -> if (isCart) CartDetailsStep(state.form, viewModel) else DetailsStep(state.form, viewModel, onAdjustPin = { adjustingPin = true }, onAddFssai = { addingFssai = true })
             }
         }
         BottomBar(
@@ -684,12 +728,12 @@ private fun MenuDrawing() {
     }
 }
 
-/** Step 4 (design 1d): where the shop goes on the map, then the optional details */
+/** Step 4 (design 1d): where the shop goes on the map ("Adjust pin" opens 1g), then the optional details */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun DetailsStep(form: ShopForm, viewModel: AddShopViewModel) {
+private fun DetailsStep(form: ShopForm, viewModel: AddShopViewModel, onAdjustPin: () -> Unit, onAddFssai: () -> Unit) {
     val colors = MaterialTheme.feastColors
-    PlaceCard()
+    PlaceCard(pinnedByHand = form.pin != null, onAdjustPin = onAdjustPin)
     FeastFormField(form.description, stringResource(Res.string.section_description), viewModel::onDescriptionChange, height = 76.dp, singleLine = false)
     FeastFormField(form.phone, stringResource(Res.string.shop_phone), viewModel::onPhoneChange, icon = Icons.Outlined.Call, height = 52.dp, keyboardType = KeyboardType.Phone)
     FeastFormField(form.email, stringResource(Res.string.shop_email), viewModel::onEmailChange, icon = Icons.Outlined.Mail, height = 52.dp, keyboardType = KeyboardType.Email)
@@ -707,6 +751,43 @@ private fun DetailsStep(form: ShopForm, viewModel: AddShopViewModel) {
             FacilityChip(Res.string.facility_home_delivery, form.homeDelivery) { viewModel.setHomeDelivery(!form.homeDelivery) }
             FacilityChip(Res.string.facility_seating, form.hasSeating) { viewModel.setSeating(!form.hasSeating) }
             FacilityChip(Res.string.facility_wifi, form.wifi) { viewModel.setWifi(!form.wifi) }
+        }
+    }
+    FssaiCard(form.fssai, onAddFssai)
+}
+
+/** The optional FSSAI licence, last on Details (food shops only; carts skip it): "Add certificate" opens 5a */
+@Composable
+private fun FssaiCard(licence: FssaiForm?, onAdd: () -> Unit) {
+    val colors = MaterialTheme.feastColors
+    val shape = RoundedCornerShape(20.dp)
+    Row(
+        Modifier.fillMaxWidth().clip(shape).background(colors.surface).border(1.5.dp, colors.border, shape).padding(start = 14.dp, end = 10.dp, top = 12.dp, bottom = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Box(Modifier.size(44.dp).background(colors.successSoft, RoundedCornerShape(14.dp)), contentAlignment = Alignment.Center) {
+            Icon(Icons.Outlined.VerifiedUser, contentDescription = null, tint = colors.success, modifier = Modifier.size(24.dp))
+        }
+        Column(Modifier.weight(1f)) {
+            Text(stringResource(Res.string.fssai_card_title), color = colors.ink, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.titleSmall)
+            val validTill = licence?.validTill
+            Text(
+                if (licence != null && validTill != null) stringResource(Res.string.fssai_card_added, fssaiNumber(licence.number), fssaiDate(validTill))
+                else stringResource(Res.string.fssai_card_text),
+                color = colors.muted, fontSize = 13.sp, lineHeight = 17.sp, style = MaterialTheme.typography.bodySmall,
+            )
+        }
+        Row(
+            Modifier.height(40.dp).clip(RoundedCornerShape(12.dp)).background(colors.lavender).clickable(onClick = onAdd).padding(horizontal = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            if (licence == null) Icon(Icons.Outlined.AddAPhoto, contentDescription = null, tint = colors.accent, modifier = Modifier.size(18.dp))
+            Text(
+                stringResource(if (licence == null) Res.string.fssai_card_add else Res.string.fssai_card_change), color = colors.ink, fontSize = 14.sp,
+                fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.labelLarge,
+            )
         }
     }
 }
@@ -732,9 +813,9 @@ private fun FacilityChip(label: StringResource, selected: Boolean, onClick: () -
     }
 }
 
-/** A drawn bit of map with a saffron spot, over "The shop goes on the map where you are now" */
+/** A drawn bit of map with a saffron spot, over where the pin is and "Adjust pin" */
 @Composable
-private fun PlaceCard() {
+private fun PlaceCard(pinnedByHand: Boolean, onAdjustPin: () -> Unit) {
     val colors = MaterialTheme.feastColors
     Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(colors.indigo)) {
         Box(Modifier.fillMaxWidth().height(76.dp).clipToBounds().background(colors.mapLand)) {
@@ -761,9 +842,20 @@ private fun PlaceCard() {
                 )
             }
         }
-        Row(Modifier.padding(horizontal = 14.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            Icon(Icons.Outlined.MyLocation, contentDescription = null, tint = colors.saffron, modifier = Modifier.size(22.dp))
-            Text(stringResource(Res.string.shop_place_info), color = colors.onIndigo, fontSize = 14.sp, lineHeight = 19.sp, style = MaterialTheme.typography.bodyMedium)
+        Row(Modifier.padding(start = 14.dp, end = 10.dp, top = 10.dp, bottom = 10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Icon(if (pinnedByHand) Icons.Outlined.Place else Icons.Outlined.MyLocation, contentDescription = null, tint = colors.saffron, modifier = Modifier.size(22.dp))
+            Text(
+                stringResource(if (pinnedByHand) Res.string.pin_put_by_hand else Res.string.pin_where_you_are), color = colors.onIndigo, fontSize = 14.sp, lineHeight = 19.sp,
+                style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f),
+            )
+            Row(
+                Modifier.height(44.dp).clip(RoundedCornerShape(12.dp)).background(colors.saffron).clickable(onClick = onAdjustPin).padding(horizontal = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                Icon(Icons.Outlined.OpenInFull, contentDescription = null, tint = colors.onSaffron, modifier = Modifier.size(18.dp))
+                Text(stringResource(Res.string.adjust_pin), color = colors.onSaffron, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.labelLarge)
+            }
         }
     }
 }

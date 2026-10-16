@@ -54,6 +54,8 @@ class CameraTarget(val center: GeoLocation, val zoom: Float = DEFAULT_ZOOM) {
  * @param contentPadding the parts covered by the screen's own bars and sheets: the map centres in what's left and
  *                       keeps the Google logo visible
  * @param zones shapes drawn under the pins (groups of nearby shops); [onZoneClick] gets the tapped one's id
+ * @param satellite photos from above with road names, instead of the drawn map
+ * @param onCameraIdle where the map's middle is (inside [contentPadding]) each time it stops moving
  */
 @Composable
 expect fun PlatformMap(
@@ -68,4 +70,6 @@ expect fun PlatformMap(
     contentPadding: PaddingValues = PaddingValues(),
     zones: List<MapZone> = emptyList(),
     onZoneClick: (zoneId: String) -> Unit = {},
+    satellite: Boolean = false,
+    onCameraIdle: (GeoLocation) -> Unit = {},
 )

@@ -10,6 +10,9 @@ plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.android.kotlin.multiplatform.library)
+    // Kotlin crashes on iOS reach Crashlytics with Kotlin stack traces (CrashKiOS); this lets tests link without
+    // Crashlytics, which only the app has
+    id("co.touchlab.crashkios.crashlyticslink") version "0.10.1"
     alias(libs.plugins.compose.multiplatform)
     alias(libs.plugins.kotlin.compose)
 }
@@ -75,6 +78,7 @@ kotlin {
         }
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin)
+            implementation("co.touchlab.crashkios:crashlytics:0.10.1")
         }
         // Tests run on both platforms against a fake server (Ktor's MockEngine)
         commonTest.dependencies {

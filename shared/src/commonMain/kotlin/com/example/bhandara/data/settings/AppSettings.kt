@@ -46,6 +46,12 @@ class AppSettings(factory: Settings.Factory, private val nowMillis: () -> Long =
 
     fun markRegisteredWithBackend(uid: String) = sync.putBoolean(KEY_BACKEND_SYNCED + uid, true)
 
+    /** The backend no longer knows this user (e.g. its data was reset): the phone registers again */
+    fun forgetRegisteredWithBackend(uid: String) {
+        sync.remove(KEY_BACKEND_SYNCED + uid)
+        sync.remove(KEY_PUSH_TOKEN_SENT + uid)
+    }
+
     /** The push-notification token the backend last confirmed for this user, or null */
     fun lastPushTokenSent(uid: String): String? = sync.getStringOrNull(KEY_PUSH_TOKEN_SENT + uid)
 
@@ -196,7 +202,7 @@ class AppSettings(factory: Settings.Factory, private val nowMillis: () -> Long =
         savedPlaces.clear()
         account.forEach { place -> prefixFor(place.kind)?.let { write(it, place.id, true, place.savedAt) } }
         stillPending.forEach { change -> prefixFor(change.kind)?.let { write(it, change.id, change.saved, change.savedAt.takeIf { at -> at > 0 } ?: nowMillis()) } }
-        _savedChanges.value++
+        // Not a change to sync: counting it would start another sync, and that another, without end
     }
 
     private fun setSaved(prefix: String, id: String, saved: Boolean) {

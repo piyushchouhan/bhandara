@@ -1,5 +1,9 @@
 package com.example.bhandara.ui.addshop
 
+import io.ktor.http.HttpMethod
+import kotlinx.datetime.LocalDate
+import com.example.bhandara.ui.fssai.FssaiForm
+import com.example.bhandara.data.network.FssaiApi
 import kotlinx.datetime.LocalTime
 import com.example.bhandara.data.location.DeviceLocation
 import com.example.bhandara.data.location.GeoLocation
@@ -88,6 +92,7 @@ class AddShopViewModelTest {
     private val requests = mutableListOf<HttpRequestData>()
     private var createStatus = HttpStatusCode.Created
     private var menuStatus = HttpStatusCode.Created
+    private var fssaiStatus = HttpStatusCode.Created
 
     private val client = ApiClient("https://api.test/", { "id-token" }, MockEngine(MockEngineConfig().apply {
         dispatcher = this@AddShopViewModelTest.dispatcher
@@ -97,6 +102,8 @@ class AddShopViewModelTest {
                 request.url.encodedPath == "/api/localshops" ->
                     createStatus to (if (createStatus == HttpStatusCode.Created) """{"id":"42","shopName":"Sharma Chaat","latitude":18.58,"longitude":73.88}""" else "")
                 request.url.encodedPath.startsWith("/api/menu-items/manual/shop/") -> menuStatus to "[]"
+                request.url.encodedPath == "/api/fssai/shops/42" -> fssaiStatus to
+                    """{"id":1,"shopId":42,"licenceNumber":"11523026000123","validTill":"2028-03-12","status":"PENDING_REVIEW"}"""
                 else -> HttpStatusCode.NotFound to ""
             }
             respond(body, status, headersOf(HttpHeaders.ContentType, "application/json"))
@@ -116,7 +123,16 @@ class AddShopViewModelTest {
         settings,
         currentUid = { "owner-1" },
         accountEmail = accountEmail,
+        fssaiApi = FssaiApi(client),
     )
+
+    /** A certificate page that can be sent */
+    private class Page(val name: String) : PickedPhoto {
+        override val preview: Any = name
+        override suspend fun compressed() = CompressedPhoto(name.encodeToByteArray(), "jpg", "image/jpeg")
+    }
+
+    private val licence = FssaiForm(listOf(Page("certificate")), "11523026000123", LocalDate(2028, 3, 12))
 
     /** Enough to add a shop: a fixed shop with a name, a kind and a dish */
     private fun AddShopViewModel.fillIn() {
@@ -604,6 +620,94 @@ class AddShopViewModelTest {
         assertTrue(viewModel.state.value.needsLocation)
         // The draft stays for when they allow it
         assertEquals("Sharma Chaat", settings.addShopDraft?.shopName)
+    }
+
+    @Test
+    fun aShopGoesWhereItsPinWasPutNotWhereThePhoneIs() = runTest(dispatcher) {
+        val viewModel = viewModel()
+        viewModel.fillIn()
+        viewModel.setPin(GeoLocation(18.5901, 73.8912))
+
+        submitted(viewModel)
+
+        val shop = requestTo("/api/localshops").json()
+        assertEquals(18.5901, shop["latitude"]!!.jsonPrimitive.double)
+        assertEquals(73.8912, shop["longitude"]!!.jsonPrimitive.double)
+    }
+
+    @Test
+    fun aPinPutByHandNeedsNoLocationAccess() = runTest(dispatcher) {
+        // Added later from home: the owner found the shop on the map
+        phone.permitted = false
+        val viewModel = viewModel()
+        viewModel.fillIn()
+        viewModel.setPin(GeoLocation(18.5901, 73.8912))
+
+        submitted(viewModel)
+
+        assertFalse(viewModel.state.value.needsLocation)
+        assertEquals(18.5901, requestTo("/api/localshops").json()["latitude"]!!.jsonPrimitive.double)
+    }
+
+    @Test
+    fun thePinIsKeptForNextTimeAndClearingForgetsIt() {
+        viewModel().apply {
+            fillIn()
+            setPin(GeoLocation(18.5901, 73.8912))
+        }
+
+        val again = viewModel()
+        assertEquals(GeoLocation(18.5901, 73.8912), again.state.value.form.pin)
+
+        again.clearAll()
+        assertNull(viewModel().state.value.form.pin)
+    }
+
+    @Test
+    fun theFssaiLicenceIsSentForTheNewShop() = runTest(dispatcher) {
+        val viewModel = viewModel()
+        viewModel.fillIn()
+        viewModel.setFssai(licence)
+
+        submitted(viewModel)
+
+        val sent = requestTo("/api/fssai/shops/42")
+        assertEquals(HttpMethod.Post, sent.method)
+        assertEquals(AddedShop("42", menuSaved = true, fssaiSent = true), viewModel.state.value.added)
+    }
+
+    @Test
+    fun ifOnlyTheLicenceFailsTheShopIsStillAddedAndTheUserTold() = runTest(dispatcher) {
+        fssaiStatus = HttpStatusCode.ServiceUnavailable
+        val viewModel = viewModel()
+        viewModel.fillIn()
+        viewModel.setFssai(licence)
+
+        submitted(viewModel)
+
+        assertEquals(AddedShop("42", menuSaved = true, fssaiSent = false), viewModel.state.value.added)
+    }
+
+    @Test
+    fun aMovingCartSendsNoLicence() = runTest(dispatcher) {
+        val viewModel = viewModel()
+        viewModel.fillInCart()
+        viewModel.setFssai(licence)
+
+        submitted(viewModel)
+
+        assertTrue(requests.none { it.url.encodedPath.startsWith("/api/fssai") })
+        assertEquals(true, viewModel.state.value.added?.fssaiSent)
+    }
+
+    @Test
+    fun withoutALicenceNothingIsSentForIt() = runTest(dispatcher) {
+        val viewModel = viewModel()
+        viewModel.fillIn()
+
+        submitted(viewModel)
+
+        assertTrue(requests.none { it.url.encodedPath.startsWith("/api/fssai") })
     }
 
     @Test

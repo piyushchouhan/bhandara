@@ -25,7 +25,8 @@ final class IosGoogleMapBridge: IosMapBridge {
         styleJson: String,
         topPadding: Double,
         bottomPadding: Double,
-        zones: [IosMapZone]
+        zones: [IosMapZone],
+        satellite: Bool
     ) {
         guard let map = view as? AppMapView else { return }
 
@@ -39,9 +40,13 @@ final class IosGoogleMapBridge: IosMapBridge {
             map.cameraId = cameraId
         }
         map.isMyLocationEnabled = showMyLocation
-        if map.styleJson != styleJson {
-            map.mapStyle = try? GMSMapStyle(jsonString: styleJson)
-            map.styleJson = styleJson
+        // Satellite photos keep Google's own labels; the app's style is for the drawn map
+        let mapType: GMSMapViewType = satellite ? .hybrid : .normal
+        if map.mapType != mapType { map.mapType = mapType }
+        let style = satellite ? "" : styleJson
+        if map.styleJson != style {
+            map.mapStyle = satellite ? nil : try? GMSMapStyle(jsonString: styleJson)
+            map.styleJson = style
         }
 
         // Markers: keep the ones still shown, add new ones, remove the rest
@@ -116,5 +121,6 @@ private final class AppMapView: GMSMapView, GMSMapViewDelegate {
 
     func mapView(_ mapView: GMSMapView, idleAt position: GMSCameraPosition) {
         listener?.onZoomChanged(zoom: position.zoom)
+        listener?.onCameraIdle(latitude: position.target.latitude, longitude: position.target.longitude)
     }
 }

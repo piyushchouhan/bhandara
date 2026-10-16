@@ -107,15 +107,34 @@ class FeastsMapViewModel(
 
     private var started = false
 
-    /** Find the user and load the feasts; only the first call does anything (the screen calls it when shown) */
+    /**
+     * Find the user and load the feasts (the screen calls it each time it's shown). Coming back to it (e.g. after
+     * posting a feast) loads the feasts again where the user was found, without moving the map.
+     */
     fun start() {
-        if (started) return
+        if (started) return refresh()
         started = true
         locateAndLoad()
     }
 
+    private fun refresh() {
+        val location = (_state.value.location as? MapLocationState.Found)?.location ?: return
+        if (_state.value.loading) return
+        viewModelScope.launch { load(location) }
+    }
+
     fun onLocationPermissionResult(granted: Boolean) {
         if (granted) locateAndLoad() else _state.update { it.copy(location = MapLocationState.PermissionDenied) }
+    }
+
+    /**
+     * What the phone allows now, read each time the app comes back (e.g. from the permission dialog or Settings).
+     * The map can think location is off when it isn't: on Android, a second permission request while another is
+     * showing (the app asks at start too) answers "denied" at once, even if the user then allows the first.
+     */
+    fun onLocationAccessChanged(allowed: Boolean) {
+        val location = _state.value.location
+        if (allowed && (location == MapLocationState.PermissionNeeded || location == MapLocationState.PermissionDenied)) locateAndLoad()
     }
 
     fun retry() = locateAndLoad()

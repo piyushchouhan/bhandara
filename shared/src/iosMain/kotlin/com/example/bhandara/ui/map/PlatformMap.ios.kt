@@ -13,6 +13,7 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asSkiaBitmap
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalDensity
+import com.example.bhandara.data.location.GeoLocation
 import androidx.compose.runtime.CompositionLocalProvider
 import com.example.bhandara.ui.theme.LocalUnscaledDensity
 import androidx.compose.ui.viewinterop.UIKitInteropInteractionMode
@@ -56,6 +57,9 @@ interface IosMapListener {
     fun onPinClick(pinId: String)
     fun onZoneClick(zoneId: String)
     fun onZoomChanged(zoom: Float)
+
+    /** The map stopped moving with its middle (inside the padding) here */
+    fun onCameraIdle(latitude: Double, longitude: Double)
 }
 
 /**
@@ -67,7 +71,8 @@ interface IosMapBridge {
 
     /**
      * Moves the camera only when [cameraId] is new; adds, moves or removes markers to match [pins] and shapes to
-     * match [zones]. The paddings (in points) are the parts covered by the screen's bars and sheets.
+     * match [zones]. The paddings (in points) are the parts covered by the screen's bars and sheets. [satellite]
+     * shows photos from above (with labels) instead of the styled map.
      */
     fun updateMapView(
         view: UIView,
@@ -81,6 +86,7 @@ interface IosMapBridge {
         topPadding: Double,
         bottomPadding: Double,
         zones: List<IosMapZone>,
+        satellite: Boolean,
     )
 }
 
@@ -100,6 +106,8 @@ actual fun PlatformMap(
     contentPadding: PaddingValues,
     zones: List<MapZone>,
     onZoneClick: (zoneId: String) -> Unit,
+    satellite: Boolean,
+    onCameraIdle: (GeoLocation) -> Unit,
 ) {
     val bridge = LocalIosMapBridge.current ?: error("IosMapBridge not provided (see MainViewController)")
     val scale = LocalDensity.current.density.toDouble()
@@ -128,6 +136,7 @@ actual fun PlatformMap(
     val currentOnPinClick by rememberUpdatedState(onPinClick)
     val currentOnZoomChanged by rememberUpdatedState(onZoomChanged)
     val currentOnZoneClick by rememberUpdatedState(onZoneClick)
+    val currentOnCameraIdle by rememberUpdatedState(onCameraIdle)
     val listener = remember {
         object : IosMapListener {
             override fun onPinClick(pinId: String) {
@@ -137,6 +146,8 @@ actual fun PlatformMap(
             override fun onZoneClick(zoneId: String) = currentOnZoneClick(zoneId)
 
             override fun onZoomChanged(zoom: Float) = currentOnZoomChanged(zoom)
+
+            override fun onCameraIdle(latitude: Double, longitude: Double) = currentOnCameraIdle(GeoLocation(latitude, longitude))
         }
     }
 
@@ -153,7 +164,7 @@ actual fun PlatformMap(
                     view, iosPins, camera.center.latitude, camera.center.longitude, camera.zoom, camera.id,
                     showMyLocation, MapStyles.forLook(look, darkMap),
                     contentPadding.calculateTopPadding().value * toPoints, contentPadding.calculateBottomPadding().value * toPoints,
-                    iosZones,
+                    iosZones, satellite,
                 )
             },
             // Pans and pinches go straight to the map

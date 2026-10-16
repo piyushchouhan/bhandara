@@ -30,6 +30,7 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertSame
 import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNull
@@ -103,6 +104,21 @@ class ShopsMapViewModelTest {
     // ==================== Locating the user and loading the map ====================
 
     @Test
+    fun comingBackToTheMapShowsAShopAddedMeanwhileWithoutMovingTheMap() = runTest(dispatcher) {
+        val viewModel = started()
+        val camera = viewModel.state.value.camera
+
+        // The user added a shop, then came back to the map
+        feedBody = feed(shops = listOf(shop("1", "Sharma Chaat"), shop("30", "McDonald's")))
+        viewModel.start()
+        advanceUntilIdle()
+
+        assertEquals(listOf("Sharma Chaat", "McDonald's"), viewModel.state.value.shops.map { it.shopName })
+        assertSame(camera, viewModel.state.value.camera)
+        assertEquals(2, feedRequests().size)
+    }
+
+    @Test
     fun theMapCentresOnTheUserAndShowsTheShopsAroundThem() = runTest(dispatcher) {
         feedBody = feed(shops = listOf(shop("1", "Sharma Chaat"), shop("2", "Gupta Snacks")), carts = listOf(cart("9", "Momo Cart")))
 
@@ -127,6 +143,46 @@ class ShopsMapViewModelTest {
         started()
 
         assertEquals("500.0", feedRequests().last().url.parameters["radius"])
+    }
+
+    @Test
+    fun locationAllowedInAnotherDialogStillFindsTheUser() = runTest(dispatcher) {
+        // The app's own start-up request is showing, so the map's request answers "denied" at once
+        phone.permitted = false
+        val viewModel = started()
+        viewModel.onLocationPermissionResult(false)
+        advanceUntilIdle()
+        assertEquals(MapLocationState.PermissionDenied, viewModel.state.value.location)
+
+        // The user allows location in the other dialog; the app comes back to the front
+        phone.permitted = true
+        viewModel.onLocationAccessChanged(true)
+        advanceUntilIdle()
+
+        assertEquals(MapLocationState.Found(here), viewModel.state.value.location)
+        assertEquals(1, feedRequests().size)
+    }
+
+    @Test
+    fun comingBackToTheAppDoesNotLookForTheUserAgainOnceFound() = runTest(dispatcher) {
+        val viewModel = started()
+
+        viewModel.onLocationAccessChanged(true)
+        advanceUntilIdle()
+
+        assertEquals(1, feedRequests().size)
+    }
+
+    @Test
+    fun locationStillOffChangesNothing() = runTest(dispatcher) {
+        phone.permitted = false
+        val viewModel = started()
+
+        viewModel.onLocationAccessChanged(false)
+        advanceUntilIdle()
+
+        assertEquals(MapLocationState.PermissionNeeded, viewModel.state.value.location)
+        assertTrue(feedRequests().isEmpty())
     }
 
     @Test

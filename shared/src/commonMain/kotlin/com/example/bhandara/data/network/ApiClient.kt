@@ -2,6 +2,7 @@ package com.example.bhandara.data.network
 
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.HttpClientEngine
+import io.ktor.client.network.sockets.SocketTimeoutException
 import io.ktor.client.plugins.HttpRequestTimeoutException
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
@@ -48,7 +49,10 @@ class ApiClient(
         install(ContentNegotiation) { json(json) }
         install(HttpTimeout) {
             connectTimeoutMillis = 15_000
-            requestTimeoutMillis = 60_000 // reading menu photos with AI can take a while
+            // Reading menu photos with AI can take a while (14 s for a 30-item menu). The socket timeout matters on
+            // Android too: without it OkHttp gives up waiting for the answer after its own default of 10 s.
+            requestTimeoutMillis = 60_000
+            socketTimeoutMillis = 60_000
         }
         defaultRequest {
             url(baseUrl)
@@ -90,6 +94,9 @@ class ApiClient(
         } catch (e: CancellationException) {
             throw e // the screen went away; don't report it as a failure
         } catch (e: HttpRequestTimeoutException) {
+            return ApiResult.Failure(ApiError(ApiError.Kind.NETWORK, ApiErrors.TIMEOUT))
+        } catch (e: SocketTimeoutException) {
+            // Connected, but the answer didn't come in time: not a missing connection
             return ApiResult.Failure(ApiError(ApiError.Kind.NETWORK, ApiErrors.TIMEOUT))
         } catch (e: Exception) {
             // No connection, DNS failure, connection reset, connect timeout, ...

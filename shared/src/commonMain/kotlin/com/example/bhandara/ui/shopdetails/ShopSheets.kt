@@ -21,6 +21,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Block
 import androidx.compose.material.icons.rounded.DoorFront
+import androidx.compose.material.icons.rounded.GppBad
 import androidx.compose.material.icons.rounded.Flag
 import androidx.compose.material.icons.rounded.NoFood
 import androidx.compose.material.icons.rounded.Storefront
@@ -67,6 +68,7 @@ import com.example.bhandara.shared.resources.Res
 import com.example.bhandara.shared.resources.cancel
 import com.example.bhandara.shared.resources.report_prompt
 import com.example.bhandara.shared.resources.report_reason_closed
+import com.example.bhandara.shared.resources.report_reason_fssai
 import com.example.bhandara.shared.resources.report_reason_inappropriate
 import com.example.bhandara.shared.resources.report_reason_not_food_shop
 import com.example.bhandara.shared.resources.report_reason_wrong_location
@@ -124,9 +126,11 @@ internal fun FeastSheet(onDismiss: () -> Unit, content: @Composable ColumnScope.
 internal fun ReportShopSheet(
     onReport: (ShopReportReason, note: String, photos: List<PickedPhoto>) -> Unit,
     onDismiss: () -> Unit,
+    hasFssai: Boolean = false,
+    initial: ShopReportReason? = null,
 ) {
     val colors = MaterialTheme.feastColors
-    var reason by rememberSaveable { mutableStateOf<ShopReportReason?>(null) }
+    var reason by rememberSaveable { mutableStateOf(initial) }
     var note by rememberSaveable { mutableStateOf("") }
     var photos by remember { mutableStateOf(emptyList<PickedPhoto>()) }
     FeastSheet(onDismiss) { close ->
@@ -140,7 +144,7 @@ internal fun ReportShopSheet(
             }
         }
         Column(Modifier.padding(top = 14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            ShopReportReason.entries.forEach { option ->
+            ShopReportReason.entries.filter { hasFssai || it != ShopReportReason.WRONG_FSSAI_LICENCE }.forEach { option ->
                 ReasonRow(option.icon, stringResource(option.label), selected = option == reason) { reason = option }
             }
         }
@@ -197,6 +201,7 @@ private val ShopReportReason.label: StringResource
         ShopReportReason.WRONG_LOCATION -> Res.string.report_reason_wrong_location
         ShopReportReason.INAPPROPRIATE_CONTENT -> Res.string.report_reason_inappropriate
         ShopReportReason.PERMANENTLY_CLOSED -> Res.string.report_reason_closed
+        ShopReportReason.WRONG_FSSAI_LICENCE -> Res.string.report_reason_fssai
     }
 
 private val ShopReportReason.icon: ImageVector
@@ -205,6 +210,7 @@ private val ShopReportReason.icon: ImageVector
         ShopReportReason.WRONG_LOCATION -> Icons.Rounded.WrongLocation
         ShopReportReason.INAPPROPRIATE_CONTENT -> Icons.Rounded.Block
         ShopReportReason.PERMANENTLY_CLOSED -> Icons.Rounded.DoorFront
+        ShopReportReason.WRONG_FSSAI_LICENCE -> Icons.Rounded.GppBad
     }
 
 /**

@@ -15,6 +15,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Composable
 import com.example.bhandara.data.location.GeoLocation
+import com.example.bhandara.data.network.ApiError
 import com.example.bhandara.data.network.ApiResult
 import com.example.bhandara.data.network.UserApi
 import com.example.bhandara.data.settings.AppSettings
@@ -37,19 +38,19 @@ class DeviceRegistration(
     private val pushToken: suspend () -> String?,
 ) {
     private val lock = Mutex()
-    private val tokenSync = PushTokenSync(userApi, settings)
 
     /** Registers the phone if this account hasn't yet, else sends a new push token; true when the backend has it */
     suspend fun ensureRegistered(location: GeoLocation? = null): Boolean = lock.withLock {
         val uid = currentUid() ?: return false
         val token = currentToken()
-        if (!settings.isRegisteredWithBackend(uid)) {
-            if (userApi.register(uid, token, location) !is ApiResult.Success) return false
-            settings.markRegisteredWithBackend(uid)
-            token?.let { settings.markPushTokenSent(uid, it) }
-            return true
+        if (!settings.isRegisteredWithBackend(uid)) return register(uid, token, location)
+        if (token != null && settings.lastPushTokenSent(uid) != token) {
+            when (val sent = userApi.updatePushToken(token)) {
+                is ApiResult.Success -> settings.markPushTokenSent(uid, token)
+                // The backend lost the user (e.g. its data was reset): register again
+                is ApiResult.Failure -> if (sent.error.isNotFound) return reregister(uid, token, location)
+            }
         }
-        token?.let { tokenSync.sync(uid, it) }
         true
     }
 
@@ -57,8 +58,26 @@ class DeviceRegistration(
     suspend fun shareLocation(location: GeoLocation): Boolean {
         if (!ensureRegistered(location)) return false
         val uid = currentUid() ?: return false
-        return userApi.updateLocation(uid, settings.lastPushTokenSent(uid), location) is ApiResult.Success
+        return when (val shared = userApi.updateLocation(uid, settings.lastPushTokenSent(uid), location)) {
+            is ApiResult.Success -> true
+            // Registering sends the location too
+            is ApiResult.Failure -> shared.error.isNotFound && lock.withLock { reregister(uid, currentToken(), location) }
+        }
     }
+
+    private suspend fun register(uid: String, token: String?, location: GeoLocation?): Boolean {
+        if (userApi.register(uid, token, location) !is ApiResult.Success) return false
+        settings.markRegisteredWithBackend(uid)
+        token?.let { settings.markPushTokenSent(uid, it) }
+        return true
+    }
+
+    private suspend fun reregister(uid: String, token: String?, location: GeoLocation?): Boolean {
+        settings.forgetRegisteredWithBackend(uid)
+        return register(uid, token, location)
+    }
+
+    private val ApiError.isNotFound: Boolean get() = status == 404
 
     /** The push token, or null when there is none or it can't be had right now */
     private suspend fun currentToken(): String? = try {

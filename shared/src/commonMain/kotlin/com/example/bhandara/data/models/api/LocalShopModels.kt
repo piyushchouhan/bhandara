@@ -100,6 +100,8 @@ data class LocalShopResponse(
     val operatingDays: String? = null,
     val isCurrentlyOpen: Boolean? = null,
     val crowdLevel: String? = null, // QUIET, MODERATE or BUSY right now; null for moving carts
+    /** The checked FSSAI licence (shop page only); null when it has none */
+    val fssai: FssaiBadge? = null,
     val homeDelivery: Boolean? = null,
     val takeaway: Boolean? = null,
     val hasSeating: Boolean? = null,
@@ -261,7 +263,12 @@ data class VerifyShopRequest(
 )
 
 /** Why a user reports a shop; sent as the code (e.g. WRONG_LOCATION) so moderators see it in any language */
-enum class ShopReportReason { NOT_FOOD_SHOP, WRONG_LOCATION, INAPPROPRIATE_CONTENT, PERMANENTLY_CLOSED }
+enum class ShopReportReason {
+    NOT_FOOD_SHOP, WRONG_LOCATION, INAPPROPRIATE_CONTENT, PERMANENTLY_CLOSED,
+
+    /** Only offered on a shop with the FSSAI badge */
+    WRONG_FSSAI_LICENCE,
+}
 
 /** Why the user reports a shop, with an optional note and photos */
 @Serializable

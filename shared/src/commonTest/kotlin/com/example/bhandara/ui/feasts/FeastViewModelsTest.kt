@@ -40,6 +40,7 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertSame
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
@@ -117,6 +118,19 @@ class FeastViewModelsTest {
     // ==================== The feasts map ====================
 
     @Test
+    fun comingBackToTheMapShowsAFeastPostedMeanwhileWithoutMovingTheMap() = runTest(dispatcher) {
+        val viewModel = mapStarted()
+        val camera = viewModel.state.value.camera
+
+        nearbyAre(feast("1", "Gurudwara langar"), feast("2", null, start = "20:00:00", end = "23:00:00"), feast("3", "Mandir bhandara"))
+        viewModel.start()
+        advanceUntilIdle()
+
+        assertEquals(listOf("1", "2", "3"), viewModel.state.value.feasts.map { it.id })
+        assertSame(camera, viewModel.state.value.camera)
+    }
+
+    @Test
     fun theMapCentresOnTheUserAndShowsFeastsAroundThem() = runTest(dispatcher) {
         val state = mapStarted().state.value
 
@@ -129,6 +143,20 @@ class FeastViewModelsTest {
         assertEquals("18.5823", url.parameters["lat"])
         assertEquals("73.8845", url.parameters["lon"])
         assertEquals("5000.0", url.parameters["radius"])
+    }
+
+    @Test
+    fun feastsMapFindsTheUserWhenLocationIsAllowedInAnotherDialog() = runTest(dispatcher) {
+        phone.permitted = false
+        val viewModel = mapStarted()
+        viewModel.onLocationPermissionResult(false)
+        advanceUntilIdle()
+
+        phone.permitted = true
+        viewModel.onLocationAccessChanged(true)
+        advanceUntilIdle()
+
+        assertEquals(MapLocationState.Found(here), viewModel.state.value.location)
     }
 
     @Test
