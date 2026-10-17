@@ -22,7 +22,7 @@ kotlin {
     android {
         namespace = "com.example.bhandara.shared"
         compileSdk = 37
-        minSdk = 35
+        minSdk = 31
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_11)
         }
